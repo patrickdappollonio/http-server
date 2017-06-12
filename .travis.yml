@@ -15,8 +15,7 @@ install:
   - # an empty install saves the hassle of pseudo-getting deps (they're vendored, so no need!)
 
 script:
-  - make
-  - docker build --pull=true --rm=true -t $IMAGE_TAG .
+  - make ci
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then

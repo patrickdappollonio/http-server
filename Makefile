@@ -1,13 +1,16 @@
+IMAGE_TAG ?= patrickdappollonio/docker-http-server
+BIN_NAME = docker-http-server
+
 default: build
 
 build:
-	go build -a -tags netgo -ldflags '-s -w' -o $$(pwd)/docker-http-server
+	go build -a -tags netgo -ldflags '-s -w' -o $$(pwd)/$(BIN_NAME)
 
 clean:
-	rm -rf $$(pwd)/docker-http-server
+	rm -rf $$(pwd)/$(BIN_NAME)
 
 docker:
-	docker build --pull=true --rm=true -t patrickdappollonio/docker-http-server .
+	docker build --pull=true --rm=true -t $(IMAGE_TAG) .
 
 ci:
 	$(MAKE) build
