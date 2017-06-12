@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,16 +9,12 @@ import (
 
 var (
 	fileServerPath = "/html"
-	fileServerPort = "5000"
+	fileServerPort = "0.0.0.0:5000"
 )
 
 func init() {
 	if v := os.Getenv("FILE_SERVER_PATH"); v != "" {
 		fileServerPath = v
-	}
-
-	if v := os.Getenv("FILE_SERVER_PORT"); v != "" {
-		fileServerPort = v
 	}
 }
 
@@ -51,7 +46,7 @@ func main() {
 	close := make(chan bool, 1)
 
 	// Create a server
-	srv := &http.Server{Addr: fmt.Sprintf(":%s", fileServerPort)}
+	srv := &http.Server{Addr: fileServerPort}
 
 	// Execute the server
 	go func() {

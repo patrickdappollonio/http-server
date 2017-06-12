@@ -1,0 +1,18 @@
+sudo: required
+
+services:
+  - docker
+
+env:
+  global:
+    - IMAGE_TAG=$DOCKER_USERNAME/docker-http-server
+
+script:
+  - make
+  - docker build --pull=true --rm=true -t $IMAGE_TAG
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push $IMAGE_TAG;
+    fi
