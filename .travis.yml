@@ -3,13 +3,20 @@ sudo: required
 services:
   - docker
 
+language: go
+go:
+  - 1.8.3
+
 env:
   global:
     - IMAGE_TAG=$DOCKER_USERNAME/docker-http-server
 
+install:
+  - # an empty install saves the hassle of pseudo-getting deps (they're vendored, so no need!)
+
 script:
   - make
-  - docker build --pull=true --rm=true -t $IMAGE_TAG
+  - docker build --pull=true --rm=true -t $IMAGE_TAG .
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
