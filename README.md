@@ -5,7 +5,9 @@
 This docker container is just a simple HTTP file server. It will serve a simple file server
 which will show either the contents of the `/html` folder or the mounted volume contents.
 
-By default, the container will listen in port `5000` accepting any incoming request.
+By default, the container will listen in port `5000` accepting any incoming request. If no volume
+is passed to be mount, then [the default html currently available](html/index.html) will redirect
+you here, to this docs.
 
 ## Container published to the docker registry
 
@@ -30,6 +32,7 @@ docker run -d -P -v $(pwd):/html patrickdappollonio/docker-http-server
 docker run -d -p 8080:5000 -v $(pwd):/html patrickdappollonio/docker-http-server
 ```
 
-## USe it with Docker Compose
+## Use it with Docker Compose
 
+TODO
 
