@@ -35,5 +35,19 @@ docker run -d -p 8080:5000 -v $(pwd):/html patrickdappollonio/docker-http-server
 
 ## Use it with Docker Compose
 
-TODO
+To use it with Docker Compose you need to create a `docker-compose.yaml` and paste inside
+the content below. Make sure to change the port mapping `5000:5000` and the folder you want
+to serve (currently, `./html:/html`).
 
+```yaml
+version: '2'
+
+services:
+  http-server:
+    image: patrickdappollonio/docker-http-server
+    ports:
+      - 5000:5000
+    volumes:
+      - ./html:/html
+    restart: always
+```
