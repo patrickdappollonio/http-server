@@ -1,4 +1,4 @@
-# Docker container for a HTTP server
+# Docker container for a HTTP file server
 
 [![Build Status](https://travis-ci.org/patrickdappollonio/docker-http-server.svg?branch=master)](https://travis-ci.org/patrickdappollonio/docker-http-server)
 [![Docker Automated buil](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
@@ -12,8 +12,8 @@ you here, to this docs.
 
 ## Container published to the docker registry
 
-The docker container is published in the public Docker Registry under `patrickdappollonio/docker-http-server`,
-you can pull it by executing:
+The docker container [is published in the public Docker Registry](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
+under `patrickdappollonio/docker-http-server`, you can pull it by executing:
 
 ```bash
 docker pull patrickdappollonio/docker-http-server
