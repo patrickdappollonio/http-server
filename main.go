@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 )
 
 var (
@@ -67,7 +69,10 @@ func main() {
 		<-sigquit
 		log.Printf("Gracefully shutting down server...")
 
-		if err := srv.Shutdown(nil); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
 			log.Println("Unable to shut down server: " + err.Error())
 			close <- true
 		}
