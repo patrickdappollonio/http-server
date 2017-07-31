@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Browsing directory: {{ .Path }}</title>
+        <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-red.min.css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+        <style type="text/css">
+            .list-contents {
+                border-radius: 2px;
+                padding: 56px 64px;
+                margin-bottom: 80px;
+            }
+
+            .file-list {
+                padding: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+            <header class="mdl-layout__header">
+                <div class="mdl-layout__header-row">
+                    <span class="mdl-layout-title">HTTP File Server</span>
+                    <div class="mdl-layout-spacer"></div>
+                    <nav class="mdl-navigation mdl-layout--large-screen-only">
+                        <a class="mdl-navigation__link" href="https://github.com/patrickdappollonio/docker-http-server" target="_blank">Source code</a>
+                        <a class="mdl-navigation__link" href="https://hub.docker.com/r/patrickdappolonio/docker-http-server" target="_blank">Docker Hub</a>
+                    </nav>
+                </div>
+            </header>
+            <main class="mdl-layout__content">
+                <div class="page-content">
+                    <div class="mdl-grid">
+                        <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+                        <div class="list-contents mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+                            <ul class="file-list mdl-list">
+                                {{ range .Files }}
+                                <li class="mdl-list__item mdl-list__item--two-line">
+                                    <span class="mdl-list__item-primary-content">
+                                        <i class="material-icons mdl-list__item-icon">{{ if .IsDir }}folder{{ else }}description{{ end }}</i>
+                                        <span>{{ .Name }}</span>
+                                        <span class="mdl-list__item-sub-title">{{ if not .IsDir }}{{ .Size | humansize }}{{ else }}Directory{{ end }} | {{ .Mode }} | Dir: {{ .IsDir }}</span>
+                                    </span>
+                                </li>
+                                {{ end }}
+                            </ul>
+
+                            {{ if not .Files }}
+                            <h1 class="mdl-typography--display-1">No files found</h1>
+                            <p>The folder you're trying to navigate, <code>{{ .Path }}</code> is empty.</p>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

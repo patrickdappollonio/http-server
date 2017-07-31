@@ -35,8 +35,7 @@ func main() {
 	}
 
 	// Create the file server
-	fs := http.FileServer(http.Dir(fileServerPath))
-	http.Handle("/", fs)
+	http.HandleFunc("/", handler(fileServerPath))
 
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)
@@ -66,6 +65,10 @@ func main() {
 	go func() {
 		<-sigquit
 		log.Printf("Gracefully shutting down server...")
+
+		if srv == nil {
+			return
+		}
 
 		if err := srv.Shutdown(nil); err != nil {
 			log.Println("Unable to shut down server: " + err.Error())
