@@ -65,6 +65,8 @@ var extensionList = map[string]string{
 	".jpeg":      "JPEG image",
 	".png":       "PNG image",
 	".ps":        "PostScript",
+	".ps1":       "PowerShell Script",
+	".reg":       "Registry",
 	".psd":       "PSD image",
 	".svg":       "Scalable Vector Graphics",
 	".tif":       "TIFF image",
@@ -158,9 +160,21 @@ var extensionList = map[string]string{
 // fileNameList is a map from filename to the file type
 // associated with it
 var fileNameList = map[string]string{
-	"Dockerfile":      "Dockerfile",
 	".dockerignore":   "Docker Ignore",
 	".gitattribute":   "Git attribute",
+	".bash_profile":   "Bash Profile",
+	".profile":        "Bash Profile",
+	".bash_history":   "Bash History",
+	".bash_logout":    "Bash Logout",
+	".bashrc":         "Bash RC",
+	".gemrc":          "Ruby Gem Config",
+	".minttyrc":       "MinTTY Config",
+	".npmjs":          "NPM Config",
+	".vim":            "Vim Config",
+	".vimrc":          "Vim Config",
+	".vimtags":        "Vim Tags Config",
+	".wget-hsts":      "Wget HSTS Config",
+	"Dockerfile":      "Dockerfile",
 	"LICENSE":         "License",
 	"CONTRIBUTE":      "Contributor README",
 	"README":          "README",
@@ -172,6 +186,7 @@ var fileNameList = map[string]string{
 	"Rakefile":        "Ruby Rake",
 	"config.ru":       "Ruby Config",
 	"Vagrant":         "Vagrant VM",
+	"config":          "Config",
 }
 
 // detectByName tries to find the filetype based on the
