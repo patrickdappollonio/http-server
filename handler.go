@@ -25,11 +25,11 @@ var (
 		"contenttype": func(path string, f os.FileInfo) string {
 			// Try finding the content type based off the extension
 			if s := detectByName(f.Name()); s != "" {
-				return s
+				return fmt.Sprintf("%s file", s)
 			}
 
 			// If not, open the file and read it, then get the contents
-			return "Unknown"
+			return "File"
 		},
 	}
 )
