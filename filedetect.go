@@ -43,6 +43,7 @@ var extensionList = map[string]string{
 	".sav":       "Save",
 	".sql":       "SQL database",
 	".tar":       "Linux / Unix tarball archive",
+	".tgz":       "Linux / Unix tarball gzipped archive",
 	".xml":       "XML",
 	".apk":       "Android package",
 	".bat":       "Batch",
