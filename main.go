@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,14 +13,11 @@ import (
 var (
 	fileServerPath = "/html"
 	fileServerPort = "0.0.0.0:5000"
+
+	pathFlag = flag.String("path", "", "The path you want to serve via HTTP")
 )
 
-func init() {
-	if v := os.Getenv("FILE_SERVER_PATH"); v != "" {
-		fileServerPath = v
-	}
-}
-
+// exists returns whether a folder exists or not in the filesystem
 func exists(path string) bool {
 	_, err := os.Stat(path)
 
@@ -31,9 +29,25 @@ func exists(path string) bool {
 }
 
 func main() {
+	// Print usage if the number of parameters is wrong
+	if len(flag.Args()) > 2 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	// If there's an environment variable with the file server
+	// path then use it.
+	if v := os.Getenv("FILE_SERVER_PATH"); v != "" {
+		fileServerPath = v
+	} else {
+		if flag.Parse(); *pathFlag != "" {
+			fileServerPath = *pathFlag
+		}
+	}
+
 	// Check if the folder exists
 	if !exists(fileServerPath) {
-		log.Fatalf("Unable to start server because $FILE_SERVER_PATH doesn't exist: %q", fileServerPath)
+		log.Fatalf("Unable to start server because the path in $FILE_SERVER_PATH or --path doesn't exist: %q", fileServerPath)
 	}
 
 	// Create the file server

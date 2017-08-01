@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,31 +18,23 @@ var (
 		"humansize": func(s int64) string {
 			return humansize(s)
 		},
+		"mergepath": func(a ...string) string {
+			return path.Join(a...)
+		},
 	}
 )
 
-type foldersFirst []os.FileInfo
-
-func (f foldersFirst) Len() int      { return len(f) }
-func (f foldersFirst) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
-func (f foldersFirst) Less(i, j int) bool {
-	if f[i].IsDir() && f[j].IsDir() {
-		return f[i].Name() < f[j].Name()
-	}
-
-	if !f[i].IsDir() && f[j].IsDir() {
-		return false
-	}
-
-	if f[i].IsDir() && !f[j].IsDir() {
-		return true
-	}
-
-	return f[i].Name() < f[j].Name()
-}
-
 func init() {
-	tmpl = template.Must(template.New(tmplName).Funcs(tmplFuncs).ParseFiles(tmplName))
+	// Find the folder to the current binary
+	binaryPath := "./"
+	if p, _ := os.Executable(); p != "" {
+		binaryPath = path.Dir(p)
+	}
+
+	// Open the template
+	tmpl = template.Must(template.New(tmplName).
+		Funcs(tmplFuncs).
+		ParseFiles(filepath.Join(binaryPath, tmplName)))
 }
 
 func handler(path string) func(http.ResponseWriter, *http.Request) {
@@ -120,16 +113,17 @@ func serve(path string, w http.ResponseWriter, r *http.Request) {
 	f.Close()
 }
 
-func walk(path string, w http.ResponseWriter, r *http.Request) {
+func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 	// Check if there's an index file, and if so, present it on screen
-	indexPath := filepath.Join(path, "index.html")
+	indexPath := filepath.Join(fpath, "index.html")
 	if _, err := os.Stat(indexPath); err == nil {
 		serve(indexPath, w, r)
+		return
 	}
 
 	// If not, construct the UI we need with a list of files from this folder
 	// by first opening the folder to get a Go object
-	folder, err := os.Open(path)
+	folder, err := os.Open(fpath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -147,11 +141,19 @@ func walk(path string, w http.ResponseWriter, r *http.Request) {
 	// Folders first, then alphabetically
 	sort.Sort(foldersFirst(list))
 
+	// Get the path to a parent folder
+	parentFolder := ""
+	if p := r.URL.Path; p != "/" {
+		parentFolder = path.Dir(p)
+	}
+
 	// If we reached this point, we're ready to print the template
 	// so we create a bag, and we save the information there
 	bag := map[string]interface{}{
-		"Path":  r.URL.Path,
-		"Files": list,
+		"Path":        r.URL.Path,
+		"IncludeBack": parentFolder != "",
+		"BackURL":     parentFolder,
+		"Files":       list,
 	}
 	if err := tmpl.ExecuteTemplate(w, tmplName, bag); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
