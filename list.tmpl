@@ -11,7 +11,7 @@
         <style type="text/css">
             .list-contents {
                 border-radius: 2px;
-                padding: 56px 64px;
+                padding: 20px 32px;
                 margin-bottom: 80px;
             }
 
@@ -60,11 +60,13 @@
                                         <span class="mdl-list__item-sub-title">Directory</span>
                                     </span>
                                 </li>{{ end }}
-                                {{ $path := .Path }}{{ range .Files }}<li class="mdl-list__item mdl-list__item--two-line">
+                                {{ $path := .Path }}{{ $filepath := .FilePath }}{{ range .Files }}<li class="mdl-list__item mdl-list__item--two-line">
                                     <span class="mdl-list__item-primary-content">
                                         <i class="material-icons mdl-list__item-icon">{{ if .IsDir }}folder{{ else }}description{{ end }}</i>
-                                        <span><a class="file-link" href="{{ mergepath $path .Name }}">{{ .Name }}</a></span>
-                                        <span class="mdl-list__item-sub-title">{{ if not .IsDir }}{{ .Size | humansize }}{{ else }}Directory{{ end }} | {{ .Mode }}</span>
+                                        <span><a class="file-link" href="{{ mergepath $path .Name }}{{ if .IsDir }}/{{ end }}">{{ .Name }}</a></span>
+                                        <span class="mdl-list__item-sub-title">
+                                            {{ if not .IsDir }} {{ contenttype $filepath . }} {{ .Size | humansize }}{{ else }}Directory{{ end }} | {{ .Mode }}
+                                        </span>
                                     </span>
                                 </li>{{ end }}
                             </ul>

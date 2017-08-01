@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -20,6 +21,15 @@ var (
 		},
 		"mergepath": func(a ...string) string {
 			return path.Join(a...)
+		},
+		"contenttype": func(path string, f os.FileInfo) string {
+			// Try finding the content type based off the extension
+			if s := detectByName(f.Name()); s != "" {
+				return s
+			}
+
+			// If not, open the file and read it, then get the contents
+			return "Unknown"
 		},
 	}
 )
@@ -74,6 +84,11 @@ func handler(path string) func(http.ResponseWriter, *http.Request) {
 
 		// Check if it's a folder, if so, walk and present the contents on screen
 		if info.IsDir() || strings.HasSuffix(fullpath, "/index.html") {
+			if info.IsDir() && !strings.HasSuffix(r.URL.Path, "/") {
+				http.Redirect(w, r, fmt.Sprintf("%s/", r.URL.Path), http.StatusFound)
+				return
+			}
+
 			walk(fullpath, w, r)
 			return
 		}
@@ -144,7 +159,10 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 	// Get the path to a parent folder
 	parentFolder := ""
 	if p := r.URL.Path; p != "/" {
-		parentFolder = path.Dir(p)
+		// If the path is not root, we're in a folder, but since folders
+		// are enforced to use trailing slash then we need to remove it
+		// so path.Dir() can work
+		parentFolder = path.Dir(strings.TrimSuffix(p, "/"))
 	}
 
 	// If we reached this point, we're ready to print the template
@@ -154,6 +172,7 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 		"IncludeBack": parentFolder != "",
 		"BackURL":     parentFolder,
 		"Files":       list,
+		"FilePath":    fpath,
 	}
 	if err := tmpl.ExecuteTemplate(w, tmplName, bag); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
