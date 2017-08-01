@@ -2,6 +2,7 @@ package main
 
 import (
 	"path/filepath"
+	"strings"
 )
 
 // nameTypes holds a key-value store with the most common
@@ -167,7 +168,7 @@ func detectByName(name string) string {
 	}
 
 	// Get the content type based off the file name without extension
-	if content, found := fileNameTypes[name[:len(filepath.Ext(name))-1]]; found {
+	if content, found := fileNameTypes[strings.TrimSuffix(name, filepath.Ext(name))]; found {
 		return content
 	}
 
