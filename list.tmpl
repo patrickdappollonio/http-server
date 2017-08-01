@@ -53,7 +53,7 @@
                                 <p>There are no files in the folder <code>{{ .Path }}</code>. Please, use a different folder when you start the server.</p>
                             </div>{{ end }}
                             <ul class="file-list mdl-list">
-                                {{ with .IncludeBack }}<li class="mdl-list__item mdl-list__item--two-line">
+                                {{ if .IncludeBack }}<li class="mdl-list__item mdl-list__item--two-line">
                                     <span class="mdl-list__item-primary-content">
                                         <i class="material-icons mdl-list__item-icon">folder</i>
                                         <span><a class="file-link" href="{{ .BackURL }}">../</a></span>
