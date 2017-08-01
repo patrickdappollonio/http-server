@@ -159,12 +159,15 @@ var extensionList = map[string]string{
 // associated with it
 var fileNameList = map[string]string{
 	"Dockerfile":      "Dockerfile",
+	".dockerignore":   "Docker Ignore",
+	".gitattribute":   "Git attribute",
 	"LICENSE":         "License",
 	"CONTRIBUTE":      "Contributor README",
 	"README":          "README",
 	"README.md":       "README Markdown",
 	"README.markdown": "README Markdown",
 	"Makefile":        "GNU Make",
+	"Makefile.inc":    "GNU Make include",
 	"Gemfile":         "Ruby Gem",
 	"Rakefile":        "Ruby Rake",
 	"config.ru":       "Ruby Config",
