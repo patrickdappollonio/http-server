@@ -7,7 +7,6 @@
         <title>Browsing directory: {{ .Path }}</title>
         <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-red.min.css" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-        <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
         <style type="text/css">
             .list-contents {
                 border-radius: 2px;
@@ -28,7 +27,12 @@
                 background-color: rgba(0, 0, 0, .1);
                 padding: 2px 3px;
                 color: rgba(0, 0, 0, .87);
-            }
+			}
+
+			.file-selected {
+				background-color: #fffbdd;
+				border-right: 2px solid #d6d0a6;
+			}
         </style>
     </head>
     <body>
@@ -77,20 +81,42 @@
         </main>
     </div>
 
+	<script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+
     <script type="text/javascript">
-        "use strict";
+		$(window).on("load", function(){
+			"use strict";
 
-        if (window.location.hash) {
-            var files = decodeURIComponent(window.location.hash.substr(1)).split("/");
+			// Colorize those files selected in the URI hash
+			var colorHashFiles = function() {
+				var elems = window.location.hash.substr(1).split("/");
+				$.each(elems, function(index, item) {
+					$("[data-name='" + item + "']").first().addClass("file-selected");
+				});
+			};
 
-            for (var i = 0; i < files.length; i++) {
-                var e = document.querySelectorAll("[data-name='" + files[i] + "']");
-                if (e[0] != null) {
-                    e[0].style.backgroundColor="#fffbdd";
-                    e[0].style.borderRight="2px solid #d6d0a6";
-                }
-            }
-        }
+			// Detect hash changes in the UI
+			$(window).on("hashchange", colorHashFiles);
+
+			// Run it when entering the screen
+			colorHashFiles();
+
+			// Click on one or many and change the logic
+			$("li[data-name]").on("click", function(e) {
+				if (!e.ctrlKey) return;
+
+				// Toggle the class of the selected element
+				$(this).toggleClass("file-selected");
+
+				// Create an array of all the selected elements
+				var selected = $(".file-selected").map(function() {
+					return $(this).attr("data-name");
+				}).get();
+
+				window.location.hash = selected.join("/");
+			});
+		});
     </script>
     </body>
 </html>
