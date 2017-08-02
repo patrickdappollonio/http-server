@@ -114,7 +114,11 @@
 					return $(this).attr("data-name");
 				}).get();
 
-				window.location.hash = selected.join("/");
+				if (selected.length > 0) {
+					window.location.hash = selected.join("/");
+				} else {
+					history.replaceState({}, document.title, ".")
+				}
 			});
 		});
     </script>
