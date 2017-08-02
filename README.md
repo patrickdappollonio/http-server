@@ -1,7 +1,7 @@
 # Docker container for a HTTP file server
 
 [![Build Status](https://travis-ci.org/patrickdappollonio/docker-http-server.svg?branch=master)](https://travis-ci.org/patrickdappollonio/docker-http-server)
-[![Docker Automated buil](https://img.shields.io/docker/automated/patrickdappollonio/docker-http-server.svg)](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
+[![Docker](https://img.shields.io/docker/pulls/patrickdappollonio/docker-http-server.svg)](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
 
 This docker container is just a simple HTTP file server. It will serve a simple file server
 which will show either the contents of the `/html` folder or the mounted volume contents.
