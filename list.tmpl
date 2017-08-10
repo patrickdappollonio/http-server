@@ -96,18 +96,16 @@
 					<div class="mdl-grid">
 						<div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
 						<div class="list-contents mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+							{{ if .Breadcrumb }}
+								<ul id="breadcrumb">
+									{{ range .Breadcrumb }}	<li><a href="{{ .URL }}" title="Browse to {{ .URL }}">{{ .Name }}</a></li> {{ end }}
+								</ul>
+							{{ end }}
 							{{ if and (not .IncludeBack) (not .Files) }}
 								<div>
 									<h3 class="nothing-found"><i class="material-icons">error</i> No files found!</h3>
-									<p>There are no files in the folder <code>{{ .Path }}</code>. Please, use a different folder when you start the server.</p>
+									<p>There are no files in the folder <code>{{ .Path }}</code>.</p>
 								</div>
-							{{ end }}
-							{{ if .Files }}
-								<ul id="breadcrumb">
-									{{ range .Breadcrumb }}
-										<li><a href="{{ .URL }}" title="Browse to {{ .URL }}">{{ .Name }}</a></li>
-									{{ end }}
-								</ul>
 							{{ end }}
 							<ul class="file-list mdl-list">
 								{{ if .IncludeBack }}<li class="mdl-list__item mdl-list__item--two-line">
