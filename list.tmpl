@@ -33,6 +33,11 @@
 				background-color: #fffbdd;
 				border-right: 2px solid #d6d0a6;
 			}
+
+			.info-tooltip {
+				font-size: 13px;
+				color: #777;
+			}
         </style>
     </head>
     <body>
@@ -67,9 +72,12 @@
                                 {{ $path := .Path }}{{ $filepath := .FilePath }}{{ range .Files }}<li class="mdl-list__item mdl-list__item--two-line" data-name="{{ .Name }}">
                                     <span class="mdl-list__item-primary-content">
                                         <i class="material-icons mdl-list__item-icon">{{ if .IsDir }}folder{{ else }}description{{ end }}</i>
-                                        <span><a class="file-link" href="{{ mergepath $path .Name }}{{ if .IsDir }}/{{ end }}">{{ .Name }}</a></span>
+										<span>
+											<a class="file-link" href="{{ mergepath $path .Name }}{{ if .IsDir }}/{{ end }}">{{ .Name }}</a>
+											{{ if not .IsDir }}<i class="material-icons info-tooltip" title="Updated on {{ .ModTime | prettytime }}">info_outline</i>{{ end }}
+										</span>
                                         <span class="mdl-list__item-sub-title">
-                                            {{ if not .IsDir }} {{ contenttype $filepath . }} {{ .Size | humansize }}{{ else }}Directory{{ end }} | {{ .Mode }}
+											{{ if not .IsDir }} {{ contenttype $filepath . }}; {{ .Size | humansize }}{{ else }}Directory{{ end }}
                                         </span>
                                     </span>
                                 </li>{{ end }}

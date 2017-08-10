@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
 
 var (
@@ -30,6 +31,9 @@ var (
 
 			// If not, open the file and read it, then get the contents
 			return "File"
+		},
+		"prettytime": func(t time.Time) string {
+			return t.Format(time.RFC1123)
 		},
 	}
 )
