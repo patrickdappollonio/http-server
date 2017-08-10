@@ -1,4 +1,4 @@
-FROM alpine
+FROM scratch
 EXPOSE 5000
 
 ADD html /html
