@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"hash/fnv"
 	"html/template"
 	"net/http"
 	"os"
@@ -35,8 +36,17 @@ var (
 		"prettytime": func(t time.Time) string {
 			return t.Format(time.RFC1123)
 		},
+		"genid": func(s string) string {
+			h := fnv.New32a()
+			h.Write([]byte(s))
+			return fmt.Sprintf("%v", h.Sum32())
+		},
 	}
 )
+
+type BreadcrumbItem struct {
+	Name, URL string
+}
 
 func init() {
 	// Find the folder to the current binary
@@ -172,6 +182,7 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 	// If we reached this point, we're ready to print the template
 	// so we create a bag, and we save the information there
 	bag := map[string]interface{}{
+		"Breadcrumb":  generateBreadcrumb(r.URL.Path),
 		"Path":        r.URL.Path,
 		"IncludeBack": parentFolder != "",
 		"BackURL":     parentFolder,
@@ -182,4 +193,36 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func generateBreadcrumb(webpath string) []BreadcrumbItem {
+	// We clean the parts before splitting, removing the initial and trailing slash
+	// since we will take care of them later on
+	parts := strings.Split(strings.Trim(webpath, "/"), "/")
+
+	// We allocate a slice based on the length of parts plus the initial root slash
+	breadcrumb := make([]BreadcrumbItem, 0, len(parts)+1)
+
+	// Adding the first element which is the root folder
+	breadcrumb = append(breadcrumb, BreadcrumbItem{
+		Name: "/",
+		URL:  "/",
+	})
+
+	// Iterate over all other parts
+	for i, v := range parts {
+		// If the path is empty, we just continue
+		// since you can't have folders with empty names
+		if v == "" {
+			continue
+		}
+
+		// Append new breadcrumb and joining the path to the previous item
+		breadcrumb = append(breadcrumb, BreadcrumbItem{
+			Name: v,
+			URL:  path.Join(breadcrumb[i].URL, v) + "/",
+		})
+	}
+
+	return breadcrumb
 }
