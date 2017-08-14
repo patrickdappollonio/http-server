@@ -17,7 +17,7 @@ trailing slash at the end.
 There's also a Docker container you can use by mounting anything into the `/html` path. When served
 from Docker, if no directory is mouted, it'll redirect by default here, to this repository.
 
-## File explorer
+### File explorer
 
 ![http-server file explorer](http://i.imgur.com/m8otA2i.png)
 
@@ -31,7 +31,9 @@ In the screenshot example, I'm serving my `$HOME` directory and I navigated to `
 * Folders are always shown first, files below folders
 * Path explorer on top: you can jump back and forth between different folders parent to the one you're visiting
 
-## Container published to the docker registry
+## Usage with Docker
+
+#### Container published to the docker registry
 
 The docker container [is published in the public Docker Registry](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
 under `patrickdappollonio/docker-http-server`, you can pull it by executing:
@@ -40,7 +42,7 @@ under `patrickdappollonio/docker-http-server`, you can pull it by executing:
 docker pull patrickdappollonio/docker-http-server
 ```
 
-## Use it with Docker standalone
+#### Use it with Docker standalone
 
 Run the container, preferably in detached mode (by passing `-d`), exposing either
 a random port with `-P` (uppercase "P"), or an actual mapping, with `-p 5000:5000`,
@@ -54,7 +56,7 @@ docker run -d -P -v $(pwd):/html patrickdappollonio/docker-http-server
 docker run -d -p 8080:5000 -v $(pwd):/html patrickdappollonio/docker-http-server
 ```
 
-## Use it with Docker Compose
+#### Use it with Docker Compose
 
 To use it with Docker Compose you need to create a `docker-compose.yaml` and paste inside
 the content below. Make sure to change the port mapping `5000:5000` and the folder you want
