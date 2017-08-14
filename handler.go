@@ -44,7 +44,7 @@ var (
 	}
 )
 
-type BreadcrumbItem struct {
+type breadcrumbItem struct {
 	Name, URL string
 }
 
@@ -195,16 +195,16 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func generateBreadcrumb(webpath string) []BreadcrumbItem {
+func generateBreadcrumb(webpath string) []breadcrumbItem {
 	// We clean the parts before splitting, removing the initial and trailing slash
 	// since we will take care of them later on
 	parts := strings.Split(strings.Trim(webpath, "/"), "/")
 
 	// We allocate a slice based on the length of parts plus the initial root slash
-	breadcrumb := make([]BreadcrumbItem, 0, len(parts)+1)
+	breadcrumb := make([]breadcrumbItem, 0, len(parts)+1)
 
 	// Adding the first element which is the root folder
-	breadcrumb = append(breadcrumb, BreadcrumbItem{
+	breadcrumb = append(breadcrumb, breadcrumbItem{
 		Name: "/",
 		URL:  "/",
 	})
@@ -218,7 +218,7 @@ func generateBreadcrumb(webpath string) []BreadcrumbItem {
 		}
 
 		// Append new breadcrumb and joining the path to the previous item
-		breadcrumb = append(breadcrumb, BreadcrumbItem{
+		breadcrumb = append(breadcrumb, breadcrumbItem{
 			Name: v,
 			URL:  path.Join(breadcrumb[i].URL, v) + "/",
 		})
