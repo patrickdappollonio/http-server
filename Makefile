@@ -1,5 +1,5 @@
 IMAGE_TAG ?= patrickdappollonio/docker-http-server
-BIN_NAME = docker-http-server
+BIN_NAME = http-server
 
 default: build
 

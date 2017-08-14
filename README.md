@@ -1,14 +1,35 @@
-# Docker container for a HTTP file server
+# Simple HTTP file server
 
-[![Build Status](https://travis-ci.org/patrickdappollonio/docker-http-server.svg?branch=master)](https://travis-ci.org/patrickdappollonio/docker-http-server)
+[![Build Status](https://travis-ci.org/patrickdappollonio/http-server.svg?branch=master)](https://travis-ci.org/patrickdappollonio/http-server)
 [![Docker](https://img.shields.io/docker/pulls/patrickdappollonio/docker-http-server.svg)](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
 
-This docker container is just a simple HTTP file server. It will serve a simple file server
-which will show either the contents of the `/html` folder or the mounted volume contents.
+`http-server` is a simple binary to provide a static http server from a given folder. The
+binary accepts a `-path` flag which can be pointed to a given folder to display it on a browser.
 
-By default, the container will listen in port `5000` accepting any incoming request. If no volume
-is passed to be mount, then [the default html currently available](html/index.html) will redirect
-you here, to this docs.
+The application listen by default on port 5000. If the folder contains an `index.html` file
+then the request will be redirected to the folder root and the `index.html` file will be displayed
+instead of the file explorer (see screenshot below for the file explorer).
+
+In different words, if you access `localhost:5000/index.html`, then the app will redirect to
+`localhost:5000/` without the `index.html` part. All folders are enforced to be read by using a
+trailing slash at the end.
+
+There's also a Docker container you can use by mounting anything into the `/html` path. When served
+from Docker, if no directory is mouted, it'll redirect by default here, to this repository.
+
+## File explorer
+
+![http-server file explorer](http://i.imgur.com/m8otA2i.png)
+
+The `http-server` app includes a file explorer which can be useful to show some downloadable files.
+In the screenshot example, I'm serving my `$HOME` directory and I navigated to `/Golang/src/github.com/patrickdappollonio/http-server`
+(this repository) to showcase some of the features:
+
+* File detection, based either on the file extension, file name or both.
+* File size reported by the OS
+* Modified date and permissions -- under the info icon next to the name
+* Folders are always shown first, files below folders
+* Path explorer on top: you can jump back and forth between different folders parent to the one you're visiting
 
 ## Container published to the docker registry
 
