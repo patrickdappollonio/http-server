@@ -49,16 +49,9 @@ type breadcrumbItem struct {
 }
 
 func init() {
-	// Find the folder to the current binary
-	binaryPath := "./"
-	if p, _ := os.Executable(); p != "" {
-		binaryPath = path.Dir(p)
-	}
-
-	// Open the template
 	tmpl = template.Must(template.New(tmplName).
 		Funcs(tmplFuncs).
-		ParseFiles(filepath.Join(binaryPath, tmplName)))
+		Parse(httpServerTemplate))
 }
 
 func handler(path string) func(http.ResponseWriter, *http.Request) {

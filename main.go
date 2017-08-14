@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+//go:generate go run tmpl_generator.go
+
 var (
 	fileServerPath = "/html"
 	fileServerPort = "0.0.0.0:5000"
