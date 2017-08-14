@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-//go:generate go run tmpl_generator.go
+//go:generate go run generator.go
 
 var (
 	fileServerPath = "/html"
