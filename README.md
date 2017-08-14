@@ -14,6 +14,19 @@ In different words, if you access `localhost:5000/index.html`, then the app will
 `localhost:5000/` without the `index.html` part. All folders are enforced to be read by using a
 trailing slash at the end.
 
+Files are served using the Go standard HTTP file server, which handles Range requests properly,
+sets the MIME type, and handles If-Match, If-Unmodified-Since, If-None-Match, If-Modified-Since,
+and If-Range requests. The MIME-type is based off the file extension or by reading the first
+512 bytes of the file and trying to guess the file type based off some rules. If nothing matches then
+the `application/octet-stream` header is set as the content type.
+
+Also, based off the modified date from the file being browsed, `http-server` includes a Last-Modified
+header in the response. If the request includes an If-Modified-Since header, `http-server` will use
+the modified time to decide whether the content needs to be sent at all.
+
+If there's a proper w's `ETag` -- formatted based on RFC 7232, section 2.3 -- then the server will use
+it to appropriately handle If-Match, If-None-Match or If-Range.
+
 There's also a Docker container you can use by mounting anything into the `/html` path. When served
 from Docker, if no directory is mouted, it'll redirect by default here, to this repository.
 
