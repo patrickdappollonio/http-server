@@ -25,7 +25,7 @@ Also, based off the modified date from the file being browsed, `http-server` inc
 header in the response. If the request includes an `If-Modified-Since` header, `http-server` will use
 the modified time to decide whether the content needs to be sent at all.
 
-If there's a proper w's `ETag` -- formatted based on RFC 7232, section 2.3 -- then the server will use
+If there's a proper `w`'s `ETag` -- formatted based on RFC 7232, section 2.3 -- then the server will use
 it to appropriately handle `If-Match`, `If-None-Match` or `If-Range`.
 
 There's also a Docker container you can use by mounting anything into the `/html` path. When served
@@ -39,11 +39,15 @@ The `http-server` app includes a file explorer which can be useful to show some 
 In the screenshot example, I'm serving my `$HOME` directory and I navigated to `/Golang/src/github.com/patrickdappollonio/http-server`
 (this repository) to showcase some of the features:
 
-* File detection, based either on the file extension, file name or both.
-* File size reported by the OS
-* Modified date and permissions -- under the info icon next to the name
-* Folders are always shown first, files below folders
-* Path explorer on top: you can jump back and forth between different folders parent to the one you're visiting
+* **File type detection**, based either on the file extension, file name or both.
+* **File size** reported by the OS
+* **Modified date and permissions** -- under the info icon next to the name
+* **Folders are always shown first**, files below folders
+* **Path explorer on top**: you can jump back and forth between different folders parent to the one you're visiting
+* **CTRL-click to select one or many folders or files**. The selected folders / files will be highlighted (useful
+  when you want to direct the attention to one or more files but still show the rest of them).
+* **One-to-one mapping of folders to URL path**: if you change manually the URL, the application will list the files on that
+  path.
 
 ## Usage with Docker
 
