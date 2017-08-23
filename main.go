@@ -53,7 +53,7 @@ func main() {
 	}
 
 	// Create the file server
-	http.HandleFunc("/", handler(fileServerPath))
+	http.Handle("/", logrequest(handler(fileServerPath)))
 
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)

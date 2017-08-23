@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -54,8 +55,8 @@ func init() {
 		Parse(httpServerTemplate))
 }
 
-func handler(path string) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func handler(path string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// If the method is GET, then we continue, we fail with "Method Not Allowed"
 		// otherwise, since all request are for files.
 		if r.Method != http.MethodGet {
@@ -101,7 +102,7 @@ func handler(path string) func(http.ResponseWriter, *http.Request) {
 		}
 
 		serve(fullpath, w, r)
-	}
+	})
 }
 
 func serve(path string, w http.ResponseWriter, r *http.Request) {
@@ -186,6 +187,26 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func logrequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Create a custom response writer to get the status code
+		lrw := newLRW(w)
+
+		// Capture the start time of this request
+		// to measure how long it took
+		start := time.Now()
+
+		// Serve the request
+		next.ServeHTTP(lrw, r)
+
+		// Now get the status code and print the log statement
+		log.Printf(
+			"%s %s -- %s %d %s served in %v",
+			r.Method, r.URL.String(), r.Proto, lrw.statusCode, http.StatusText(lrw.statusCode), time.Now().Sub(start),
+		)
+	})
 }
 
 func generateBreadcrumb(webpath string) []breadcrumbItem {
