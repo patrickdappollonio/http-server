@@ -1,7 +1,7 @@
 IMAGE_TAG ?= patrickdappollonio/docker-http-server
 BIN_NAME = http-server
 
-default: build
+default: release
 
 build:
 	go build -a -tags netgo -ldflags '-s -w' -o $$(pwd)/$(BIN_NAME)

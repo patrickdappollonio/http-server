@@ -91,8 +91,8 @@ func handler(path string) http.Handler {
 		}
 
 		// Check if it's a folder, if so, walk and present the contents on screen
-		if info.IsDir() || strings.HasSuffix(fullpath, "/index.html") {
-			if info.IsDir() && !strings.HasSuffix(r.URL.Path, "/") {
+		if info.IsDir() {
+			if !strings.HasSuffix(r.URL.Path, "/") {
 				http.Redirect(w, r, fmt.Sprintf("%s/", r.URL.Path), http.StatusFound)
 				return
 			}
@@ -101,46 +101,15 @@ func handler(path string) http.Handler {
 			return
 		}
 
-		serve(fullpath, w, r)
+		http.ServeFile(w, r, fullpath)
 	})
-}
-
-func serve(path string, w http.ResponseWriter, r *http.Request) {
-	// If there's no info coming, we get it
-	info, err := os.Stat(path)
-	if err != nil {
-		// If when trying to stat a file, the error is "not exists"
-		// then we throw a 404
-		if os.IsNotExist(err) {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-			return
-		}
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Since http.ServeContent can only handle ReadSeekers then we
-	// open the file for read.
-	f, err := os.Open(path)
-
-	// If we couldn't open, we just fail
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// We serve the content and close the file. ServeContent will handle
-	// different headers like Range, Mime types and so on.
-	http.ServeContent(w, r, info.Name(), info.ModTime(), f)
-	f.Close()
 }
 
 func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 	// Check if there's an index file, and if so, present it on screen
 	indexPath := filepath.Join(fpath, "index.html")
 	if _, err := os.Stat(indexPath); err == nil {
-		serve(indexPath, w, r)
+		http.ServeFile(w, r, indexPath)
 		return
 	}
 
