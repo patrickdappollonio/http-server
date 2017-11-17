@@ -37,7 +37,6 @@ var extensionList = map[string]string{
 	".vcd":       "Virtual CD",
 	".csv":       "Comma separated value",
 	".dat":       "Data",
-
 	".dbf":       "Database",
 	".log":       "Log",
 	".mdb":       "Microsoft Access database",
