@@ -49,6 +49,17 @@ In the screenshot example, I'm serving my `$HOME` directory and I navigated to `
 * **One-to-one mapping of folders to URL path**: if you change manually the URL, the application will list the files on that
   path.
 
+### Configurable options
+
+All of the following options set different settings regarding how the `http-server` behaves:
+
+* `$FILE_SERVER_PATH` or `-path`: Allows you to set a different path than the default one, which is `/html`
+* `$FILE_SERVER_TITLE`: Customize the title to whatever you want. By default the UI title is "HTTP File Server" and the HTML page title is "Browsing: /path/to/file".
+  This variable sets both to the same value.
+* `$FILE_SERVER_COLOR_SET`: Choose from a pretty big set of different colors schemes for your UI. The supported list of colors
+  [is available in the MDL website](https://getmdl.io/customize/index.html). Choose from the selector and then you'll get an URL
+  which is always ending on `material.$COLOR.min.css`. Pick the `$COLOR` part and use it here. By default I pick `indigo-red` for you.
+
 ## Usage with Docker
 
 #### Container published to the docker registry
