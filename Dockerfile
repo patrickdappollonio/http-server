@@ -1,4 +1,4 @@
-FROM scratch
+FROM drone/ca-certs
 
 ADD html /html
 ADD http-server /

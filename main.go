@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,11 @@ import (
 )
 
 //go:generate go run generator.go
+
+const (
+	defaultColor = "indigo-red"
+	cssURL       = "https://code.getmdl.io/1.3.0/material.%s.min.css"
+)
 
 var (
 	fileServerPath = "/html"
@@ -54,13 +60,33 @@ func main() {
 		givenTitle = v
 	}
 
+	// Define a default color
+	givenColor := fmt.Sprintf(cssURL, defaultColor)
+	if v := strings.TrimSpace(os.Getenv("FILE_SERVER_COLOR_SET")); v != "" {
+		// Validate the color is valid, otherwise set it to the default one
+		resp, err := http.Get(fmt.Sprintf(cssURL, v))
+		if err != nil {
+			log.Printf("Unable to set color palette to %q. Error: %s", v, err.Error())
+		}
+
+		// Close body right away, since we don't need it
+		resp.Body.Close()
+
+		// We can use this color palette only if the status code is 200
+		if resp.StatusCode == http.StatusOK {
+			givenColor = resp.Request.URL.String()
+		} else {
+			log.Printf("Unable to set color palette to %q. Server returned status %d %s", resp.StatusCode, resp.Status)
+		}
+	}
+
 	// Check if the folder exists
 	if !exists(fileServerPath) {
 		log.Fatalf("Unable to start server because the path in $FILE_SERVER_PATH or --path doesn't exist: %q", fileServerPath)
 	}
 
 	// Create the file server
-	http.Handle("/", logrequest(handler(fileServerPath, givenTitle)))
+	http.Handle("/", logrequest(handler(fileServerPath, givenTitle, givenColor)))
 
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)
