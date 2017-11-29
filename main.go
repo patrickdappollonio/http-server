@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -47,13 +48,19 @@ func main() {
 		}
 	}
 
+	// Define a default title
+	var givenTitle string
+	if v := strings.TrimSpace(os.Getenv("FILE_SERVER_TITLE")); v != "" {
+		givenTitle = v
+	}
+
 	// Check if the folder exists
 	if !exists(fileServerPath) {
 		log.Fatalf("Unable to start server because the path in $FILE_SERVER_PATH or --path doesn't exist: %q", fileServerPath)
 	}
 
 	// Create the file server
-	http.Handle("/", logrequest(handler(fileServerPath)))
+	http.Handle("/", logrequest(handler(fileServerPath, givenTitle)))
 
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)

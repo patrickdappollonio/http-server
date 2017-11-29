@@ -55,7 +55,7 @@ func init() {
 		Parse(httpServerTemplate))
 }
 
-func handler(path string) http.Handler {
+func handler(path, givenTitle string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// If the method is GET, then we continue, we fail with "Method Not Allowed"
 		// otherwise, since all request are for files.
@@ -97,7 +97,7 @@ func handler(path string) http.Handler {
 				return
 			}
 
-			walk(fullpath, w, r)
+			walk(fullpath, givenTitle, w, r)
 			return
 		}
 
@@ -105,7 +105,7 @@ func handler(path string) http.Handler {
 	})
 }
 
-func walk(fpath string, w http.ResponseWriter, r *http.Request) {
+func walk(fpath, givenTitle string, w http.ResponseWriter, r *http.Request) {
 	// Check if there's an index file, and if so, present it on screen
 	indexPath := filepath.Join(fpath, "index.html")
 	if _, err := os.Stat(indexPath); err == nil {
@@ -151,7 +151,16 @@ func walk(fpath string, w http.ResponseWriter, r *http.Request) {
 		"BackURL":     parentFolder,
 		"Files":       list,
 		"FilePath":    fpath,
+		"PageTitle":   "HTTP File Server",
+		"TagTitle":    fmt.Sprintf("Browsing directory: %s", r.URL.Path),
 	}
+
+	// Check if we need to change the title
+	if givenTitle != "" {
+		bag["PageTitle"] = givenTitle
+		bag["TagTitle"] = givenTitle
+	}
+
 	if err := tmpl.ExecuteTemplate(w, tmplName, bag); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
