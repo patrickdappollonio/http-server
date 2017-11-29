@@ -1,10 +1,11 @@
 IMAGE_TAG ?= patrickdappollonio/docker-http-server
+GOOS ?= linux
 BIN_NAME = http-server
 
 default: release
 
 build:
-	go build -a -tags netgo -ldflags '-s -w' -o $$(pwd)/$(BIN_NAME)
+	GOOS=$(GOOS) go build -a -tags netgo -ldflags '-s -w' -o $$(pwd)/$(BIN_NAME)
 
 generate:
 	go generate

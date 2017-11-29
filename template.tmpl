@@ -170,7 +170,7 @@
 
 				// Click on one or many and change the logic
 				$("li[data-name]").on("click", function(e) {
-					if (!e.ctrlKey) return;
+					if (!(e.metaKey || e.ctrlKey)) return;
 
 					// Toggle the class of the selected element
 					$(this).toggleClass("file-selected");
