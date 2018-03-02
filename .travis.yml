@@ -22,3 +22,11 @@ after_success:
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
     docker push $IMAGE_TAG;
     fi
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: http-server
+  skip_cleanup: true
+  on:
+    tags: true

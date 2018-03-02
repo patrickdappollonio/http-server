@@ -21,6 +21,6 @@ docker:
 
 release: generate build remove-gen
 
-ci: generate build remove-gen docker clean
+ci: generate build remove-gen docker
 
 .NOTPARALLEL:
