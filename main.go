@@ -20,10 +20,12 @@ const (
 )
 
 var (
-	fileServerPath = "/html"
-	fileServerPort = "0.0.0.0:5000"
+	fileServerPath   = "/html"
+	fileServerPrefix = "/"
+	fileServerPort   = "0.0.0.0:5000"
 
-	pathFlag = flag.String("path", "", "The path you want to serve via HTTP")
+	pathFlag       = flag.String("path", "", "The path you want to serve via HTTP")
+	pathprefixFlag = flag.String("pathprefix", "/", "A URL path prefix on where to serve these")
 )
 
 // exists returns whether a folder exists or not in the filesystem
@@ -49,9 +51,27 @@ func main() {
 	if v := os.Getenv("FILE_SERVER_PATH"); v != "" {
 		fileServerPath = v
 	} else {
-		if flag.Parse(); *pathFlag != "" {
+		flag.Parse()
+
+		if *pathFlag != "" {
 			fileServerPath = *pathFlag
 		}
+
+		if *pathprefixFlag != "/" {
+			fileServerPrefix = *pathprefixFlag
+		}
+	}
+
+	// Check if the prefix matches what we want
+	if !strings.HasSuffix(fileServerPrefix, "/") || !strings.HasPrefix(fileServerPrefix, "/") {
+		log.Println("Unable to start a server with a path prefix not starting or ending in \"/\"... Aborting...")
+		return
+	}
+
+	// Check if the prefix matches what we want
+	if fileServerPrefix == "//" {
+		log.Printf("Incorrect prefix supplied: %q. Aborting...", fileServerPrefix)
+		return
 	}
 
 	// Define a default title
@@ -86,7 +106,7 @@ func main() {
 	}
 
 	// Create the file server
-	http.Handle("/", logrequest(handler(fileServerPath, givenTitle, givenColor)))
+	http.Handle(fileServerPrefix, logrequest(handler(fileServerPrefix, fileServerPath, givenTitle, givenColor)))
 
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)

@@ -101,8 +101,8 @@
                     <div class="mdl-grid">
                         <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
                         <div class="list-contents mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-                            {{ if .Breadcrumb -}}
-                                <ul id="breadcrumb">{{ range .Breadcrumb }}	<li><a href="{{ .URL }}" title="Browse to {{ .URL }}">{{ .Name }}</a></li> {{ end }}</ul>
+                            {{ if .Breadcrumb -}}{{ $prefix := .PathPrefix }}
+                                <ul id="breadcrumb">{{ range .Breadcrumb }}	<li><a href="{{ mergepathtrail $prefix .URL }}" title="Browse to {{ mergepathtrail $prefix .URL }}">{{ .Name }}</a></li> {{ end }}</ul>
                             {{- end }}
                             {{ if and (not .IncludeBack) (not .Files) }}
                                 <div>
@@ -120,13 +120,13 @@
                                         </span>
                                     </li>
                                 {{- end }}
-                                {{ $path := .Path }}{{ $filepath := .FilePath -}}
+                                {{ $path := .Path }}{{ $prefix := .PathPrefix }}{{ $filepath := .FilePath -}}
                                 {{- range .Files -}}
                                     <li class="mdl-list__item mdl-list__item--two-line" data-name="{{ .Name }}">
                                         <span class="mdl-list__item-primary-content">
                                             <i class="material-icons mdl-list__item-icon">{{ if .IsDir }}folder{{ else }}description{{ end }}</i>
                                             <span>
-                                                <a class="file-link" href="{{ mergepath $path .Name }}{{ if .IsDir }}/{{ end }}">{{ .Name }}</a>
+                                                <a class="file-link" href="{{ mergepath $prefix $path .Name }}{{ if .IsDir }}/{{ end }}">{{ .Name }}</a>
                                                 {{ if not .IsDir -}}
                                                     <i id="file-{{ .Name | genid }}" class="material-icons info-tooltip">info_outline</i>
                                                     <div class="mdl-tooltip" data-mdl-for="file-{{ .Name | genid }}">

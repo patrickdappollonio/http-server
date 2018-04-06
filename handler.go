@@ -23,7 +23,14 @@ var (
 			return humansize(s)
 		},
 		"mergepath": func(a ...string) string {
-			return path.Join(a...)
+			return path.Clean(path.Join(a...))
+		},
+		"mergepathtrail": func(a ...string) string {
+			m := path.Clean(path.Join(a...)) + "/"
+			if m == "//" {
+				return "/"
+			}
+			return m
 		},
 		"contenttype": func(path string, f os.FileInfo) string {
 			// Try finding the content type based off the extension
@@ -55,13 +62,22 @@ func init() {
 		Parse(httpServerTemplate))
 }
 
-func handler(path, givenTitle, givenColor string) http.Handler {
+func handler(prefix, p, givenTitle, givenColor string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// If the method is GET, then we continue, we fail with "Method Not Allowed"
 		// otherwise, since all request are for files.
 		if r.Method != http.MethodGet {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
+		}
+
+		// Check if the prefix isn't "/", if so, remove it
+		if prefix != "/" {
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, prefix)
+
+			if r.URL.Path == "" {
+				r.URL.Path = "/"
+			}
 		}
 
 		// Check if the URL ends on "/index.html", if so, redirect to the folder, because
@@ -74,7 +90,7 @@ func handler(path, givenTitle, givenColor string) http.Handler {
 		// Get the full path to the file or directory, since
 		// we don't need the current working directory, we can
 		// omit the error
-		fullpath, _ := filepath.Abs(filepath.Join(path, r.URL.Path))
+		fullpath, _ := filepath.Abs(filepath.Join(p, r.URL.Path))
 
 		// Find if there's a file or folder here
 		info, err := os.Stat(fullpath)
@@ -93,11 +109,12 @@ func handler(path, givenTitle, givenColor string) http.Handler {
 		// Check if it's a folder, if so, walk and present the contents on screen
 		if info.IsDir() {
 			if !strings.HasSuffix(r.URL.Path, "/") {
-				http.Redirect(w, r, fmt.Sprintf("%s/", r.URL.Path), http.StatusFound)
+				to := path.Join("/", prefix, r.URL.Path) + "/"
+				http.Redirect(w, r, to, http.StatusFound)
 				return
 			}
 
-			walk(fullpath, givenTitle, givenColor, w, r)
+			walk(prefix, fullpath, givenTitle, givenColor, w, r)
 			return
 		}
 
@@ -105,7 +122,7 @@ func handler(path, givenTitle, givenColor string) http.Handler {
 	})
 }
 
-func walk(fpath, givenTitle, givenColor string, w http.ResponseWriter, r *http.Request) {
+func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r *http.Request) {
 	// Check if there's an index file, and if so, present it on screen
 	indexPath := filepath.Join(fpath, "index.html")
 	if _, err := os.Stat(indexPath); err == nil {
@@ -135,12 +152,17 @@ func walk(fpath, givenTitle, givenColor string, w http.ResponseWriter, r *http.R
 
 	// Get the path to a parent folder
 	parentFolder := ""
-	if p := r.URL.Path; p != "/" {
+	if p := path.Join(prefix, r.URL.Path); p != "/" {
 		// If the path is not root, we're in a folder, but since folders
 		// are enforced to use trailing slash then we need to remove it
 		// so path.Dir() can work
 		parentFolder = path.Dir(strings.TrimSuffix(p, "/"))
 	}
+
+	// Update prefix to be nothing if it's just "/"
+	// if prefix == "/" {
+	// 	prefix = ""
+	// }
 
 	// If we reached this point, we're ready to print the template
 	// so we create a bag, and we save the information there
@@ -154,6 +176,7 @@ func walk(fpath, givenTitle, givenColor string, w http.ResponseWriter, r *http.R
 		"PageTitle":   "HTTP File Server",
 		"TagTitle":    fmt.Sprintf("Browsing directory: %s", r.URL.Path),
 		"GivenColor":  givenColor,
+		"PathPrefix":  prefix,
 	}
 
 	// Check if we need to change the title
@@ -177,13 +200,16 @@ func logrequest(next http.Handler) http.Handler {
 		// to measure how long it took
 		start := time.Now()
 
+		// Save URL before sending the next handler
+		u := r.URL.String()
+
 		// Serve the request
 		next.ServeHTTP(lrw, r)
 
 		// Now get the status code and print the log statement
 		log.Printf(
-			"%s %s -- %s %d %s served in %v",
-			r.Method, r.URL.String(), r.Proto, lrw.statusCode, http.StatusText(lrw.statusCode), time.Now().Sub(start),
+			"%s %q -- %s %d %s served in %v",
+			r.Method, u, r.Proto, lrw.statusCode, http.StatusText(lrw.statusCode), time.Now().Sub(start),
 		)
 	})
 }
