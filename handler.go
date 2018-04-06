@@ -152,17 +152,21 @@ func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r
 
 	// Get the path to a parent folder
 	parentFolder := ""
-	if p := path.Join(prefix, r.URL.Path); p != "/" {
+	if p := path.Join(prefix, r.URL.Path); p != "/" && p != prefix {
 		// If the path is not root, we're in a folder, but since folders
 		// are enforced to use trailing slash then we need to remove it
 		// so path.Dir() can work
 		parentFolder = path.Dir(strings.TrimSuffix(p, "/"))
-	}
+		if !strings.HasSuffix(parentFolder, "/") {
+			parentFolder += "/"
+		}
 
-	// Update prefix to be nothing if it's just "/"
-	// if prefix == "/" {
-	// 	prefix = ""
-	// }
+		// Remove the parent folder if there's a prefix, so we don't have a parent for
+		// a root in a prefixed environment
+		if parentFolder == "/" && prefix != "/" {
+			parentFolder = ""
+		}
+	}
 
 	// If we reached this point, we're ready to print the template
 	// so we create a bag, and we save the information there

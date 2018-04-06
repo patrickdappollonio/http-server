@@ -108,6 +108,12 @@ func main() {
 	// Create the file server
 	http.Handle(fileServerPrefix, logrequest(handler(fileServerPrefix, fileServerPath, givenTitle, givenColor)))
 
+	// Check whether or not the fileServerPrefix is set, if so, then
+	// simply create a temporary redirect to the new path
+	if fileServerPrefix != "/" {
+		http.Handle("/", logrequest(redirect("/", fileServerPrefix)))
+	}
+
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)
 	signal.Notify(sigquit, os.Interrupt, os.Kill)
