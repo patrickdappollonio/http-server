@@ -109,9 +109,11 @@ func main() {
 	http.Handle(fileServerPrefix, logrequest(handler(fileServerPrefix, fileServerPath, givenTitle, givenColor)))
 
 	// Check whether or not the fileServerPrefix is set, if so, then
-	// simply create a temporary redirect to the new path
+	// simply create a temporary redirect to the new path. Also add a listener
+	// for the prefix without the slash at the end so it goes to "/"
 	if fileServerPrefix != "/" {
 		http.Handle("/", logrequest(redirect("/", fileServerPrefix)))
+		http.Handle(strings.TrimSuffix(fileServerPrefix, "/"), logrequest(redirect("*", fileServerPrefix)))
 	}
 
 	// Graceful shutdown
