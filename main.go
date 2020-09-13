@@ -96,7 +96,7 @@ func main() {
 		if resp.StatusCode == http.StatusOK {
 			givenColor = resp.Request.URL.String()
 		} else {
-			log.Printf("Unable to set color palette to %q. Server returned status %d %s", resp.StatusCode, resp.Status)
+			log.Printf("Unable to set color palette to %q. Server returned status %d %s", givenColor, resp.StatusCode, resp.Status)
 		}
 	}
 
