@@ -41,7 +41,7 @@ func main() {
 
 	var (
 		fileServerPath   = firstNonEmpty("/html", *pathFlag, envany("FILE_SERVER_PATH"))
-		fileServerPrefix = firstNonEmpty("/", *pathprefixFlag)
+		fileServerPrefix = firstNonEmpty("/", *pathprefixFlag, envany("FILE_SERVER_PATH_PREFIX"))
 		fileServerPort   = firstNonEmpty("5000", *portFlag, envany("FILE_SERVER_PORT", "PORT"))
 
 		fileServerUsername = firstNonEmpty("", envany("FILE_SERVER_USERNAME", "HTTP_USER"))
