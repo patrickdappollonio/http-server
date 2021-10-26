@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"flag"
 	"fmt"
 	"log"
@@ -9,35 +10,24 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
-
-//go:generate go run generator.go
 
 const (
 	defaultColor = "indigo-red"
 	cssURL       = "https://code.getmdl.io/1.3.0/material.%s.min.css"
 )
 
-var (
-	fileServerPath   = "/html"
-	fileServerPrefix = "/"
-	fileServerPort   = "0.0.0.0:5000"
+//go:embed template.tmpl
+var httpServerTemplate string
 
+var (
 	pathFlag       = flag.String("path", "", "The path you want to serve via HTTP")
 	pathprefixFlag = flag.String("pathprefix", "/", "A URL path prefix on where to serve these")
+	portFlag       = flag.String("port", "5000", "The port you want to serve via HTTP")
+	bannerFlag     = flag.String("banner", "", "The HTML code you want to show on the top of the page")
 )
-
-// exists returns whether a folder exists or not in the filesystem
-func exists(path string) bool {
-	_, err := os.Stat(path)
-
-	if err != nil || os.IsNotExist(err) {
-		return false
-	}
-
-	return true
-}
 
 func main() {
 	// Print usage if the number of parameters is wrong
@@ -46,85 +36,88 @@ func main() {
 		os.Exit(1)
 	}
 
-	// If there's an environment variable with the file server
-	// path then use it.
-	if v := os.Getenv("FILE_SERVER_PATH"); v != "" {
-		fileServerPath = v
-	} else {
-		flag.Parse()
+	// Parse all flags
+	flag.Parse()
 
-		if *pathFlag != "" {
-			fileServerPath = *pathFlag
-		}
+	var (
+		fileServerPath   = firstNonEmpty("/html", *pathFlag, envany("FILE_SERVER_PATH"))
+		fileServerPrefix = firstNonEmpty("/", *pathprefixFlag)
+		fileServerPort   = firstNonEmpty("5000", *portFlag, envany("FILE_SERVER_PORT", "PORT"))
 
-		if *pathprefixFlag != "/" {
-			fileServerPrefix = *pathprefixFlag
-		}
-	}
+		fileServerUsername = firstNonEmpty("", envany("FILE_SERVER_USERNAME", "HTTP_USER"))
+		fileServerPassword = firstNonEmpty("", envany("FILE_SERVER_PASSWORD", "HTTP_PASS"))
+
+		givenTitle = firstNonEmpty("", envany("FILE_SERVER_TITLE", "PAGE_TITLE"))
+		givenColor = firstNonEmpty(defaultColor, envany("FILE_SERVER_COLOR_SET", "COLOR_SET"))
+
+		hideSourceCodeLinks = firstNonEmpty("", envany("FILE_SERVER_HIDE_LINKS", "HIDE_LINKS")) != ""
+		bannerCode          = firstNonEmpty("", *bannerFlag, envany("FILE_SERVER_BANNER", "BANNER"))
+	)
 
 	// Check if the prefix matches what we want
 	if !strings.HasSuffix(fileServerPrefix, "/") || !strings.HasPrefix(fileServerPrefix, "/") {
-		log.Println("Unable to start a server with a path prefix not starting or ending in \"/\"... Aborting...")
+		log.Fatalf("Unable to start a server with a path prefix not starting or ending in %q... Aborting...", "/")
 		return
 	}
 
 	// Check if the prefix matches what we want
 	if fileServerPrefix == "//" {
-		log.Printf("Incorrect prefix supplied: %q. Aborting...", fileServerPrefix)
+		log.Fatalf("Incorrect prefix supplied: %q. Aborting...", fileServerPrefix)
 		return
 	}
 
-	// Define a default title
-	var givenTitle string
-	if v := strings.TrimSpace(os.Getenv("FILE_SERVER_TITLE")); v != "" {
-		givenTitle = v
-	}
-
 	// Define a default color
-	givenColor := fmt.Sprintf(cssURL, defaultColor)
-	if v := strings.TrimSpace(os.Getenv("FILE_SERVER_COLOR_SET")); v != "" {
-		// Validate the color is valid, otherwise set it to the default one
-		resp, err := http.Get(fmt.Sprintf(cssURL, v))
-		if err != nil {
-			log.Printf("Unable to set color palette to %q. Error: %s", v, err.Error())
-		}
-
-		// Close body right away, since we don't need it
-		resp.Body.Close()
-
-		// We can use this color palette only if the status code is 200
-		if resp.StatusCode == http.StatusOK {
-			givenColor = resp.Request.URL.String()
-		} else {
-			log.Printf("Unable to set color palette to %q. Server returned status %d %s", givenColor, resp.StatusCode, resp.Status)
+	if givenColor != defaultColor {
+		if !isAvailableColor(givenColor) {
+			log.Fatalf("Unable to set color palette to %q. The color palette does not exist in getmdl.io", givenColor)
+			return
 		}
 	}
+
+	// Convert givenColor to a URL
+	givenColor = fmt.Sprintf(cssURL, givenColor)
 
 	// Check if the folder exists
 	if !exists(fileServerPath) {
 		log.Fatalf("Unable to start server because the path in $FILE_SERVER_PATH or --path doesn't exist: %q", fileServerPath)
+		return
+	}
+
+	// Generic middlewares for all paths
+	paths := chain(logrequest)
+
+	// Check if needs authentication and if so, extend the middlewares
+	if fileServerUsername != "" && fileServerPassword != "" {
+		paths = paths.extend(basicAuth(fileServerUsername, fileServerPassword))
 	}
 
 	// Create the file server
-	http.Handle(fileServerPrefix, logrequest(handler(fileServerPrefix, fileServerPath, givenTitle, givenColor)))
+	http.Handle(fileServerPrefix,
+		paths.then(
+			handler(fileServerPrefix, fileServerPath, givenTitle, givenColor, bannerCode, hideSourceCodeLinks),
+		),
+	)
 
 	// Check whether or not the fileServerPrefix is set, if so, then
 	// simply create a temporary redirect to the new path. Also add a listener
 	// for the prefix without the slash at the end so it goes to "/"
 	if fileServerPrefix != "/" {
-		http.Handle("/", logrequest(redirect("/", fileServerPrefix)))
-		http.Handle(strings.TrimSuffix(fileServerPrefix, "/"), logrequest(redirect("*", fileServerPrefix)))
+		handleredir := paths.then(redirect("/", fileServerPrefix))
+		handlesubpath := paths.then(redirect("*", fileServerPrefix))
+
+		http.Handle("/", handleredir)
+		http.Handle(strings.TrimSuffix(fileServerPrefix, "/"), handlesubpath)
 	}
 
 	// Graceful shutdown
 	sigquit := make(chan os.Signal, 1)
-	signal.Notify(sigquit, os.Interrupt, os.Kill)
+	signal.Notify(sigquit, os.Interrupt, syscall.SIGTERM)
 
 	// Wait signal
 	close := make(chan bool, 1)
 
 	// Create a server
-	srv := &http.Server{Addr: fileServerPort}
+	srv := &http.Server{Addr: ":" + fileServerPort}
 
 	// Execute the server
 	go func() {
@@ -132,7 +125,7 @@ func main() {
 
 		if err := srv.ListenAndServe(); err != nil {
 			if err != http.ErrServerClosed {
-				log.Println(err.Error())
+				log.Fatal(err.Error())
 			} else {
 				log.Println("Server closed. Bye!")
 			}

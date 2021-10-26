@@ -1,7 +1,11 @@
-FROM drone/ca-certs
+FROM golang:1.17 as builder
+WORKDIR /app
+ADD . .
+ENV CGO_ENABLED=0
+RUN go build -trimpath -ldflags='-extldflags=-static -w -s' -o http-server
 
-ADD html /html
-ADD http-server /
-
+FROM scratch
+COPY html /html
+COPY --from=builder /app/http-server /http-server
 EXPOSE 5000
-ENTRYPOINT ["./http-server"]
+ENTRYPOINT ["/http-server"]
