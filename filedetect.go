@@ -196,6 +196,7 @@ var fileNameList = map[string]string{
 	"config.ru":         "Ruby Config",
 	"Vagrant":           "Vagrant VM",
 	"config":            "Config",
+	"go.mod":            "Go Module File",
 }
 
 // detectByName tries to find the filetype based on the

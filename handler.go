@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	tmpl     *template.Template
-	tmplName = "list.tmpl"
+	tmpl *template.Template
 
 	tmplFuncs = template.FuncMap{
 		"humansize": func(s int64) string {
@@ -33,12 +32,9 @@ var (
 			return m
 		},
 		"contenttype": func(path string, f os.FileInfo) string {
-			// Try finding the content type based off the extension
 			if s := detectByName(f.Name()); s != "" {
 				return fmt.Sprintf("%s file", s)
 			}
-
-			// If not, open the file and read it, then get the contents
 			return "File"
 		},
 		"prettytime": func(t time.Time) string {
@@ -49,6 +45,9 @@ var (
 			h.Write([]byte(s))
 			return fmt.Sprintf("%v", h.Sum32())
 		},
+		"html": func(s string) template.HTML {
+			return template.HTML(s)
+		},
 	}
 )
 
@@ -56,18 +55,16 @@ type breadcrumbItem struct {
 	Name, URL string
 }
 
-func init() {
-	tmpl = template.Must(template.New(tmplName).
+func handler(prefix, folderPath, givenTitle, givenColor, bannerCode string, hideLinks bool) http.Handler {
+	tmpl = template.Must(template.New("http-server").
 		Funcs(tmplFuncs).
 		Parse(httpServerTemplate))
-}
 
-func handler(prefix, p, givenTitle, givenColor string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// If the method is GET, then we continue, we fail with "Method Not Allowed"
 		// otherwise, since all request are for files.
 		if r.Method != http.MethodGet {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			http.Error(w, "only GET method is allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -90,7 +87,7 @@ func handler(prefix, p, givenTitle, givenColor string) http.Handler {
 		// Get the full path to the file or directory, since
 		// we don't need the current working directory, we can
 		// omit the error
-		fullpath, _ := filepath.Abs(filepath.Join(p, r.URL.Path))
+		fullpath, _ := filepath.Abs(filepath.Join(folderPath, r.URL.Path))
 
 		// Find if there's a file or folder here
 		info, err := os.Stat(fullpath)
@@ -98,11 +95,11 @@ func handler(prefix, p, givenTitle, givenColor string) http.Handler {
 			// If when trying to stat a file, the error is "not exists"
 			// then we throw a 404
 			if os.IsNotExist(err) {
-				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+				http.Error(w, "file or folder not found", http.StatusNotFound)
 				return
 			}
 
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -114,7 +111,7 @@ func handler(prefix, p, givenTitle, givenColor string) http.Handler {
 				return
 			}
 
-			walk(prefix, fullpath, givenTitle, givenColor, w, r)
+			walk(prefix, fullpath, givenTitle, givenColor, bannerCode, hideLinks, w, r)
 			return
 		}
 
@@ -122,7 +119,7 @@ func handler(prefix, p, givenTitle, givenColor string) http.Handler {
 	})
 }
 
-func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r *http.Request) {
+func walk(prefix, fpath, givenTitle, givenColor, bannerCode string, hideLinks bool, w http.ResponseWriter, r *http.Request) {
 	// Check if there's an index file, and if so, present it on screen
 	indexPath := filepath.Join(fpath, "index.html")
 	if _, err := os.Stat(indexPath); err == nil {
@@ -134,7 +131,7 @@ func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r
 	// by first opening the folder to get a Go object
 	folder, err := os.Open(fpath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -143,7 +140,7 @@ func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r
 	folder.Close()
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -181,6 +178,8 @@ func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r
 		"TagTitle":    fmt.Sprintf("Browsing directory: %s", r.URL.Path),
 		"GivenColor":  givenColor,
 		"PathPrefix":  prefix,
+		"HideLinks":   hideLinks,
+		"Banner":      bannerCode,
 	}
 
 	// Check if we need to change the title
@@ -189,7 +188,7 @@ func walk(prefix, fpath, givenTitle, givenColor string, w http.ResponseWriter, r
 		bag["TagTitle"] = givenTitle
 	}
 
-	if err := tmpl.ExecuteTemplate(w, tmplName, bag); err != nil {
+	if err := tmpl.Execute(w, bag); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -213,7 +212,7 @@ func logrequest(next http.Handler) http.Handler {
 		// Now get the status code and print the log statement
 		log.Printf(
 			"%s %q -- %s %d %s served in %v",
-			r.Method, u, r.Proto, lrw.statusCode, http.StatusText(lrw.statusCode), time.Now().Sub(start),
+			r.Method, u, r.Proto, lrw.statusCode, http.StatusText(lrw.statusCode), time.Since(start),
 		)
 	})
 }
