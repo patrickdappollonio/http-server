@@ -1,6 +1,7 @@
 # Simple HTTP file server
 
 [![Docker](https://img.shields.io/docker/pulls/patrickdappollonio/docker-http-server.svg)](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
+[![Github Downloads](https://img.shields.io/github/downloads/patrickdappollonio/http-server/total?color=orange&label=github%20downloads)](https://github.com/patrickdappollonio/http-server/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server)
 
 `http-server` is a simple binary to provide a static http server from a given folder. The binary accepts a `-path` flag which can be pointed to a given folder to display it on a browser.
