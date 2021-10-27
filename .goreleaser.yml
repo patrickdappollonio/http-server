@@ -27,6 +27,8 @@ dockers:
   - image_templates:
     - "patrickdappollonio/docker-http-server:{{ .Tag }}"
     - "patrickdappollonio/docker-http-server:latest"
+    extra_files:
+    - 'html/'
 changelog:
   sort: asc
   filters:
