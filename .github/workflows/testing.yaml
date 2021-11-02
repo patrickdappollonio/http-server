@@ -28,4 +28,4 @@ jobs:
           tags: testing-docker-image
       - name: Test
         run: |
-          docker run --rm testing-docker-image
+          docker run --rm testing-docker-image --version
