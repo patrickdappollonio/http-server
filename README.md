@@ -28,6 +28,10 @@ under `ghcr.io/patrickdappollonio/docker-http-server`, you can pull it by execut
 docker pull ghcr.io/patrickdappollonio/docker-http-server
 ```
 
+#### This container existed previously on `patrickdappollonio/docker-http-server`, what happened?
+
+See [Pull Request #5](https://github.com/patrickdappollonio/http-server/pull/5) for details.
+
 #### Use it with Docker standalone
 
 Run the container, preferably in detached mode (by passing `-d`), exposing either
