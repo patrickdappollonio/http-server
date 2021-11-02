@@ -22,11 +22,14 @@ const (
 //go:embed template.tmpl
 var httpServerTemplate string
 
+var version = "development"
+
 var (
 	pathFlag       = flag.String("path", "", "The path you want to serve via HTTP")
 	pathprefixFlag = flag.String("pathprefix", "/", "A URL path prefix on where to serve these")
 	portFlag       = flag.String("port", "5000", "The port you want to serve via HTTP")
 	bannerFlag     = flag.String("banner", "", "The HTML code you want to show on the top of the page")
+	versionFlag    = flag.Bool("version", false, "Print the version and exit")
 )
 
 func main() {
@@ -38,6 +41,12 @@ func main() {
 
 	// Parse all flags
 	flag.Parse()
+
+	// Print version and exit
+	if *versionFlag {
+		fmt.Println("http-server version", version)
+		os.Exit(0)
+	}
 
 	var (
 		fileServerPath   = firstNonEmpty("/html", *pathFlag, envany("FILE_SERVER_PATH"))
