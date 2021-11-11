@@ -63,8 +63,10 @@ func handler(prefix, folderPath, givenTitle, givenColor, bannerCode string, hide
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// If the method is GET, then we continue, we fail with "Method Not Allowed"
 		// otherwise, since all request are for files.
-		if r.Method != http.MethodGet {
-			http.Error(w, "only GET method is allowed", http.StatusMethodNotAllowed)
+		switch r.Method {
+		case http.MethodGet, http.MethodHead:
+		default:
+			http.Error(w, "only GET and HEAD methods are allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -115,7 +117,25 @@ func handler(prefix, folderPath, givenTitle, givenColor, bannerCode string, hide
 			return
 		}
 
-		http.ServeFile(w, r, fullpath)
+		f, err := os.Open(fullpath)
+		if err != nil {
+			http.Error(w, "error opening file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+
+		// For content type hinting, we don't need the whole file,
+		// just enough to make it work
+		buf := make([]byte, 512)
+		if _, err = f.Read(buf); err != nil {
+			http.Error(w, "error reading file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Having the file name be empty prevents http.ServeContent from guessing
+		// the resource's content type
+		w.Header().Set("Content-Type", generateContentTypeCharset(info.Name(), buf))
+		http.ServeContent(w, r, "", info.ModTime(), f)
 	})
 }
 
