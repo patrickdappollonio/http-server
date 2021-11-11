@@ -98,3 +98,4 @@ All of the following options set different settings regarding how the `http-serv
 * `$HTTP_SERVER_PASSWORD` or `$HTTP_PASS`: Sets the HTTP password for any request to the server. In order for this to work, the HTTP username must be set as well.
 * `$FILE_SERVER_HIDE_LINKS` or `$HIDE_LINKS`: If set to any non-empty value, it hides the top links linking to Github and the Docker Hub.
 * `$FILE_SERVER_BANNER`, `$BANNER` or `--banner`: Allows you to set a custom banner to be displayed on the top of the page. **Warning:** any contents passed here will be rendered as-is. If HTML code is passed, it will print that inside the banner block.
+* `$FILE_SERVER_CORS` or `--add-cors`: Allows you to add Cross-Origin Resource Sharing (CORS) headers with the value of `"*"` to the responses sent by this server. Keep in mind the server only support `GET` and `HEAD` requests. `OPTIONS` requests such as CORS preflights are not supported.
