@@ -25,11 +25,12 @@ var httpServerTemplate string
 var version = "development"
 
 var (
-	pathFlag       = flag.String("path", "", "The path you want to serve via HTTP")
-	pathprefixFlag = flag.String("pathprefix", "/", "A URL path prefix on where to serve these")
-	portFlag       = flag.String("port", "5000", "The port you want to serve via HTTP")
-	bannerFlag     = flag.String("banner", "", "The HTML code you want to show on the top of the page")
-	versionFlag    = flag.Bool("version", false, "Print the version and exit")
+	pathFlag         = flag.String("path", "", "The path you want to serve via HTTP")
+	pathprefixFlag   = flag.String("pathprefix", "/", "A URL path prefix on where to serve these")
+	portFlag         = flag.String("port", "5000", "The port you want to serve via HTTP")
+	bannerFlag       = flag.String("banner", "", "The HTML code you want to show on the top of the page")
+	corsAnywhereFlag = flag.Bool("add-cors", false, "Add Access-Control-Allow-Origin=\"*\" Header to all responses")
+	versionFlag      = flag.Bool("version", false, "Print the version and exit")
 )
 
 func main() {
@@ -61,6 +62,8 @@ func main() {
 
 		hideSourceCodeLinks = firstNonEmpty("", envany("FILE_SERVER_HIDE_LINKS", "HIDE_LINKS")) != ""
 		bannerCode          = firstNonEmpty("", *bannerFlag, envany("FILE_SERVER_BANNER", "BANNER"))
+
+		corsEnabled = *corsAnywhereFlag || envany("FILE_SERVER_CORS", "CORS") != ""
 	)
 
 	// Check if the prefix matches what we want
@@ -93,7 +96,7 @@ func main() {
 	}
 
 	// Generic middlewares for all paths
-	paths := chain(logrequest)
+	paths := chain(logrequest, cors(corsEnabled))
 
 	// Check if needs authentication and if so, extend the middlewares
 	if fileServerUsername != "" && fileServerPassword != "" {
