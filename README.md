@@ -1,6 +1,5 @@
 # Simple HTTP file server
 
-[![Docker](https://img.shields.io/docker/pulls/patrickdappollonio/docker-http-server.svg)](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
 [![Github Downloads](https://img.shields.io/github/downloads/patrickdappollonio/http-server/total?color=orange&label=github%20downloads)](https://github.com/patrickdappollonio/http-server/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server)
 
@@ -17,6 +16,56 @@ Also, based off the modified date from the file being browsed, `http-server` inc
 If there's a proper `w`'s `ETag` -- formatted based on RFC 7232, section 2.3 -- then the server will use it to appropriately handle `If-Match`, `If-None-Match` or `If-Range`.
 
 There's also a Docker container you can use by mounting anything into the `/html` path. When served from Docker, if no directory is mouted, it'll redirect by default here, to this repository.
+
+## Usage with Docker
+
+#### Container published to the Github Container Registry
+
+The docker container [is published in the public Github Container Registry](https://github.com/patrickdappollonio/http-server/pkgs/container/docker-http-server)
+under `ghcr.io/patrickdappollonio/docker-http-server`, you can pull it by executing:
+
+```bash
+docker pull ghcr.io/patrickdappollonio/docker-http-server
+```
+
+#### This container existed previously on `patrickdappollonio/docker-http-server`, what happened?
+
+See [Pull Request #5](https://github.com/patrickdappollonio/http-server/pull/5) for details.
+
+#### Use it with Docker standalone
+
+Run the container, preferably in detached mode (by passing `-d`), exposing either
+a random port with `-P` (uppercase "P"), or an actual mapping, with `-p 5000:5000`,
+and mount the contents you want to show into the `/html` path.
+
+```bash
+# To get a random port from the ones available
+docker run -d -P -v $(pwd):/html ghcr.io/patrickdappollonio/docker-http-server
+
+# To get a predefined port (in this case, 8080)
+docker run -d -p 8080:5000 -v $(pwd):/html ghcr.io/patrickdappollonio/docker-http-server
+```
+
+#### Use it with Docker Compose
+
+To use it with Docker Compose you need to create a `docker-compose.yaml` and paste inside
+the content below. Make sure to change the port mapping `5000:5000` and the folder you want
+to serve (currently, `./html:/html`).
+
+```yaml
+version: '2'
+
+services:
+  http-server:
+    image: ghcr.io/patrickdappollonio/docker-http-server
+    ports:
+      - 5000:5000
+    volumes:
+      - ./html:/html
+    restart: always
+```
+
+## Features
 
 ### File explorer
 
@@ -50,47 +99,3 @@ All of the following options set different settings regarding how the `http-serv
 * `$FILE_SERVER_HIDE_LINKS` or `$HIDE_LINKS`: If set to any non-empty value, it hides the top links linking to Github and the Docker Hub.
 * `$FILE_SERVER_BANNER`, `$BANNER` or `--banner`: Allows you to set a custom banner to be displayed on the top of the page. **Warning:** any contents passed here will be rendered as-is. If HTML code is passed, it will print that inside the banner block.
 * `$FILE_SERVER_CORS` or `--add-cors`: Allows you to add Cross-Origin Resource Sharing (CORS) headers with the value of `"*"` to the responses sent by this server. Keep in mind the server only support `GET` and `HEAD` requests. `OPTIONS` requests such as CORS preflights are not supported.
-
-## Usage with Docker
-
-#### Container published to the docker registry
-
-The docker container [is published in the public Docker Registry](https://hub.docker.com/r/patrickdappollonio/docker-http-server/)
-under `patrickdappollonio/docker-http-server`, you can pull it by executing:
-
-```bash
-docker pull patrickdappollonio/docker-http-server
-```
-
-#### Use it with Docker standalone
-
-Run the container, preferably in detached mode (by passing `-d`), exposing either
-a random port with `-P` (uppercase "P"), or an actual mapping, with `-p 5000:5000`,
-and mount the contents you want to show into the `/html` path.
-
-```bash
-# To get a random port from the ones available
-docker run -d -P -v $(pwd):/html patrickdappollonio/docker-http-server
-
-# To get a predefined port (in this case, 8080)
-docker run -d -p 8080:5000 -v $(pwd):/html patrickdappollonio/docker-http-server
-```
-
-#### Use it with Docker Compose
-
-To use it with Docker Compose you need to create a `docker-compose.yaml` and paste inside
-the content below. Make sure to change the port mapping `5000:5000` and the folder you want
-to serve (currently, `./html:/html`).
-
-```yaml
-version: '2'
-
-services:
-  http-server:
-    image: patrickdappollonio/docker-http-server
-    ports:
-      - 5000:5000
-    volumes:
-      - ./html:/html
-    restart: always
-```

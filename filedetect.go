@@ -1,8 +1,11 @@
 package main
 
 import (
+	"net/http"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/net/html/charset"
 )
 
 // extensionList holds a key-value store with the most common
@@ -218,4 +221,22 @@ func detectByName(name string) string {
 	}
 
 	return ""
+}
+
+var overrideCTypeExtension = map[string]string{}
+
+// generateContentTypeCharset tries to find the filetype based on the
+// file content using the map above
+func generateContentTypeCharset(name string, content []byte) string {
+	if s, found := overrideCTypeExtension[name]; found {
+		return s
+	}
+
+	s := http.DetectContentType(content)
+
+	if _, name, certain := charset.DetermineEncoding(content, s); certain && !strings.Contains(s, ";") {
+		return s + "; charset=" + name
+	}
+
+	return s
 }
