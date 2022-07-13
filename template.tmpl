@@ -103,6 +103,37 @@
       vertical-align: text-top;
       font-size: 16px;
     }
+
+    .download-link {
+      position: relative;
+      display: block;
+    }
+
+    .download-link .download-icon, .download-link .nondownload-icon {
+      transition-property: opacity, transform;
+      transition-duration: 0.2s;
+      transition-timing-function: ease-out;
+      transform-origin: center;
+      transform: rotateZ(0deg);
+      opacity: 1;
+    }
+
+    .download-link .download-icon {
+      position: absolute;
+      left: 0;
+      transform: rotateZ(-180deg);
+      opacity: 0;
+    }
+
+    .download-link:hover .nondownload-icon, .download-link:focus-within .nondownload-icon {
+      transform: rotateZ(180deg);
+      opacity: 0;
+    }
+
+    .download-link:hover .download-icon, .download-link:focus-within .download-icon {
+      transform: rotateZ(0deg);
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -162,7 +193,14 @@
               {{- range .Files -}}
               <li class="mdl-list__item mdl-list__item--two-line" data-name="{{ .Name }}">
                 <span class="mdl-list__item-primary-content">
-                  <i class="material-icons mdl-list__item-icon">{{ if .IsDir }}folder{{ else }}description{{ end }}</i>
+                  {{ if .IsDir -}}
+                  <i class="material-icons mdl-list__item-icon">folder</i>
+                  {{- else -}}
+                  <a href="{{ mergepath $prefix $path .Name }}" class="download-link" download>
+                    <i class="material-icons mdl-list__item-icon download-icon">download_outline</i>
+                    <i class="material-icons mdl-list__item-icon nondownload-icon">description</i>
+                  </a>
+                  {{- end }}
                   <span>
                     <a class="file-link" href="{{ mergepath $prefix $path .Name }}{{ if .IsDir }}/{{ end }}">{{ .Name
                       }}</a>
