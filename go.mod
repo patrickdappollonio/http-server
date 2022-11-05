@@ -1,7 +1,9 @@
 module github.com/patrickdappollonio/http-server
 
-go 1.17
+go 1.19
 
-require golang.org/x/net v0.0.0-20211109214657-ef0fda0de508
-
-require golang.org/x/text v0.3.6 // indirect
+require (
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/spf13/cobra v1.6.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+)
