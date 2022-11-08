@@ -8,9 +8,23 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/patrickdappollonio/http-server/internal/utils"
 )
 
 func (s *Server) ListenAndServe() error {
+	// Generate the appropriate templates for the entire server
+	dltemplates, err := s.generateTemplates()
+	if err != nil {
+		return err
+	}
+	s.templates = dltemplates
+
+	// Configure a cache buster if the option is enabled
+	if !s.DisableCacheBuster {
+		s.cacheBuster = utils.Random(8)
+	}
+
 	// Create a OS Signal handler
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
@@ -21,7 +35,7 @@ func (s *Server) ListenAndServe() error {
 	// Set up an initial server
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", s.Port),
-		Handler: s.handler(),
+		Handler: s.router(),
 	}
 
 	// Start the server asynchronously

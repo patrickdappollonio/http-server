@@ -1,70 +1,26 @@
 package server
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/patrickdappollonio/http-server/internal/mw"
 )
 
 const (
-	logFormat  = `{http_method} "{url}" -- {proto} {status_code} {status_text} (served in {duration}; {bytes_written} bytes)`
-	warnPrefix = "(WARN)"
+	logFormat   = `{http_method} "{url}" -- {proto} {status_code} {status_text} (served in {duration}; {bytes_written} bytes)`
+	warnPrefix  = "(WARN)"
+	specialPath = "_"
 )
 
-func (s *Server) handler() http.Handler {
-	r := chi.NewRouter()
-
-	// Allow logging all request to our custom logger
-	r.Use(mw.LogRequest(s.LogOutput, logFormat))
-
-	// Recover the request in case of a panic
-	r.Use(middleware.Recoverer)
-
-	// Only allow specific methods in all our requests
-	r.Use(mw.VerbsAllowed("GET", "HEAD"))
-
-	// Enable basic authentication if needed
-	if s.IsAuthEnabled() {
-		r.Use(middleware.BasicAuth("http-server", map[string]string{
-			s.Username: s.Password,
-		}))
-	}
-
-	// Check if the request is against a URL ending on a known
-	// index file, and if so, redirect to the directory
-	r.Use(mw.RedirectIndexes(http.StatusMovedPermanently))
-
-	// Handle emptiness of path prefix
-	if s.PathPrefix == "" {
-		s.PathPrefix = "/"
-	}
-
-	// Create a route based on a path prefix, prevalidated that
-	// the prefix is a valid prefix
-	r.Get(s.PathPrefix+"*", s.showOrRender)
-
-	// If the path prefix is not the root of the server, then we
-	// can preemptively redirect users to the appropriate destination
-	// so they don't see a not found error
-	if s.PathPrefix != "/" {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, s.PathPrefix, http.StatusFound)
-		})
-	}
-
-	return r
-}
-
+// showOrRender is the main handler for the server. It will either render the
+// content requested or show a directory listing.
 func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
-	relpath := filepath.Join(s.Path, r.URL.Path)
+	relpath := filepath.Join(s.Path, strings.TrimPrefix(r.URL.Path, s.PathPrefix))
 
 	// Generate an absolute path off a relative one
 	currentPath, err := filepath.Abs(relpath)
@@ -149,38 +105,67 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// Render the directory listing
 	sort.Sort(foldersFirst(list))
 
-	// // Generate a link to the parent folder, for the breadcrumb
-	// parentWebFolder := ""
-	// if relPath := path.Join(s.Path, r.URL.Path); relPath != "/" && relPath != s.Path {
-	// 	parentWebFolder = path.Dir(strings.TrimSuffix(relPath, "/"))
+	// Generate a list of FileInfo objects
+	files := make([]os.FileInfo, 0, len(list))
+	for _, f := range list {
+		fi, err := f.Info()
+		if err != nil {
+			fmt.Fprintf(s.LogOutput, warnPrefix+" unable to stat file %q: %s\n", f.Name(), err)
+			httpError(http.StatusInternalServerError, w, "unable to stat file %q -- see application logs for more information", f.Name())
+			return
+		}
 
-	// 	if !strings.HasSuffix(parentWebFolder, "/") {
-	// 		parentWebFolder += "/"
-	// 	}
-
-	// 	if parentWebFolder == "/" && s.Path != "/" {
-	// 		parentWebFolder = ""
-	// 	}
-	// }
-
-	// Render the directory listing
-	content := map[string]any{
-		"Path": r.URL.Path,
-		// "ParentWebFolder": parentWebFolder,
-		"Files":         fmt.Sprintf("%#v", list),
-		"RequestedPath": requestedPath,
+		files = append(files, fi)
 	}
 
-	if err := json.NewEncoder(w).Encode(content); err != nil {
-		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to render directory %q: %s\n", requestedPath, err)
-		httpError(http.StatusInternalServerError, w, "unable to render directory -- see application logs for more information")
+	// Find if among the files there's a markdown readme
+	var markdownContent bytes.Buffer
+	if err := s.generateMarkdown(requestedPath, files, &markdownContent); err != nil {
+		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to generate markdown: %s\n", err)
+		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
 		return
 	}
 
-	// fmt.Fprintln(w, "directory listing not implemented yet, getting:", requestedPath)
+	// Define the parent directory
+	parent := getParentURL(s.PathPrefix, r.URL.Path)
+
+	// Render the directory listing
+	content := map[string]any{
+		"DirectoryRootPath": s.PathPrefix,
+		"PageTitle":         s.PageTitle,
+		"CurrentPath":       r.URL.Path,
+		"CacheBuster":       s.cacheBuster,
+		"Files":             files,
+		"RequestedPath":     requestedPath,
+		"IsRoot":            s.PathPrefix == r.URL.Path,
+		"UpDirectory":       parent,
+		"HideLinks":         s.HideLinks,
+		"MarkdownContent":   markdownContent.String(),
+		"MarkdownBeforeDir": s.MarkdownBeforeDir,
+	}
+
+	if err := s.templates.ExecuteTemplate(w, "app.tmpl", content); err != nil {
+		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to render directory listing: %s\n", err)
+		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
+		return
+	}
 }
 
 func httpError(statusCode int, w http.ResponseWriter, format string, args ...any) {
 	w.WriteHeader(statusCode)
 	fmt.Fprintf(w, format, args...)
+}
+
+func getParentURL(base string, loc string) string {
+	if loc == base {
+		return ""
+	}
+
+	s := path.Dir(strings.TrimSuffix(loc, "/"))
+
+	if strings.HasSuffix(s, "/") {
+		return s
+	}
+
+	return s + "/"
 }

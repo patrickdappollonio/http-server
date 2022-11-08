@@ -3,17 +3,20 @@ module github.com/patrickdappollonio/http-server
 go 1.19
 
 require (
+	github.com/abhinav/goldmark-mermaid v0.2.0
+	github.com/go-chi/chi v1.5.4
+	github.com/go-playground/validator/v10 v10.11.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.13.0
+	github.com/yuin/goldmark v1.5.2
+	github.com/yuin/goldmark-emoji v1.0.1
 )
 
 require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-chi/chi v1.5.4 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect

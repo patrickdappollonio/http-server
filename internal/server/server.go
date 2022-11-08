@@ -1,6 +1,7 @@
 package server
 
 import (
+	"html/template"
 	"io"
 )
 
@@ -16,10 +17,16 @@ type Server struct {
 	Username string `json:"username" validate:"omitempty,alphanum"`
 	Password string `json:"password" validate:"omitempty,alphanum"`
 
-	CorsEnabled bool
-	HideLinks   bool
+	CorsEnabled        bool
+	HideLinks          bool
+	DisableCacheBuster bool
+	DisableMarkdown    bool
+	MarkdownBeforeDir  bool
 
 	LogOutput io.Writer
+
+	cacheBuster string
+	templates   *template.Template
 }
 
 // IsAuthEnabled returns true if the server has been configured with
