@@ -29,6 +29,11 @@ func (s *Server) router() http.Handler {
 		}))
 	}
 
+	// Enable CORS if needed
+	if s.CorsEnabled {
+		r.Use(mw.EnableCORS)
+	}
+
 	// Check if the request is against a URL ending on a known
 	// index file, and if so, redirect to the directory
 	r.Use(mw.RedirectIndexes(http.StatusMovedPermanently))
