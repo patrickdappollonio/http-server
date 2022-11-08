@@ -247,6 +247,10 @@ footer p {
   text-align: center;
 }
 
+footer p a {
+  color: #0969da;
+}
+
 footer p code {
   font-family: "Roboto Mono", monospace;
   padding: 0.2em 0.4em;

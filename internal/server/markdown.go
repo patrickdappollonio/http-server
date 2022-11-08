@@ -14,7 +14,7 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
-var allowedIndexFiles = []string{"README.md", "readme.md", "index.md"}
+var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "readme.markdown", "index.md", "index.markdown"}
 
 // generateMarkdown generates the markdown needed to render the content
 // in the directory listing page
