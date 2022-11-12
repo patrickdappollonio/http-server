@@ -43,7 +43,7 @@ func (lrw *statusResponseWriter) Write(b []byte) (int, error) {
 // - {status_text} the HTTP status text
 // - {duration} the duration of the request
 // - {bytes_written} the number of bytes written
-func LogRequest(output io.Writer, format string) func(http.Handler) http.Handler {
+func LogRequest(output io.Writer, format string, redactedQuerystringFields ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Capture starting time
@@ -55,10 +55,22 @@ func LogRequest(output io.Writer, format string) func(http.Handler) http.Handler
 			// Serve the next request
 			next.ServeHTTP(lrw, r)
 
+			// Capture path and remove any querystring keys
+			urlpath := r.URL.Path
+			if r.URL.Query().Encode() != "" {
+				querystrings := r.URL.Query()
+				for _, key := range redactedQuerystringFields {
+					if _, ok := querystrings[key]; ok {
+						querystrings.Set(key, "REDACTED")
+					}
+				}
+				urlpath = r.URL.Path + "?" + querystrings.Encode()
+			}
+
 			// Generate a string representation of the log message
 			s := strings.NewReplacer(
 				"{http_method}", r.Method,
-				"{url}", r.URL.String(),
+				"{url}", urlpath,
 				"{proto}", r.Proto,
 				"{status_code}", fmt.Sprintf("%d", lrw.statusCode),
 				"{status_text}", http.StatusText(lrw.statusCode),

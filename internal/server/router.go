@@ -15,7 +15,7 @@ func (s *Server) router() http.Handler {
 	r := chi.NewRouter()
 
 	// Allow logging all request to our custom logger
-	r.Use(mw.LogRequest(s.LogOutput, logFormat))
+	r.Use(mw.LogRequest(s.LogOutput, logFormat, "token"))
 
 	// Recover the request in case of a panic
 	r.Use(middleware.Recoverer)
