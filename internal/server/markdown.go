@@ -9,7 +9,6 @@ import (
 
 	mermaid "github.com/abhinav/goldmark-mermaid"
 	"github.com/yuin/goldmark"
-	emoji "github.com/yuin/goldmark-emoji"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 )
@@ -60,7 +59,6 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 	// Configure goldmark
 	md := goldmark.New(
 		goldmark.WithExtensions(
-			emoji.Emoji,
 			extension.GFM,
 			&mermaid.Extender{
 				RenderMode: mermaid.RenderModeClient,
