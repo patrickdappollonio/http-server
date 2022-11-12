@@ -1,7 +1,9 @@
 package server
 
 import (
+	"crypto/sha1"
 	"embed"
+	"fmt"
 	"net/http"
 )
 
@@ -22,6 +24,16 @@ func (s *Server) serveAssets(prefix string) func(http.ResponseWriter, *http.Requ
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Set the cache control header
 		w.Header().Set("Cache-Control", "public, max-age=31536000")
+
+		// Create a SHA etag for the current path
+		etag := sha1.Sum([]byte(r.URL.Path + s.cacheBuster))
+		w.Header().Set("Etag", fmt.Sprintf("%x", etag))
+
+		// Check etag and send 304 if needed
+		if r.Header.Get("If-None-Match") == w.Header().Get("Etag") {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
 
 		// Serve the asset
 		fs.ServeHTTP(w, r)
