@@ -1,0 +1,46 @@
+package server
+
+import (
+	"html/template"
+	"io"
+)
+
+const repositoryURL = "https://github.com/patrickdappollonio/http-server/"
+
+// Server is an HTTP server with optional directory listing enabled
+type Server struct {
+	// Core settings
+	Port       int    `flagName:"port" validate:"required,min=1,max=65535"`
+	Path       string `flagName:"path" validate:"required,dir"`
+	PathPrefix string `flagName:"pathprefix" validate:"omitempty,ispathprefix"`
+	PageTitle  string `flagName:"title" validate:"omitempty,max=100"`
+	LogOutput  io.Writer
+
+	// Basic auth settings
+	Username string `flagName:"username" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
+	Password string `flagName:"password" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
+
+	// Boolean specific settings
+	CorsEnabled        bool
+	HideLinks          bool
+	DisableCacheBuster bool
+	DisableMarkdown    bool
+	MarkdownBeforeDir  bool
+
+	// JWT Specific settings
+	JWTSigningKey    string `flagName:"jwt-key" validate:"omitempty,excluded_with=Username,excluded_with=Password"`
+	ValidateTimedJWT bool
+
+	// Viper config settings
+	ConfigFilePrefix string
+
+	// Internal fields
+	cacheBuster string
+	templates   *template.Template
+}
+
+// IsBasicAuthEnabled returns true if the server has been configured with
+// a username and password
+func (s *Server) IsBasicAuthEnabled() bool {
+	return s.Username != "" && s.Password != ""
+}

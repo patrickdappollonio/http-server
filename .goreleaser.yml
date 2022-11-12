@@ -25,10 +25,8 @@ snapshot:
   name_template: "{{ incpatch .Version }}-next"
 dockers:
   - image_templates:
-    - "ghcr.io/patrickdappollonio/docker-http-server:{{ .Tag }}"
+    - "ghcr.io/patrickdappollonio/docker-http-server:v{{ .RawVersion }}"
     - "ghcr.io/patrickdappollonio/docker-http-server:latest"
-    extra_files:
-    - 'html/'
 changelog:
   sort: asc
   filters:

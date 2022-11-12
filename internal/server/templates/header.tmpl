@@ -1,0 +1,19 @@
+{{- define "header" }}
+<header>
+  <div class="container">
+    <nav>
+      <a class="page-title" href="{{ .DirectoryRootPath }}">{{ .PageTitle | default "HTTP File Server" }}</a>
+      {{- if not .HideLinks }}
+      <ul>
+        <li>
+          <a href="https://github.com/patrickdappollonio/http-server" target="_blank"><i class="fab fa-github"></i> Github Repo</a>
+        </li>
+        <li>
+          <a href="https://ghcr.io/patrickdappollonio/docker-http-server" target="_blank"><i class="fab fa-docker"></i> Container Image</a>
+        </li>
+      </ul>
+      {{- end }}
+    </nav>
+  </div>
+</header>
+{{- end }}

@@ -1,0 +1,56 @@
+{{- define "listing" }}
+{{- $currentPath := .CurrentPath }}
+
+<section id="directory-listing">
+  <div class="container">
+    {{- if .MarkdownBeforeDir }}{{- with .MarkdownContent }}
+    <div class="card-large">
+      <div class="markdown-body">{{- . | unsafeHTML }}</div>
+    </div>
+    {{- end }}{{- end }}
+
+    <div class="card-large">
+      <ul class="files">
+        <li>
+          <span class="files-heading">
+            <span class="name"><strong>Name</strong></span>
+            <span class="size"><strong>Size</strong></span>
+            <span class="date"><strong>Modified</strong></span>
+          </span>
+        </li>
+
+        {{- if not .IsRoot }}
+        <li class="file">
+          <a href="{{ .UpDirectory }}">
+            <span class="name"><i class="fas fa-level-up-alt"></i> ..</span>
+            <span class="size"></span>
+            <span class="date"></span>
+          </a>
+        </li>
+        {{- end }}
+        {{- range .Files }}
+        <li class="file">
+          <a href="{{ canonicalURL .IsDir $currentPath .Name }}" data-name="{{ .Name }}">
+            <span class="name"><i class="{{ getIconForFile .IsDir .Name }}"></i> {{ .Name }}</span>
+            <span class="size">{{ if not .IsDir }}{{ .Size | humansize }}{{ else }}-{{ end }}</span>
+            <span class="date">{{ .ModTime | prettytime }}</span>
+          </a>
+        </li>
+        {{- end }}
+        {{- if not .Files }}
+        <li class="file">
+          <div class="no-files">Directory is empty.</div>
+        </li>
+        {{- end }}
+      </ul>
+    </div>
+
+    {{- if not .MarkdownBeforeDir }}{{- with .MarkdownContent }}
+    <div class="card-large">
+      <div class="markdown-body">{{- . | unsafeHTML }}</div>
+    </div>
+    {{- end }}{{- end }}
+  </div>
+</section>
+
+{{- end }}

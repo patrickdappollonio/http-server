@@ -1,0 +1,296 @@
+/***
+    The new CSS reset - version 1.7.3 (last updated 7.8.2022)
+    GitHub page: https://github.com/elad2412/the-new-css-reset
+***/
+
+/*
+    Remove all the styles of the "User-Agent-Stylesheet", except for the 'display' property
+    - The "symbol *" part is to solve Firefox SVG sprite bug
+ */
+*:where(:not(html, iframe, canvas, img, svg, video, audio):not(svg *, symbol *)) {
+  all: unset;
+  display: revert;
+}
+
+/* Preferred box-sizing value */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Reapply the pointer cursor for anchor tags */
+a,
+button {
+  cursor: revert;
+}
+
+/* Remove list styles (bullets/numbers) */
+ol,
+ul,
+menu {
+  list-style: none;
+}
+
+/* For images to not be able to exceed their container */
+img {
+  max-width: 100%;
+}
+
+/* removes spacing between cells in tables */
+table {
+  border-collapse: collapse;
+}
+
+/* Safari - solving issue when using user-select:none on the <body> text input doesn't working */
+input,
+textarea {
+  -webkit-user-select: auto;
+}
+
+/* revert the 'white-space' property for textarea elements on Safari */
+textarea {
+  white-space: revert;
+}
+
+/* minimum style to allow to style meter element */
+meter {
+  -webkit-appearance: revert;
+  appearance: revert;
+}
+
+/* reset default text opacity of input placeholder */
+::placeholder {
+  color: unset;
+}
+
+/* fix the feature of 'hidden' attribute.
+   display:revert; revert to element instead of attribute */
+:where([hidden]) {
+  display: none;
+}
+
+/* revert for bug in Chromium browsers
+   - fix for the content editable attribute will work properly.
+   - webkit-user-select: auto; added for Safari in case of using user-select:none on wrapper element*/
+:where([contenteditable]:not([contenteditable="false"])) {
+  -moz-user-modify: read-write;
+  -webkit-user-modify: read-write;
+  overflow-wrap: break-word;
+  -webkit-line-break: after-white-space;
+  -webkit-user-select: auto;
+}
+
+/* apply back the draggable feature - exist only in Chromium and Safari */
+:where([draggable="true"]) {
+  -webkit-user-drag: element;
+}
+
+/*
+* BEGIN - CSS Code for http-server
+*/
+
+body {
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  color: #555;
+}
+
+body>* {
+  font-size: 1.1rem;
+}
+
+.container {
+  display: block;
+  margin: 0 auto;
+  padding: 0 40px;
+  max-width: 1200px;
+}
+
+header {
+  padding: 23px 0;
+  background: #3f51b5;
+  box-shadow: 0 2px 2px 0 rgb(0 0 0 / 14%), 0 3px 1px -2px rgb(0 0 0 / 20%), 0 1px 5px 0 rgb(0 0 0 / 12%);
+}
+
+nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+nav .page-title {
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+nav ul {
+  margin: 0;
+}
+
+nav ul li {
+  display: inline-block;
+  margin-left: 24px;
+}
+
+nav ul li a {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.card-large {
+  display: block;
+  box-sizing: border-box;
+  box-shadow: 0 4px 5px 0 rgb(0 0 0 / 14%), 0 1px 10px 0 rgb(0 0 0 / 12%), 0 2px 4px -1px rgb(0 0 0 / 20%);
+  border-radius: 5px;
+  padding: 30px 34px;
+  margin: 30px 0;
+}
+
+#directory-listing {
+  margin-top: 10px;
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.files .file {}
+
+.files .file a,
+.files .files-heading {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+.files .files-heading {
+  font-weight: 500;
+  font-size: 1.12rem;
+  padding: 1rem 1.2rem;
+  color: #656565;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 8px;
+}
+
+.files .size,
+.files .date,
+.files .name,
+.files .no-files {
+  font-size: 1.05rem;
+}
+
+.files .size,
+.files .date {
+  text-align: right;
+  padding-left: 15px;
+}
+
+.files .name {
+  flex-grow: 1;
+  min-width: 330px;
+  text-overflow: ellipsis;
+}
+
+.files .name i {
+  margin-right: 12px;
+  width: 1.5rem;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.files .size {
+  width: 80px;
+}
+
+.files .date {
+  width: 260px;
+  text-overflow: ellipsis;
+  overflow: none;
+}
+
+.files .file a,
+.files .file .no-files {
+  padding: 1rem 1.2rem;
+}
+
+.files .file a:hover,
+.files .file a:focus,
+.files .file a:active {
+  background: #e7e7e7;
+}
+
+.files .file a.file-selected {
+  background-color: #fffbdd;
+  position: relative;
+}
+
+.files .file a.file-selected:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #d6d0a6;
+}
+
+.files .file .no-files {
+  padding: 1rem 1.2rem;
+  text-align: center;
+}
+
+footer {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  color: #555;
+  margin: 8px 0 30px 0;
+}
+
+footer p {
+  text-align: center;
+}
+
+footer p a {
+  color: #0969da;
+}
+
+footer p code {
+  font-family: "Roboto Mono", monospace;
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 95%;
+  background-color: rgba(175, 184, 193, 0.2);
+  border-radius: 6px;
+}
+
+@media screen and (max-width: 845px) {
+
+  .container {
+    padding: 0 10px;
+  }
+
+  .card-large {
+    box-shadow: none;
+    padding: 0;
+    padding-bottom: 50px;
+    margin-bottom: 50px;
+    border-bottom: 1px solid #ccc;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .files .size,
+  .files .date {
+    display: none;
+  }
+
+  header nav ul {
+    display: none;
+  }
+}
