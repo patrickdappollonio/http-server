@@ -81,6 +81,8 @@ Old versions of this program would render the contents in the `/html` folder, ho
 
 To allow for directory listing mode, folders cannot contain a folder called `_` (underscore). `http-server` reserves underscore folders for the directory listing mode and its assets.
 
+A sample preview of the directory listing page can be seen [in this screenshot](img/sample-site.png) or in the live site [here](#).
+
 #### File highlighting
 
 `http-server` includes support for highlighting files in the UI. Useful when you want to direct the end user's attention toward one or more files being shown via the directory listing feature. To "highlight" a file, `CTRL+Shift+Click` (or `CMD+Shift+Click` on macOS) on the file name in the UI. This will add a URL parameter with the files selected and you can share this URL with end users.
