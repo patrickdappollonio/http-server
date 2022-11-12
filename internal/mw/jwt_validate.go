@@ -69,7 +69,7 @@ func ValidateJWTHS256(warnFunction func(string, ...interface{}), loggedInFunctio
 				}
 			}
 
-			if user := claims["user"]; user != nil {
+			if user := claims["sub"]; user != nil {
 				s := fmt.Sprintf("JWT auth passed for url %q: user: %q", r.URL.Path, user)
 
 				if issuer := claims["iss"]; issuer != nil {
