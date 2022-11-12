@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ .PageTitle }}</title>
+  <title>{{ .PageTitle | default "HTTP File Server" }}</title>
   <link rel="stylesheet" href="{{ assetpath "style.css" }}">
   <link rel="stylesheet" href="{{ assetpath "roboto-font.css" }}">
   <link rel="stylesheet" href="{{ assetpath "fontawesome-6.2.0.css" }}">

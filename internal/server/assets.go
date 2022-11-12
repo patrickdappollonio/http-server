@@ -20,6 +20,10 @@ func (s *Server) serveAssets(prefix string) func(http.ResponseWriter, *http.Requ
 
 	// Return the file server handler
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Set the cache control header
+		w.Header().Set("Cache-Control", "public, max-age=31536000")
+
+		// Serve the asset
 		fs.ServeHTTP(w, r)
 	}
 }
