@@ -103,6 +103,14 @@
   top: -0.5em;
 }
 
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body del {
+  text-decoration: line-through;
+}
+
 .markdown-body img {
   border-style: none;
   max-width: 100%;
@@ -167,6 +175,8 @@
   box-sizing: border-box;
   padding: 0;
   appearance: auto;
+  transform: scale(1.2);
+  margin-right: 3px;
 }
 
 .markdown-body [type=number]::-webkit-inner-spin-button,

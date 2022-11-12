@@ -20,7 +20,7 @@
 
 There are multiple configuration options available, and you can see them by running `http-server --help`:
 
-```bash
+```text
 A simple HTTP server and a directory listing tool.
 
 Usage:
@@ -64,10 +64,7 @@ WORKDIR /html
 Alternatively, you can use the container directly and point the path to the `/html` directory or any other directory:
 
 ```bash
-docker run -d -p 5000:5000 \
-  -v /path/to/your/files:/html \
-  ghcr.io/patrickdappollonio/docker-http-server:latest \
-  --path /html
+docker run -p 5000:5000 -v /path/to/files:/html ghcr.io/patrickdappollonio/docker-http-server:latest --path /html
 ```
 
 ## Features
@@ -102,7 +99,7 @@ When using markdown, consider:
 
 * CommonMark and GitHub Flavored Markdown are supported
 * Mermaid diagrams are supported
-* Raw HTML within markdown files is not supported for security considerations
+* Raw HTML within markdown files is not supported for security considerations, instead, `<!-- raw HTML omitted -->` will be rendered
 * Code fences are supported but they will not include syntax highlighting
 * Headings will include anchors, and links to headings are supported
 * Links to files within the directory being printed are also supported
