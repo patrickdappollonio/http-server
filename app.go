@@ -70,6 +70,20 @@ func run() error {
 	// Customize writer inside the command
 	rootCmd.SetOut(pw)
 
+	// Configure a custom help command to avoid writing to the customized pipe
+	originalHelp := rootCmd.HelpFunc()
+	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		cmd.SetOut(os.Stdout)
+		originalHelp(cmd, args)
+	})
+
+	// Configure a custom usage command to avoid writing to the customized pipe
+	origUsage := rootCmd.UsageFunc()
+	rootCmd.SetUsageFunc(func(cmd *cobra.Command) error {
+		cmd.SetOut(os.Stdout)
+		return origUsage(cmd)
+	})
+
 	// Define the flags for the root command
 	flags := rootCmd.Flags()
 	flags.IntVarP(&server.Port, "port", "p", 5000, "The port the server will listen on")
