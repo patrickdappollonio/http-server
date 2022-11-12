@@ -81,7 +81,7 @@ Old versions of this program would render the contents in the `/html` folder, ho
 
 To allow for directory listing mode, folders cannot contain a folder called `_` (underscore). `http-server` reserves underscore folders for the directory listing mode and its assets.
 
-A sample preview of the directory listing page can be seen [in this screenshot](img/sample-site.png) or in the live site [here](#).
+A sample preview of the directory listing page can be seen [in this screenshot](img/sample-site.png).
 
 #### File highlighting
 
