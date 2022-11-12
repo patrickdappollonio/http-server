@@ -24,6 +24,9 @@ func run() error {
 	// Server and settings holder
 	var server server.Server
 
+	// Define the config prefix for config files
+	server.ConfigFilePrefix = configFilePrefix
+
 	// Create a logger
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
@@ -75,11 +78,13 @@ func run() error {
 	flags.BoolVar(&server.CorsEnabled, "cors", false, "Enable CORS support by setting the \"Access-Control-Allow-Origin\" header to \"*\"")
 	flags.StringVar(&server.Username, "username", "", "The username for basic authentication")
 	flags.StringVar(&server.Password, "password", "", "The password for basic authentication")
-	flags.StringVar(&server.PageTitle, "title", "HTTP File Server", "The title of the directory listing page")
+	flags.StringVar(&server.PageTitle, "title", "", "The title of the directory listing page")
 	flags.BoolVar(&server.HideLinks, "hide-links", false, "Hide the links to this project's source code")
 	flags.BoolVar(&server.DisableCacheBuster, "disable-cache-buster", false, "Disable the cache buster for assets from the directory listing feature")
 	flags.BoolVar(&server.DisableMarkdown, "disable-markdown", false, "Disable the markdown rendering feature")
 	flags.BoolVar(&server.MarkdownBeforeDir, "markdown-before-dir", false, "Render markdown content before the directory listing")
+	flags.StringVar(&server.JWTSigningKey, "jwt-key", "", "The signing key for JWT authentication")
+	flags.BoolVar(&server.ValidateTimedJWT, "ensure-unexpired-jwt", false, "Enable time validation for JWT claims \"exp\" and \"nbf\"")
 
 	return rootCmd.Execute()
 }
@@ -129,6 +134,7 @@ func bindCobraAndViper(rootCommand *cobra.Command) error {
 	// Attempt to read settings from a config file from multiple
 	// different file types
 	v.SetConfigName(configFilePrefix)
+	v.SetConfigType("yaml")
 
 	// Look for the config file in these locations
 	v.AddConfigPath(".")

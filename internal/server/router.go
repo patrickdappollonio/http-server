@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -22,11 +23,26 @@ func (s *Server) router() http.Handler {
 	// Only allow specific methods in all our requests
 	r.Use(mw.VerbsAllowed("GET", "HEAD"))
 
+	// Disable access to specific files
+	r.Use(mw.DisableConfigAccess(nil, []string{s.ConfigFilePrefix}, nil, http.StatusNotFound))
+
 	// Enable basic authentication if needed
-	if s.IsAuthEnabled() {
-		r.Use(middleware.BasicAuth("http-server", map[string]string{
+	basicAuth := func(next http.Handler) http.Handler { return next }
+	if s.IsBasicAuthEnabled() {
+		basicAuth = middleware.BasicAuth("http-server", map[string]string{
 			s.Username: s.Password,
-		}))
+		})
+	}
+
+	// Check if JWT authentication is enabled
+	jwtAuth := func(next http.Handler) http.Handler { return next }
+	if s.JWTSigningKey != "" {
+		jwtAuth = mw.ValidateJWTHS256(
+			s.printWarning,
+			func(str string) { fmt.Fprintln(s.LogOutput, str) },
+			s.JWTSigningKey,
+			s.ValidateTimedJWT,
+		)
 	}
 
 	// Enable CORS if needed
@@ -44,9 +60,10 @@ func (s *Server) router() http.Handler {
 	}
 
 	// Create a route based on a path prefix, prevalidated that
-	// the prefix is a valid prefix
+	// the prefix is a valid prefix, and including any potential
+	// authentication method
 	routePrefix := path.Join(s.PathPrefix, "*")
-	r.Get(routePrefix, s.showOrRender)
+	r.With(basicAuth, jwtAuth).Get(routePrefix, s.showOrRender)
 
 	// Create a route for static assets, including
 	// the cache buster randomized string so we can

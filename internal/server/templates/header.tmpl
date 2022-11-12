@@ -2,7 +2,7 @@
 <header>
   <div class="container">
     <nav>
-      <a class="page-title" href="{{ .DirectoryRootPath }}">{{ .PageTitle }}</a>
+      <a class="page-title" href="{{ .DirectoryRootPath }}">{{ .PageTitle | default "HTTP File Server" }}</a>
       {{- if not .HideLinks }}
       <ul>
         <li>

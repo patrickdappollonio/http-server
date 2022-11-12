@@ -33,7 +33,7 @@
       if (selectedNames.length > 0) {
         window.location.hash = selectedNames.join("/");
       } else {
-        historystore.replaceState({}, document.title, ".");
+        history.replaceState({}, document.title, ".");
       }
     });
   });

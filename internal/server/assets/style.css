@@ -215,18 +215,27 @@ nav ul li a {
 .files .file a,
 .files .file .no-files {
   padding: 1rem 1.2rem;
-  border-left: 3px solid transparent;
 }
 
 .files .file a:hover,
 .files .file a:focus,
 .files .file a:active {
-  background: #f5f5f5;
+  background: #e7e7e7;
 }
 
 .files .file a.file-selected {
   background-color: #fffbdd;
-  border-left: 3px solid #d6d0a6;
+  position: relative;
+}
+
+.files .file a.file-selected:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #d6d0a6;
 }
 
 .files .file .no-files {
@@ -263,7 +272,7 @@ footer p code {
 @media screen and (max-width: 845px) {
 
   .container {
-    padding: 0 20px;
+    padding: 0 10px;
   }
 
   .card-large {
@@ -272,6 +281,8 @@ footer p code {
     padding-bottom: 50px;
     margin-bottom: 50px;
     border-bottom: 1px solid #ccc;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .files .size,

@@ -54,15 +54,19 @@ func (v *ValidationError) Error() string {
 	var humanMsg string
 	switch v.Tag {
 	case "max":
-		humanMsg = fmt.Sprintf("maximum value of %s exceeded", v.Param)
+		humanMsg = fmt.Sprintf("value must be bigger than %s (for numbers) or longer than %s characters (for text)", v.Param, v.Param)
+	case "min":
+		humanMsg = fmt.Sprintf("value must be less than %s (for numbers) or smaller than %s characters (for text)", v.Param, v.Param)
 	case "ispathprefix":
 		humanMsg = "must start and end with a forward slash, and include within alphanumeric, dashes or underscores, or additional forward slashes"
+	case "excluded_with":
+		humanMsg = fmt.Sprintf("cannot be used in conjunction with %s", v.Param)
 	default:
 		humanMsg = fmt.Sprintf("%s: %s", v.Tag, v.Param)
 	}
 
 	return fmt.Sprintf(
-		"Parameter %q is invalid: %s (value: %v)",
+		"Parameter %q is invalid: %s (current value: \"%v\")",
 		v.Field, humanMsg, v.Value,
 	)
 }

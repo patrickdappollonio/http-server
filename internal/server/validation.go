@@ -1,10 +1,14 @@
 package server
 
 import (
+	"fmt"
+	"reflect"
 	"regexp"
 
 	"github.com/go-playground/validator/v10"
 )
+
+const warnPrefix = "[WARNING] >>> "
 
 // Validate checks the configuration using struct tags and validate
 // if the fields are valid per those rules
@@ -14,6 +18,11 @@ func (s *Server) Validate() error {
 
 	// Add custom validation rules
 	valid.RegisterValidation("ispathprefix", validateIsPathPrefix)
+
+	// Read tag names from struct fields
+	valid.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		return fld.Tag.Get("flagName")
+	})
 
 	// Attempt to validate the structure, and grab the errors
 	err := valid.Struct(s)
@@ -48,4 +57,10 @@ func validateIsPathPrefix(field validator.FieldLevel) bool {
 	}
 
 	return reIsPathPrefix.MatchString(field.Field().String())
+}
+
+func (s *Server) printWarning(format string, args ...interface{}) {
+	if s.LogOutput != nil {
+		fmt.Fprintf(s.LogOutput, warnPrefix+format+"\n", args...)
+	}
 }

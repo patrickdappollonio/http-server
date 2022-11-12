@@ -13,7 +13,6 @@ import (
 
 const (
 	logFormat   = `{http_method} "{url}" -- {proto} {status_code} {status_text} (served in {duration}; {bytes_written} bytes)`
-	warnPrefix  = "(WARN)"
 	specialPath = "_"
 )
 
@@ -36,14 +35,14 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 		// If the path doesn't exist, return the 404 error but also print in the log
 		// of the app the full path to the given location
 		if os.IsNotExist(err) {
-			fmt.Fprintln(s.LogOutput, warnPrefix, "attempted to acess non-existent path:", currentPath)
-			httpError(http.StatusNotFound, w, "file or folder not found")
+			s.printWarning("attempted to access non-existent path: %s", currentPath)
+			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
 		// If it's any other kind of error, return the 500 error and log the actual error
 		// to the app log
-		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to stat directory %q: %s\n", currentPath, err)
+		s.printWarning("unable to stat directory %q: %s", currentPath, err)
 		httpError(http.StatusInternalServerError, w, "unable to stat directory -- see application logs for more information")
 		return
 	}
@@ -80,13 +79,13 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		// If the directory doesn't exist, render an appropriate message
 		if os.IsNotExist(err) {
-			fmt.Fprintln(s.LogOutput, warnPrefix, "attempted to acess non-existent path:", requestedPath)
-			httpError(http.StatusNotFound, w, "file or folder not found")
+			s.printWarning("attempted to access non-existent path: %s", requestedPath)
+			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
 		// Otherwise handle it generically speaking
-		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to open directory %q: %s\n", requestedPath, err)
+		s.printWarning("unable to open directory %q: %s", requestedPath, err)
 		httpError(http.StatusInternalServerError, w, "unable to open directory -- see application logs for more information")
 		return
 	}
@@ -97,7 +96,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 
 	// Handle error on readdir call
 	if err != nil {
-		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to read directory %q: %s\n", requestedPath, err)
+		s.printWarning("unable to read directory %q: %s", requestedPath, err)
 		httpError(http.StatusInternalServerError, w, "unable to read directory -- see application logs for more information")
 		return
 	}
@@ -110,9 +109,14 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	for _, f := range list {
 		fi, err := f.Info()
 		if err != nil {
-			fmt.Fprintf(s.LogOutput, warnPrefix+" unable to stat file %q: %s\n", f.Name(), err)
+			s.printWarning("unable to stat file %q: %s", f.Name(), err)
 			httpError(http.StatusInternalServerError, w, "unable to stat file %q -- see application logs for more information", f.Name())
 			return
+		}
+
+		// Check if file starts with config prefix
+		if strings.HasPrefix(fi.Name(), s.ConfigFilePrefix) {
+			continue
 		}
 
 		files = append(files, fi)
@@ -121,7 +125,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// Find if among the files there's a markdown readme
 	var markdownContent bytes.Buffer
 	if err := s.generateMarkdown(requestedPath, files, &markdownContent); err != nil {
-		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to generate markdown: %s\n", err)
+		s.printWarning("unable to generate markdown: %s", err)
 		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
 		return
 	}
@@ -145,7 +149,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := s.templates.ExecuteTemplate(w, "app.tmpl", content); err != nil {
-		fmt.Fprintf(s.LogOutput, warnPrefix+" unable to render directory listing: %s\n", err)
+		s.printWarning("unable to render directory listing: %s", err)
 		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
 		return
 	}
