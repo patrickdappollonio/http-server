@@ -12,7 +12,6 @@ func applyStatusCode(w http.ResponseWriter, code int) {
 }
 
 func DisableConfigAccess(files []string, filePrefixes []string, fileExt []string, statusCode int) func(http.Handler) http.Handler {
-
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Get the file's name

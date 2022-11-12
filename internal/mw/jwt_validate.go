@@ -41,6 +41,7 @@ func ValidateJWTHS256(warnFunction func(string, ...interface{}), loggedInFunctio
 
 			// Check for errors during parsing
 			if err != nil {
+				warnFunction("error parsing token for URL %q: %s", r.URL.Path, err.Error())
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
