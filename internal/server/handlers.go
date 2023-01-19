@@ -155,6 +155,12 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// healthCheck is a simple health check endpoint that returns 200 OK
+func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 func httpError(statusCode int, w http.ResponseWriter, format string, args ...any) {
 	w.WriteHeader(statusCode)
 	fmt.Fprintf(w, format, args...)

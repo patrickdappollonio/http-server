@@ -27,6 +27,7 @@ func (s *Server) generateTemplates() (*template.Template, error) {
 		"getIconForFile": getIconForFile,
 		"unsafeHTML":     func(s string) template.HTML { return template.HTML(s) },
 		"default":        dfault,
+		"serverVersion":  func() string { return s.version },
 	}
 
 	wtfs, err := template.New("").Funcs(tplfuncs).ParseFS(walkTemplatesFS, "templates/*")

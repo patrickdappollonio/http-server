@@ -37,10 +37,16 @@ type Server struct {
 	// Internal fields
 	cacheBuster string
 	templates   *template.Template
+	version     string
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with
 // a username and password
 func (s *Server) IsBasicAuthEnabled() bool {
 	return s.Username != "" && s.Password != ""
+}
+
+// SetVersion sets the server version
+func (s *Server) SetVersion(version string) {
+	s.version = version
 }
