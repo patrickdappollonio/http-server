@@ -53,6 +53,7 @@ func run() error {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Set the message output to the appropriate writer
 			server.LogOutput = cmd.OutOrStdout()
+			server.SetVersion(version)
 
 			// Validate fields to make sure they're correct
 			if err := server.Validate(); err != nil {
