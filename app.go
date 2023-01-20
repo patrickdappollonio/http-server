@@ -100,6 +100,7 @@ func run() error {
 	flags.BoolVar(&server.MarkdownBeforeDir, "markdown-before-dir", false, "render markdown content before the directory listing")
 	flags.StringVar(&server.JWTSigningKey, "jwt-key", "", "signing key for JWT authentication")
 	flags.BoolVar(&server.ValidateTimedJWT, "ensure-unexpired-jwt", false, "enable time validation for JWT claims \"exp\" and \"nbf\"")
+	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
 
 	return rootCmd.Execute()
 }

@@ -10,6 +10,7 @@
     - [Directory listing](#directory-listing)
       - [File highlighting](#file-highlighting)
       - [Markdown rendering](#markdown-rendering)
+      - [Markdown banner](#markdown-banner)
       - [Air-gapped environment](#air-gapped-environment)
     - [Authentication](#authentication)
       - [Basic authentication](#basic-authentication)
@@ -27,6 +28,7 @@ Usage:
   http-server [flags]
 
 Flags:
+      --banner string          markdown text to be rendered at the top of the directory listing page
       --cors                   enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
       --disable-cache-buster   disable the cache buster for assets from the directory listing feature
       --disable-markdown       disable the markdown rendering feature
@@ -75,13 +77,15 @@ By default, the `http-server` will serve the files from the current directory an
 
 ### Directory listing
 
-If the directory does not contain any `index.html` or `index.htm` file, the `http-server` will render a directory listing page, which will list all the files and folders in the directory, excluding `http-server`'s own configuration files.
+If the directory does not contain any `index.html` or `index.htm` file, the `http-server` will render a directory listing page, which will list all the files and folders in the directory, excluding `http-server`'s configuration files.
 
 Old versions of this program would render the contents in the `/html` folder, however, this was changed to a more dynamic approach, since `/html` was not a cross-platform suitable configuration value.
 
 To allow for directory listing mode, folders cannot contain a folder called `_` (underscore). `http-server` reserves underscore folders for the directory listing mode and its assets.
 
-A sample preview of the directory listing page can be seen [in this screenshot](img/sample-site.png).
+An example of what the directory listing page looks like is below:
+
+![Directory listing](img/sample-site.png)
 
 #### File highlighting
 
@@ -107,6 +111,22 @@ When using markdown, consider:
 * Links to files within the directory being printed are also supported
 * Images loaded from the directory in use are supported, as well as 3rd party images
 
+#### Markdown banner
+
+Another utility to draw attention to specific details is the "banner" feature. In short, it's a yellow stripe that appears right below the page header (the blue one) and allows you to provide a message that shows centered in the stripe. This is useful for providing a warning or a notice to end users.
+
+The message is configured with `--banner`, and it supports a very basic Markdown: only links, bold and italic are supported.
+
+For example, the following command:
+
+```bash
+http-server --banner '**Information:** Documents below are provided as-is, with no guarantees. For more information, see our [help page](https://www.example.org).'
+```
+
+Will render the following banner:
+
+![Markdown banner](img/banner.png)
+
 #### Air-gapped environment
 
 `http-server` is self-contained. Previous versions will load specific assets from the web, which made them unsuitable for environments with no internet access or in corporate environments. Starting from version `v2`, all assets are bundled with the binary, and the `http-server` will not load any external assets.
@@ -115,7 +135,7 @@ Behaviour-wise, this allows for custom icons in directory listing mode, as well 
 
 ### Authentication
 
-`http-server` supports two modes of authorizing access to its contents. On "directory listing" mode, only the directory contents are protected, while anything that's specific to `http-server`'s behaviour such as static assets like CSS, JavaScript or images are not protected. Everything served from the provided `--path` is protected.
+`http-server` supports two modes of authorizing access to its contents. On "directory listing" mode, only the directory contents are protected, while anything specific to `http-server`'s behaviour such as static assets like CSS, JavaScript or images are not protected. Everything served from the provided `--path` is protected.
 
 #### Basic authentication
 

@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 
 	mermaid "github.com/abhinav/goldmark-mermaid"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/util"
 )
 
 var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "readme.markdown", "index.md", "index.markdown"}
@@ -77,4 +79,39 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 	}
 
 	return nil
+}
+
+func (s *Server) generateBannerMarkdown() (string, error) {
+	if s.cachedBannerMarkdown != "" {
+		return s.cachedBannerMarkdown, nil
+	}
+
+	if s.BannerMarkdown == "" {
+		return "", nil
+	}
+
+	s.BannerMarkdown = strings.ReplaceAll(s.BannerMarkdown, "\n", "")
+
+	parser := parser.NewParser(
+		parser.WithBlockParsers(
+			util.Prioritized(parser.NewParagraphParser(), 500),
+		),
+		parser.WithInlineParsers(
+			util.Prioritized(parser.NewEmphasisParser(), 500),
+			util.Prioritized(parser.NewLinkParser(), 501),
+			util.Prioritized(parser.NewAutoLinkParser(), 502),
+			util.Prioritized(parser.NewCodeSpanParser(), 503),
+		),
+	)
+
+	md := goldmark.New(goldmark.WithParser(parser))
+
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(s.BannerMarkdown), &buf); err != nil {
+		return "", fmt.Errorf("unable to render banner markdown: %w", err)
+	}
+
+	s.cachedBannerMarkdown = buf.String()
+
+	return s.cachedBannerMarkdown, nil
 }

@@ -16,4 +16,12 @@
     </nav>
   </div>
 </header>
+
+{{- if bannerMessage }}
+<section id="banner">
+  <div class="container">
+    {{ bannerMessage | unsafeHTML }}
+  </div>
+</section>
+{{- end }}
 {{- end }}
