@@ -109,8 +109,8 @@ body>* {
 
 header {
   padding: 23px 0;
-  background: #3f51b5;
-  box-shadow: 0 2px 2px 0 rgb(0 0 0 / 14%), 0 3px 1px -2px rgb(0 0 0 / 20%), 0 1px 5px 0 rgb(0 0 0 / 12%);
+  background-color: #3f51b5;
+  box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%), inset 0 -1px 0 rgb(255 255 255 / 15%);
 }
 
 nav {
@@ -136,6 +136,35 @@ nav ul li {
 nav ul li a {
   color: #fff;
   font-size: 1rem;
+}
+
+#banner {
+  border-top: 1px solid #ffe69c;
+  border-bottom: 1px solid #ffe69c;
+  background-color: #fff3cd;
+  text-align: center;
+  color: #997404;
+  padding: 18px 0;
+  box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%), inset 0 -1px 0 rgb(255 255 255 / 15%);
+}
+
+#banner strong {
+  font-weight: bold;
+}
+
+#banner em {
+  font-style: italic;
+}
+
+#banner a {
+  color: #997404;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#banner a:hover,
+#banner a:focus {
+  color: #6e5302;
 }
 
 .card-large {
