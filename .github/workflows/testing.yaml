@@ -9,7 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
