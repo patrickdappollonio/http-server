@@ -40,6 +40,20 @@ When using markdown, consider:
   * Code fences' syntax highlighting is not supported
   * Title anchors are not supported when file highlighting is in use, and viceversa
 
+#### Image alignment
+
+Since raw HTML is not supported, `http-server` supports Markdown image alignment. To use it, suffix your image URL with one of the following:
+
+* `#align-left` to align the image to the left
+* `#align-right` to align the image to the right
+* `#align-center` to center the image
+
+If you don't specify an alignment, the image will be set to its own paragraph block. This is different than `#align-left` since this will make the image "float" to the left instead, making the text surround the image.
+
+#### Mermaid diagrams
+
+`http-server` supports Mermaid diagrams. Create a code block with the `mermaid` language, and the diagram will be rendered as an SVG image. Rendering happens client-side, and the Mermaid library (found in [`internal/server/assets`](internal/server/assets)) is loaded only if a Mermaid code block is found.
+
 ### Markdown banner
 
 Another utility to draw attention to specific details is the "banner" feature. In short, it's a yellow stripe that appears right below the page header (the blue one) and allows you to provide a message that shows centered in the stripe. This is useful for providing a warning or a notice to end users.
@@ -55,6 +69,8 @@ http-server --banner '**Information:** Documents below are provided as-is, with 
 Will render the following banner:
 
 ![Markdown banner](../img/banner.png)
+
+Only a very limited subset of Markdown is supported including bold, italic and links. Paragraphs are removed. The `banner` feature is meant to be used for simple messages. If you need more complex messages, consider using the Markdown rendering feature instead.
 
 ### CORS support
 
