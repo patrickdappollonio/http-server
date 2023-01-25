@@ -52,7 +52,7 @@ If you don't specify an alignment, the image will be set to its own paragraph bl
 
 #### Mermaid diagrams
 
-`http-server` supports Mermaid diagrams. Create a code block with the `mermaid` language, and the diagram will be rendered as an SVG image. Rendering happens client-side, and the Mermaid library (found in [`internal/server/assets`](internal/server/assets)) is loaded only if a Mermaid code block is found.
+`http-server` supports Mermaid diagrams. Create a code block with the `mermaid` language, and the diagram will be rendered as an SVG image. Rendering happens client-side, and the Mermaid library (found in [`internal/server/assets`](../internal/server/assets)) is loaded only if a Mermaid code block is found.
 
 ### Markdown banner
 
