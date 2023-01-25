@@ -47,6 +47,7 @@ When using markdown, consider:
   * Raw HTML within markdown files is not supported, and it will be replaced with `<-- raw HTML omitted -->`
   * Code fences' syntax highlighting is not supported
   * Title anchors are not supported when file highlighting is in use, and viceversa
+  * Direct links straight to a Markdown file are not rendered as HTML. Markdown files are only rendered within the directory listing feature.
 
 #### Image alignment
 
