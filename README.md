@@ -1,7 +1,7 @@
 # `http-server`, a simple HTTP file server
 
 [![Github Downloads](https://img.shields.io/github/downloads/patrickdappollonio/http-server/total?color=orange&label=github%20downloads)](https://github.com/patrickdappollonio/http-server/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server)
+[![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server) [![Container Downloads](https://img.shields.io/badge/container%20pulls-200k-brightgreen)](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server)
 
 <img src="internal/server/assets/file-server.svg" width="160" align="right" /> `http-server` is a static file server with zero dependencies: **just one binary to run**. It also supports:
 
