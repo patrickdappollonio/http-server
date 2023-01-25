@@ -8,11 +8,12 @@ import (
 	"path"
 	"strings"
 
-	mermaid "github.com/abhinav/goldmark-mermaid"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/util"
+	mermaid "go.abhg.dev/goldmark/mermaid"
 )
 
 var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "readme.markdown", "index.md", "index.markdown"}
@@ -70,7 +71,11 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
-		goldmark.WithRendererOptions(),
+		goldmark.WithRendererOptions(
+			renderer.WithNodeRenderers(
+				util.Prioritized(&customizedRenderer{}, 500),
+			),
+		),
 	)
 
 	// Render the markdown
