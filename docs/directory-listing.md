@@ -14,7 +14,7 @@ An example of what the directory listing page looks like is below:
 
 `http-server` includes support for highlighting files in the UI. Useful when you want to direct the end user's attention toward one or more files being shown via the directory listing feature. To "highlight" a file, `CTRL+Shift+Click` (or `CMD+Shift+Click` on macOS) on the file name in the UI. This will add a URL parameter with the files selected and you can share this URL with end users.
 
-Old versions of `http-server` required only using `CTRL` (or `CMD) and clicking for highlighting, however, this was changed to avoid conflicts with the browser's default behavior of opening the file in a new tab.
+Old versions of `http-server` required only using `CTRL` (or `CMD`) and clicking for highlighting, however, this was changed to avoid conflicts with the browser's default behavior of opening the file in a new tab.
 
 Several file extensions include custom icons. More icons can be added provided the Icon Font in use, [Font Awesome](https://fontawesome.com/), supports the icon. If you see a generic file icon and you would like to have an extension to include a custom icon from Font Awesome, please [open an issue](https://github.com/patrickdappollonio/http-server/issues/new).
 
@@ -42,7 +42,7 @@ When using markdown, consider:
 
 #### Image alignment
 
-Since raw HTML is not supported, `http-server` supports Markdown image alignment. To use it, suffix your image URL with one of the following:
+Since raw HTML is not supported, `http-server` supports Markdown image alignment. To use it, update the image URL in Markdown to end with one of the following:
 
 * `#align-left` to align the image to the left
 * `#align-right` to align the image to the right
