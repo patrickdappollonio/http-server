@@ -12,6 +12,7 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/util"
 )
 
@@ -70,7 +71,11 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
-		goldmark.WithRendererOptions(),
+		goldmark.WithRendererOptions(
+			renderer.WithNodeRenderers(
+				util.Prioritized(&customizedRenderer{}, 500),
+			),
+		),
 	)
 
 	// Render the markdown

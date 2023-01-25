@@ -1,24 +1,24 @@
-(function () {
+(function() {
   "use strict";
 
-  let colorHashFiles = function () {
-    let elements = window.location.hash.substr(1).split("/");
+  let colorHashFiles = function() {
+    let elements = window.location.hash.substring(1).split("/");
 
-    elements.forEach(function (element) {
+    elements.forEach(function(element) {
       if (element.length === 0) return;
       if (element.substring(0, 2) !== "f:") return;
 
       let file = element.substring(2);
       let item = document.querySelectorAll(`[data-name="${file}"]`);
-      item.forEach(function (i) { i.classList.add("file-selected") })
+      item.forEach(function(i) { i.classList.add("file-selected") })
     });
   }
 
   window.addEventListener("hashchange", colorHashFiles);
   window.addEventListener("load", colorHashFiles);
 
-  document.querySelectorAll("[data-name]").forEach(function (element) {
-    element.addEventListener("click", function (e) {
+  document.querySelectorAll("[data-name]").forEach(function(element) {
+    element.addEventListener("click", function(e) {
       if (!((e.ctrlKey || e.metaKey) && e.shiftKey)) return;
 
       e.preventDefault();
@@ -26,7 +26,7 @@
 
       let selected = document.querySelectorAll(".file-selected");
       let selectedNames = [];
-      selected.forEach(function (element) {
+      selected.forEach(function(element) {
         selectedNames.push(`f:${element.dataset.name}`);
       });
 
