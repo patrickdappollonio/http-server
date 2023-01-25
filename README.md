@@ -18,7 +18,13 @@ The app is available both as a standalone binary and as a Docker container image
 [Find the latest version available here](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server). `latest` will always map to the latest version, which could led you to download a newer major version that might contain a breaking change. I recommend using `v2` for the tag, since it will always map to a stable version with all potential patches applied. This is the safest way to use to avoid any breaking changes.
 
 ```bash
+# stable version 2
 docker pull ghcr.io/patrickdappollonio/docker-http-server:v2
+
+# pin to specific version
+docker pull ghcr.io/patrickdappollonio/docker-http-server:v2.0.0
+
+# bleeding edge version (will always update to latest)
 docker pull ghcr.io/patrickdappollonio/docker-http-server:latest
 ```
 
