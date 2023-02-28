@@ -2,7 +2,7 @@ name: Releasing
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 jobs:
   goreleaser:
@@ -30,6 +30,6 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
