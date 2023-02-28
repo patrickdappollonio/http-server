@@ -62,7 +62,7 @@ func Etag(next http.Handler) http.Handler {
 		sum := hex.EncodeToString(ew.hash.Sum(nil))
 		w.Header().Set("ETag", "\""+sum+"\"")
 
-		if r.Header.Get("If-None-Match") == sum {
+		if r.Header.Get("If-None-Match") == w.Header().Get("Etag") {
 			w.WriteHeader(http.StatusNotModified)
 			w.Write(nil)
 			return
