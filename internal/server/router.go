@@ -69,7 +69,7 @@ func (s *Server) router() http.Handler {
 	// the cache buster randomized string so we can
 	// force reload the assets on each execution
 	assetsPrefix := path.Join(s.PathPrefix, specialPath, s.cacheBuster)
-	r.HandleFunc(path.Join(assetsPrefix, "assets", "*"), s.serveAssets(assetsPrefix))
+	r.With(mw.Etag).HandleFunc(path.Join(assetsPrefix, "assets", "*"), s.serveAssets(assetsPrefix))
 
 	// Create a health check endpoint
 	r.HandleFunc(path.Join(s.PathPrefix, specialPath, "health"), s.healthCheck)

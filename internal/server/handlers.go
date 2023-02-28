@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/patrickdappollonio/http-server/internal/mw"
 )
 
 const (
@@ -60,7 +62,7 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If the path is not a directory, then it's a file, so we can render it
-	http.ServeFile(w, r, currentPath)
+	s.serveFile(currentPath, w, r)
 }
 
 func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Request) {
@@ -69,7 +71,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	for _, index := range []string{"index.html", "index.htm"} {
 		indexPath := filepath.Join(requestedPath, index)
 		if _, err := os.Stat(indexPath); err == nil {
-			http.ServeFile(w, r, indexPath)
+			s.serveFile(indexPath, w, r)
 			return
 		}
 	}
@@ -153,6 +155,12 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
 		return
 	}
+}
+
+func (s *Server) serveFile(fp string, w http.ResponseWriter, r *http.Request) {
+	mw.Etag(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, fp)
+	})).ServeHTTP(w, r)
 }
 
 // healthCheck is a simple health check endpoint that returns 200 OK
