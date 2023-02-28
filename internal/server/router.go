@@ -24,7 +24,7 @@ func (s *Server) router() http.Handler {
 	r.Use(mw.VerbsAllowed("GET", "HEAD"))
 
 	// Disable access to specific files
-	r.Use(mw.DisableConfigAccess(nil, []string{s.ConfigFilePrefix}, nil, http.StatusNotFound))
+	r.Use(mw.DisableAccessToFile(s.isFiltered, http.StatusNotFound))
 
 	// Enable basic authentication if needed
 	basicAuth := func(next http.Handler) http.Handler { return next }

@@ -117,7 +117,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		}
 
 		// Check if file starts with config prefix
-		if strings.HasPrefix(fi.Name(), s.ConfigFilePrefix) {
+		if s.isFiltered(fi.Name()) {
 			continue
 		}
 

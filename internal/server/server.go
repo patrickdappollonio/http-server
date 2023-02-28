@@ -37,9 +37,12 @@ type Server struct {
 	ConfigFilePrefix string
 
 	// Internal fields
-	cacheBuster string
-	templates   *template.Template
-	version     string
+	cacheBuster       string
+	templates         *template.Template
+	version           string
+	forbiddenPrefixes []string
+	forbiddenSuffixes []string
+	forbiddenMatches  []string
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with
