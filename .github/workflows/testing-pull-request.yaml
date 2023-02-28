@@ -22,4 +22,4 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --snapshot --skip-publish --rm-dist
+          args: release --snapshot --skip-publish --clean
