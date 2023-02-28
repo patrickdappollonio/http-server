@@ -24,7 +24,7 @@ func (s *Server) router() http.Handler {
 	r.Use(mw.VerbsAllowed("GET", "HEAD"))
 
 	// Disable access to specific files
-	r.Use(mw.DisableConfigAccess(nil, []string{s.ConfigFilePrefix}, nil, http.StatusNotFound))
+	r.Use(mw.DisableAccessToFile(s.isFiltered, http.StatusNotFound))
 
 	// Enable basic authentication if needed
 	basicAuth := func(next http.Handler) http.Handler { return next }
@@ -69,7 +69,7 @@ func (s *Server) router() http.Handler {
 	// the cache buster randomized string so we can
 	// force reload the assets on each execution
 	assetsPrefix := path.Join(s.PathPrefix, specialPath, s.cacheBuster)
-	r.HandleFunc(path.Join(assetsPrefix, "assets", "*"), s.serveAssets(assetsPrefix))
+	r.With(mw.Etag).HandleFunc(path.Join(assetsPrefix, "assets", "*"), s.serveAssets(assetsPrefix))
 
 	// Create a health check endpoint
 	r.HandleFunc(path.Join(s.PathPrefix, specialPath, "health"), s.healthCheck)
