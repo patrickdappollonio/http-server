@@ -101,6 +101,7 @@ func run() error {
 	flags.StringVar(&server.JWTSigningKey, "jwt-key", "", "signing key for JWT authentication")
 	flags.BoolVar(&server.ValidateTimedJWT, "ensure-unexpired-jwt", false, "enable time validation for JWT claims \"exp\" and \"nbf\"")
 	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
+	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable ETag header generation")
 
 	return rootCmd.Execute()
 }

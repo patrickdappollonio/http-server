@@ -54,6 +54,7 @@ Flags:
       --banner string          markdown text to be rendered at the top of the directory listing page
       --cors                   enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
       --disable-cache-buster   disable the cache buster for assets from the directory listing feature
+      --disable-etag           disable ETag header generation
       --disable-markdown       disable the markdown rendering feature
       --ensure-unexpired-jwt   enable time validation for JWT claims "exp" and "nbf"
   -h, --help                   help for http-server

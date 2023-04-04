@@ -160,7 +160,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 // serveFile serves a file with the appropriate headers, including support
 // for ETag and Last-Modified headers, as well as range requests.
 func (s *Server) serveFile(fp string, w http.ResponseWriter, r *http.Request) {
-	mw.Etag(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mw.Etag(!s.ETagDisabled)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, fp)
 	})).ServeHTTP(w, r)
 }
