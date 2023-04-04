@@ -14,6 +14,10 @@ func (s *Server) PrintStartup() {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Path prefix:", s.PathPrefix)
 	}
 
+	if s.ETagDisabled {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "ETag headers disabled")
+	}
+
 	if s.CorsEnabled {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "CORS headers enabled: adding \"Access-Control-Allow-Origin=*\" header")
 	}

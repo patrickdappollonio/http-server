@@ -44,31 +44,45 @@ func (e *etagResponseWriter) hasHashed() bool {
 }
 
 // Etag is a middleware that will calculate the ETag header for the response.
-func Etag(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ew := etagResponseWriter{
-			rw:   w,
-			buf:  bytes.NewBuffer(nil),
-			hash: sha1.New(),
-		}
+func Etag(enabled bool) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !enabled {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-		next.ServeHTTP(&ew, r)
+			ew := etagResponseWriter{
+				rw:   w,
+				buf:  bytes.NewBuffer(nil),
+				hash: sha1.New(),
+			}
 
-		if !ew.hasHashed() {
+			next.ServeHTTP(&ew, r)
+
+			if !ew.hasHashed() {
+				w.WriteHeader(ew.status)
+				w.Write(ew.buf.Bytes())
+				return
+			}
+
+			sum := hex.EncodeToString(ew.hash.Sum(nil))
+			w.Header().Set("ETag", "\""+sum+"\"")
+
+			if r.Header.Get("If-None-Match") == w.Header().Get("Etag") {
+				w.WriteHeader(http.StatusNotModified)
+				w.Write(nil)
+				return
+			}
+
+			w.WriteHeader(ew.status)
 			w.Write(ew.buf.Bytes())
-			return
-		}
-
-		sum := hex.EncodeToString(ew.hash.Sum(nil))
-		w.Header().Set("ETag", "\""+sum+"\"")
-
-		if r.Header.Get("If-None-Match") == w.Header().Get("Etag") {
-			w.WriteHeader(http.StatusNotModified)
-			w.Write(nil)
-			return
-		}
-
-		w.WriteHeader(ew.status)
-		w.Write(ew.buf.Bytes())
-	})
+		})
+	}
 }
+
+// func Etag(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
