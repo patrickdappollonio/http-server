@@ -2,12 +2,14 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"path"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/klauspost/compress/gzhttp"
 	"github.com/patrickdappollonio/http-server/internal/mw"
 )
 
@@ -45,6 +47,17 @@ func (s *Server) router() http.Handler {
 		)
 	}
 
+	// Enable etag support
+	r.Use(mw.Etag(!s.ETagDisabled))
+
+	// Check if gzip is enabled
+	if s.GzipEnabled {
+		r.Use(func(h http.Handler) http.Handler {
+			log.Printf("Gzip enabled for all requests")
+			return gzhttp.GzipHandler(h)
+		})
+	}
+
 	// Enable CORS if needed
 	if s.CorsEnabled {
 		r.Use(mw.EnableCORS)
@@ -69,7 +82,7 @@ func (s *Server) router() http.Handler {
 	// the cache buster randomized string so we can
 	// force reload the assets on each execution
 	assetsPrefix := path.Join(s.PathPrefix, specialPath, s.cacheBuster)
-	r.With(mw.Etag(!s.ETagDisabled)).HandleFunc(path.Join(assetsPrefix, "assets", "*"), s.serveAssets(assetsPrefix))
+	r.HandleFunc(path.Join(assetsPrefix, "assets", "*"), s.serveAssets(assetsPrefix))
 
 	// Create a health check endpoint
 	r.HandleFunc(path.Join(s.PathPrefix, specialPath, "health"), s.healthCheck)

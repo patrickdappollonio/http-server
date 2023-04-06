@@ -26,6 +26,7 @@ type Server struct {
 	CorsEnabled        bool
 	HideLinks          bool
 	ETagDisabled       bool
+	GzipEnabled        bool
 	DisableCacheBuster bool
 	DisableMarkdown    bool
 	MarkdownBeforeDir  bool
