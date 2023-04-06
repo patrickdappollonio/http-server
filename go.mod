@@ -10,7 +10,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/yuin/goldmark v1.5.3
-	go.abhg.dev/goldmark/mermaid v0.3.0
+	go.abhg.dev/goldmark/mermaid v0.4.0
 )
 
 require (
