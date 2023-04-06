@@ -3,7 +3,7 @@ module github.com/patrickdappollonio/http-server
 go 1.19
 
 require (
-	github.com/go-chi/chi v1.5.4
+	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/spf13/cobra v1.6.1
