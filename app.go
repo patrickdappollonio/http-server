@@ -102,7 +102,7 @@ func run() error {
 	flags.BoolVar(&server.ValidateTimedJWT, "ensure-unexpired-jwt", false, "enable time validation for JWT claims \"exp\" and \"nbf\"")
 	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
 	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable ETag header generation")
-	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression")
+	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
 
 	return rootCmd.Execute()
 }

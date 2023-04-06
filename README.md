@@ -57,6 +57,7 @@ Flags:
       --disable-etag           disable ETag header generation
       --disable-markdown       disable the markdown rendering feature
       --ensure-unexpired-jwt   enable time validation for JWT claims "exp" and "nbf"
+      --gzip                   enable gzip compression for supported content-types
   -h, --help                   help for http-server
       --hide-links             hide the links to this project's source code
       --jwt-key string         signing key for JWT authentication
