@@ -45,3 +45,9 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+  groups:
+    - title: "Fixes, improvements and updates"
+      order: 1
+    - title: "Dependency updates"
+      regexp: '^Bump .* from .* to .*$' # dependabot
+      order: 999
