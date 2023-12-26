@@ -65,7 +65,7 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 			extension.GFM,
 			&mermaid.Extender{
 				RenderMode: mermaid.RenderModeClient,
-				MermaidJS:  s.assetpath("mermaid-9.2.0.js"),
+				MermaidURL: s.assetpath("mermaid-9.2.0.js"),
 			},
 		),
 		goldmark.WithParserOptions(
