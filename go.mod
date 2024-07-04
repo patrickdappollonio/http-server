@@ -7,7 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.20.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/klauspost/compress v1.17.8
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/yuin/goldmark v1.7.4
