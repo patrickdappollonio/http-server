@@ -1,4 +1,4 @@
-FROM busybox as builder
+FROM busybox:stable-glibc as builder
 RUN echo "nobody:x:65534:65534:Nobody:/:" > /etc/nobody
 
 FROM scratch
