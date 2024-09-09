@@ -17,6 +17,14 @@ var ctypes = []struct {
 	{[]string{".wav"}, nil, "audio/wav"},
 	{[]string{".weba"}, nil, "audio/webm"},
 	{[]string{".wma"}, nil, "audio/x-ms-wma"}, // Windows Media Audio
+	{[]string{".adp"}, nil, "audio/adpcm"},
+	{[]string{".amr"}, nil, "audio/amr"},
+	{[]string{".kar"}, nil, "audio/midi"},
+	{[]string{".mpga"}, nil, "audio/mpeg"},
+	{[]string{".ra"}, nil, "audio/x-realaudio"},
+	{[]string{".ram"}, nil, "audio/x-pn-realaudio"},
+	{[]string{".s3m"}, nil, "audio/s3m"},
+	{[]string{".xm"}, nil, "audio/xm"},
 
 	// Video Formats
 	{[]string{".3gp", ".3gpp"}, nil, "video/3gpp"},
@@ -31,6 +39,11 @@ var ctypes = []struct {
 	{[]string{".webm"}, nil, "video/webm"},
 	{[]string{".ts"}, nil, "video/mp2t"},
 	{[]string{".wmv"}, nil, "video/x-ms-wmv"}, // Windows Media Video
+	{[]string{".mj2"}, nil, "video/mj2"},
+	{[]string{".mjp2"}, nil, "video/mj2"},
+	{[]string{".f4v"}, nil, "video/x-f4v"},
+	{[]string{".dvb"}, nil, "video/vnd.dvb.file"},
+	{[]string{".dpg"}, nil, "application/vnd.dpgraph"},
 
 	// Image Formats
 	{[]string{".apng"}, nil, "image/apng"},
@@ -46,6 +59,14 @@ var ctypes = []struct {
 	{[]string{".svgz"}, nil, "image/svg+xml"}, // Compressed SVG
 	{[]string{".tif", ".tiff"}, nil, "image/tiff"},
 	{[]string{".webp"}, nil, "image/webp"},
+	{[]string{".jpe"}, nil, "image/jpeg"},
+	{[]string{".jfif"}, nil, "image/jpeg"},
+	{[]string{".jxr"}, nil, "image/jxr"},
+	{[]string{".jng"}, nil, "image/x-jng"},
+	{[]string{".dpx"}, nil, "image/dpx"},
+	{[]string{".fits"}, nil, "image/fits"},
+	{[]string{".heics"}, nil, "image/heic-sequence"},
+	{[]string{".heifs"}, nil, "image/heif-sequence"},
 
 	// Document Formats
 	{[]string{".doc"}, nil, "application/msword"},
@@ -57,6 +78,21 @@ var ctypes = []struct {
 	{[]string{".md"}, nil, "text/markdown"},
 	{[]string{".tex"}, nil, "application/x-tex"},
 	{[]string{".bib"}, nil, "application/x-bibtex"},
+	{[]string{".docm"}, nil, "application/vnd.ms-word.document.macroenabled.12"},
+	{[]string{".dot"}, nil, "application/msword"},
+	{[]string{".dotm"}, nil, "application/vnd.ms-word.template.macroenabled.12"},
+	{[]string{".dotx"}, nil, "application/vnd.openxmlformats-officedocument.wordprocessingml.template"},
+	{[]string{".xml"}, nil, "application/xml"},
+	{[]string{".xhtml"}, nil, "application/xhtml+xml"},
+	{[]string{".xul"}, nil, "application/vnd.mozilla.xul+xml"},
+	{[]string{".csv"}, nil, "text/csv"}, // Comma-Separated Values
+	{[]string{".json"}, nil, "application/json"},
+	{[]string{".json5"}, nil, "application/json5"}, // JSON with comments
+	{[]string{".markdown"}, nil, "text/markdown"},
+	{[]string{".man"}, nil, "text/troff"},
+	{[]string{".dtd"}, nil, "application/xml-dtd"},
+	{[]string{".mml"}, nil, "text/mathml"},
+	{[]string{".xlf"}, nil, "application/xliff+xml"},
 
 	// Spreadsheet Formats
 	{[]string{".ods"}, nil, "application/vnd.oasis.opendocument.spreadsheet"},
@@ -68,9 +104,15 @@ var ctypes = []struct {
 	{[]string{".odp"}, nil, "application/vnd.oasis.opendocument.presentation"},
 	{[]string{".ppt"}, nil, "application/vnd.ms-powerpoint"},
 	{[]string{".pptx"}, nil, "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+	{[]string{".pot"}, nil, "application/vnd.ms-powerpoint"},
+	{[]string{".potm"}, nil, "application/vnd.ms-powerpoint.template.macroenabled.12"},
+	{[]string{".potx"}, nil, "application/vnd.openxmlformats-officedocument.presentationml.template"},
+	{[]string{".ppam"}, nil, "application/vnd.ms-powerpoint.addin.macroenabled.12"},
+	{[]string{".ppd"}, nil, "application/vnd.cups-ppd"},
 
 	// Programming Languages
 	{[]string{".c"}, nil, "text/x-csrc"},
+	{[]string{".css"}, nil, "text/css"},
 	{[]string{".cpp"}, nil, "text/x-c++src"},
 	{[]string{".h"}, nil, "text/x-chdr"},
 	{[]string{".hpp"}, nil, "text/x-c++hdr"},
@@ -90,7 +132,6 @@ var ctypes = []struct {
 	{[]string{".js", ".mjs"}, nil, "text/javascript"},
 	{[]string{".jsx"}, nil, "text/jsx"},
 	{[]string{".tsx"}, nil, "text/tsx"},
-	{[]string{".sql"}, nil, "application/sql"}, // SQL Database Scripts
 
 	// Font Files
 	{[]string{".eot"}, nil, "application/vnd.ms-fontobject"},
@@ -111,6 +152,8 @@ var ctypes = []struct {
 	{[]string{".xz"}, nil, "application/x-xz"},   // XZ Compressed File
 	{[]string{".lz"}, nil, "application/x-lzip"}, // Lzip Compressed File
 	{[]string{".zip"}, nil, "application/zip"},
+	{[]string{".z"}, nil, "application/x-compress"},
+	{[]string{".zlib"}, nil, "application/x-zlib"},
 
 	// Configuration and Dependency Files
 	{nil, []string{"Dockerfile"}, "text/x-dockerfile"},
@@ -132,20 +175,20 @@ var ctypes = []struct {
 	{[]string{".pfx"}, nil, "application/x-pkcs12"}, // PKCS#12 File
 
 	// Miscellaneous
-	{[]string{".json"}, nil, "application/json"},
-	{[]string{".json5"}, nil, "application/json5"}, // JSON with comments
-	{[]string{".csv"}, nil, "text/csv"},            // Comma-Separated Values
 	{[]string{".html", ".htm"}, nil, "text/html"},
 	{[]string{".ico"}, nil, "image/vnd.microsoft.icon"},
 	{[]string{".ics"}, nil, "text/calendar"},
 	{[]string{".scss"}, nil, "text/x-scss"},
 	{[]string{".sass"}, nil, "text/x-sass"},
 	{[]string{".less"}, nil, "text/css"},
-	{[]string{".xml"}, nil, "application/xml"},
-	{[]string{".xhtml"}, nil, "application/xhtml+xml"},
-	{[]string{".xul"}, nil, "application/vnd.mozilla.xul+xml"},
 	{[]string{".yaml", ".yml"}, nil, "application/x-yaml"},
 	{[]string{".log"}, nil, "text/plain"},
+	{[]string{".xsd"}, nil, "application/xml"},
+	{[]string{".xsl"}, nil, "application/xml"},
+	{[]string{".xslt"}, nil, "application/xslt+xml"},
+	{[]string{".srt"}, nil, "application/x-subrip"},
+	{[]string{".sql"}, nil, "application/sql"},
+	{[]string{".tgz"}, nil, "application/x-gzip"},
 }
 
 func getContentTypeForFilename(name string) string {
