@@ -1,10 +1,10 @@
-FROM busybox
-RUN echo "nobody:x:65534:65534:Nobody:/:" > /etc/nobody
+FROM busybox as builder
+RUN adduser -D -H -u 65534 -G nogroup nobody
 
 FROM scratch
 WORKDIR /html
+COPY --from=builder /etc/passwd /etc/passwd
 USER nobody
 COPY http-server /http-server
-COPY --from=0 /etc/nobody /etc/passwd
 EXPOSE 5000
 ENTRYPOINT ["/http-server"]
