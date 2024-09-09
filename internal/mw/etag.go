@@ -1,25 +1,19 @@
 package mw
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"hash"
+	"io"
 	"net/http"
-	"sync"
+	"os"
 )
-
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
 
 type etagResponseWriter struct {
 	hash    hash.Hash
 	headers map[string][]string
-	buf     *bytes.Buffer
+	file    io.Writer
 	status  int
 }
 
@@ -45,7 +39,7 @@ func (e *etagResponseWriter) Write(p []byte) (int, error) {
 	e.hash.Write(p)
 
 	// Write the data to the actual response writer
-	return e.buf.Write(p)
+	return e.file.Write(p)
 }
 
 // Etag middleware
@@ -57,15 +51,22 @@ func Etag(enabled bool) func(next http.Handler) http.Handler {
 				return
 			}
 
-			buf := bufPool.Get().(*bytes.Buffer)
+			// Create a temporary file to store the response
+			tempFile, err := os.CreateTemp("", "http-server-etag-*")
+			if err != nil {
+				http.Error(w, "etag generation: unable to create temporary file: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Clean up the temporary file when the handler exits
 			defer func() {
-				buf.Reset()
-				bufPool.Put(buf)
+				tempFile.Close()
+				os.Remove(tempFile.Name())
 			}()
 
 			alternateWriter := &etagResponseWriter{
 				headers: http.Header{},
-				buf:     buf,
+				file:    tempFile,
 				hash:    sha1.New(),
 			}
 
@@ -90,7 +91,24 @@ func Etag(enabled bool) func(next http.Handler) http.Handler {
 				}
 			}
 			w.WriteHeader(alternateWriter.status)
-			w.Write(alternateWriter.buf.Bytes())
+
+			// Stream the response to the client 512 bytes at a time
+			tempFile.Seek(0, 0)
+			buf := make([]byte, 512)
+			for {
+				n, err := tempFile.Read(buf)
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					http.Error(w, "etag generation: unable to read temporary file: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+				if _, err := w.Write(buf[:n]); err != nil {
+					http.Error(w, "etag generation: unable to write response: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+			}
 		})
 	}
 }
