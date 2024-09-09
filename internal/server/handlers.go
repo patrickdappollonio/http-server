@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode/utf8"
+
+	"github.com/saintfish/chardet"
 )
 
 const (
@@ -158,7 +161,57 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 // serveFile serves a file with the appropriate headers, including support
 // for ETag and Last-Modified headers, as well as range requests.
 func (s *Server) serveFile(fp string, w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, fp)
+	f, err := os.Open(fp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var ctype string
+	if local := getContentTypeForFilename(filepath.Base(fp)); local != "" {
+		ctype = local
+	}
+
+	var data [512]byte
+	if _, err := f.Read(data[:]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if ctype == "" {
+		if local := http.DetectContentType(data[:]); local != "application/octet-stream" {
+			ctype = local
+		}
+	}
+
+	charset := ""
+	if utf8.Valid(data[:]) {
+		charset = "utf-8"
+	}
+
+	if charset == "" {
+		res, err := chardet.NewTextDetector().DetectBest(data[:])
+		if err == nil && res.Confidence > 50 && res.Charset != "" {
+			charset = res.Charset
+		}
+	}
+
+	if ctype != "" && ctype != "application/octet-stream" {
+		if charset != "" {
+			ctype += "; charset=" + charset
+		}
+
+		w.Header().Set("Content-Type", ctype)
+	}
+
+	http.ServeContent(w, r, fi.Name(), fi.ModTime(), f)
 }
 
 // healthCheck is a simple health check endpoint that returns 200 OK
