@@ -8,54 +8,42 @@ import (
 	"time"
 )
 
-// statusResponseWriter is a wrapper around http.ResponseWriter that
-// allows us to capture the status code and bytes written
-type statusResponseWriter struct {
-	http.ResponseWriter
+type logResponseWriter struct {
+	rw           http.ResponseWriter
 	statusCode   int
-	bytesWritten int
+	bytesWritten int64
 }
 
-// newStatusResponseWriter returns a new statusResponseWriter
-func newStatusResponseWriter(w http.ResponseWriter) *statusResponseWriter {
-	return &statusResponseWriter{w, http.StatusOK, 0}
+func (lrw *logResponseWriter) Header() http.Header {
+	return lrw.rw.Header()
 }
 
-// WriteHeader implements the http.ResponseWriter interface
-func (lrw *statusResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
+func (lrw *logResponseWriter) Write(p []byte) (int, error) {
+	n, err := lrw.rw.Write(p)
+	lrw.bytesWritten += int64(n)
+	return n, err
 }
 
-// Write implements the http.ResponseWriter interface
-func (lrw *statusResponseWriter) Write(b []byte) (int, error) {
-	bw, err := lrw.ResponseWriter.Write(b)
-	lrw.bytesWritten = bw
-	return bw, err
+func (lrw *logResponseWriter) WriteHeader(statusCode int) {
+	lrw.rw.WriteHeader(statusCode)
+	lrw.statusCode = statusCode
 }
 
-// LogRequest is a middleware that logs specific request data using a predefined
-// template format. Available options are:
-// - {http_method} the HTTP method
-// - {url} the URL
-// - {proto} the protocol version
-// - {status_code} the HTTP status code
-// - {status_text} the HTTP status text
-// - {duration} the duration of the request
-// - {bytes_written} the number of bytes written
+// LogRequest middleware
 func LogRequest(output io.Writer, format string, redactedQuerystringFields ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Capture starting time
 			start := time.Now()
 
-			// Create a new instance of our custom responsewriter
-			lrw := newStatusResponseWriter(w)
+			// Wrap the response writer
+			lrw := &logResponseWriter{
+				rw: w,
+			}
 
-			// Serve the next request
+			// Call the next middleware or handler
 			next.ServeHTTP(lrw, r)
 
-			// Capture path and remove any querystring keys
+			// Log the request after all middlewares have completed
 			urlpath := r.URL.Path
 			if r.URL.Query().Encode() != "" {
 				querystrings := r.URL.Query()
@@ -67,18 +55,23 @@ func LogRequest(output io.Writer, format string, redactedQuerystringFields ...st
 				urlpath = r.URL.Path + "?" + querystrings.Encode()
 			}
 
-			// Generate a string representation of the log message
+			// Get the status code or 200
+			statusCode := lrw.statusCode
+			if statusCode == 0 {
+				statusCode = http.StatusOK
+			}
+
+			// Log the request details
 			s := strings.NewReplacer(
 				"{http_method}", r.Method,
 				"{url}", urlpath,
 				"{proto}", r.Proto,
-				"{status_code}", fmt.Sprintf("%d", lrw.statusCode),
-				"{status_text}", http.StatusText(lrw.statusCode),
+				"{status_code}", fmt.Sprintf("%d", statusCode),
+				"{status_text}", http.StatusText(statusCode),
 				"{duration}", time.Since(start).String(),
 				"{bytes_written}", fmt.Sprintf("%d", lrw.bytesWritten),
 			).Replace(format)
 
-			// Print that log message to the output writer
 			fmt.Fprintln(output, s)
 		})
 	}
