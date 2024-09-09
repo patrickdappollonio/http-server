@@ -175,7 +175,7 @@ func (s *Server) serveFile(fp string, w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ctype string
-	if local := getContentTypeForExtension(filepath.Ext(fp)); local != "" {
+	if local := getContentTypeForFilename(filepath.Base(fp)); local != "" {
 		ctype = local
 	}
 

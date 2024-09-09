@@ -2,123 +2,162 @@ package server
 
 var ctypes = []struct {
 	Extension   []string
+	ExactNames  []string
 	ContentType string
 }{
-	// Generic types
-	{[]string{".aac"}, "audio/aac"},
-	{[]string{".abw"}, "application/x-abiword"},
-	{[]string{".apng"}, "image/apng"},
-	{[]string{".arc"}, "application/x-freearc"},
-	{[]string{".avif"}, "image/avif"},
-	{[]string{".avi"}, "video/x-msvideo"},
-	{[]string{".azw"}, "application/vnd.amazon.ebook"},
-	{[]string{".bin"}, "application/octet-stream"},
-	{[]string{".bmp"}, "image/bmp"},
-	{[]string{".bz"}, "application/x-bzip"},
-	{[]string{".bz2"}, "application/x-bzip2"},
-	{[]string{".cda"}, "application/x-cdf"},
-	{[]string{".csh"}, "application/x-csh"},
-	{[]string{".css"}, "text/css"},
-	{[]string{".csv"}, "text/csv"},
-	{[]string{".doc"}, "application/msword"},
-	{[]string{".docx"}, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
-	{[]string{".eot"}, "application/vnd.ms-fontobject"},
-	{[]string{".epub"}, "application/epub+zip"},
-	{[]string{".gz"}, "application/gzip"},
-	{[]string{".gif"}, "image/gif"},
-	{[]string{".htm", ".html"}, "text/html"},
-	{[]string{".ico"}, "image/vnd.microsoft.icon"},
-	{[]string{".ics"}, "text/calendar"},
-	{[]string{".jar"}, "application/java-archive"},
-	{[]string{".jpeg", ".jpg"}, "image/jpeg"},
-	{[]string{".js", ".mjs"}, "text/javascript"},
-	{[]string{".jsx"}, "text/jsx"},
-	{[]string{".json"}, "application/json"},
-	{[]string{".jsonld"}, "application/ld+json"},
-	{[]string{".md"}, "text/markdown"},
-	{[]string{".mid", ".midi"}, "audio/midi"},
-	{[]string{".mp3"}, "audio/mpeg"},
-	{[]string{".mp4"}, "video/mp4"},
-	{[]string{".mpeg"}, "video/mpeg"},
-	{[]string{".mpkg"}, "application/vnd.apple.installer+xml"},
-	{[]string{".odp"}, "application/vnd.oasis.opendocument.presentation"},
-	{[]string{".ods"}, "application/vnd.oasis.opendocument.spreadsheet"},
-	{[]string{".odt"}, "application/vnd.oasis.opendocument.text"},
-	{[]string{".oga"}, "audio/ogg"},
-	{[]string{".ogv"}, "video/ogg"},
-	{[]string{".ogx"}, "application/ogg"},
-	{[]string{".opus"}, "audio/ogg"},
-	{[]string{".otf"}, "font/otf"},
-	{[]string{".png"}, "image/png"},
-	{[]string{".pdf"}, "application/pdf"},
-	{[]string{".php"}, "application/x-httpd-php"},
-	{[]string{".ppt"}, "application/vnd.ms-powerpoint"},
-	{[]string{".pptx"}, "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
-	{[]string{".rar"}, "application/vnd.rar"},
-	{[]string{".rtf"}, "application/rtf"},
-	{[]string{".sh"}, "application/x-sh"},
-	{[]string{".svg"}, "image/svg+xml"},
-	{[]string{".tar"}, "application/x-tar"},
-	{[]string{".tif", ".tiff"}, "image/tiff"},
-	{[]string{".ts"}, "video/mp2t"},
-	{[]string{".tsx"}, "text/tsx"},
-	{[]string{".ttf"}, "font/ttf"},
-	{[]string{".txt", ".ini", ".env", ".lock", ".conf", ".gitignore", ".dockerfile"}, "text/plain"},
-	{[]string{".vsd"}, "application/vnd.visio"},
-	{[]string{".wav"}, "audio/wav"},
-	{[]string{".weba"}, "audio/webm"},
-	{[]string{".webm"}, "video/webm"},
-	{[]string{".webp"}, "image/webp"},
-	{[]string{".woff"}, "font/woff"},
-	{[]string{".woff2"}, "font/woff2"},
-	{[]string{".xhtml"}, "application/xhtml+xml"},
-	{[]string{".xls"}, "application/vnd.ms-excel"},
-	{[]string{".xlsx"}, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
-	{[]string{".xml"}, "application/xml"},
-	{[]string{".xul"}, "application/vnd.mozilla.xul+xml"},
-	{[]string{".yaml", ".yml"}, "application/x-yaml"},
-	{[]string{".zip"}, "application/zip"},
-	{[]string{".3gp", ".3gpp"}, "video/3gpp"},
-	{[]string{".3g2", ".3gpp2"}, "video/3gpp2"},
-	{[]string{".7z"}, "application/x-7z-compressed"},
-	{[]string{".scss"}, "text/x-scss"},
-	{[]string{".sass"}, "text/x-sass"},
-	{[]string{".less"}, "text/css"},
-	{[]string{".bat"}, "application/x-msdos-program"},
-	{[]string{".bashrc"}, "application/x-shellscript"},
+	// Audio Formats
+	{[]string{".aac"}, nil, "audio/aac"},
+	{[]string{".aiff", ".aif"}, nil, "audio/aiff"}, // Audio Interchange File Format
+	{[]string{".flac"}, nil, "audio/flac"},         // Free Lossless Audio Codec
+	{[]string{".m4a"}, nil, "audio/mp4"},           // MPEG-4 Audio
+	{[]string{".mid", ".midi"}, nil, "audio/midi"},
+	{[]string{".mp3"}, nil, "audio/mpeg"},
+	{[]string{".oga"}, nil, "audio/ogg"},
+	{[]string{".opus"}, nil, "audio/ogg"},
+	{[]string{".wav"}, nil, "audio/wav"},
+	{[]string{".weba"}, nil, "audio/webm"},
+	{[]string{".wma"}, nil, "audio/x-ms-wma"}, // Windows Media Audio
 
-	// Programming languages
-	{[]string{".c"}, "text/x-csrc"},
-	{[]string{".h"}, "text/x-chdr"},
-	{[]string{".cpp"}, "text/x-c++src"},
-	{[]string{".hpp"}, "text/x-c++hdr"},
-	{[]string{".java"}, "text/x-java-source"},
-	{[]string{".py"}, "text/x-python"},
-	{[]string{".go"}, "text/x-go"},
-	{[]string{".rb"}, "application/x-ruby"},
-	{[]string{".pl"}, "application/x-perl"},
-	{[]string{".php"}, "application/x-httpd-php"},
-	{[]string{".rs"}, "text/rust"},
-	{[]string{".swift"}, "text/x-swift"},
-	{[]string{".kt"}, "text/x-kotlin"},
-	{[]string{".scala"}, "text/x-scala"},
-	{[]string{".sh"}, "application/x-sh"},
-	{[]string{".bash"}, "application/x-shellscript"},
+	// Video Formats
+	{[]string{".3gp", ".3gpp"}, nil, "video/3gpp"},
+	{[]string{".3g2", ".3gpp2"}, nil, "video/3gpp2"},
+	{[]string{".avi"}, nil, "video/x-msvideo"},
+	{[]string{".flv"}, nil, "video/x-flv"},      // Flash Video
+	{[]string{".mkv"}, nil, "video/x-matroska"}, // Matroska Video
+	{[]string{".mp4"}, nil, "video/mp4"},
+	{[]string{".mov"}, nil, "video/quicktime"},
+	{[]string{".mpeg"}, nil, "video/mpeg"},
+	{[]string{".ogv"}, nil, "video/ogg"},
+	{[]string{".webm"}, nil, "video/webm"},
+	{[]string{".ts"}, nil, "video/mp2t"},
+	{[]string{".wmv"}, nil, "video/x-ms-wmv"}, // Windows Media Video
 
-	// Markup languages
-	{[]string{".tex"}, "application/x-tex"},
-	{[]string{".bib"}, "application/x-bibtex"},
+	// Image Formats
+	{[]string{".apng"}, nil, "image/apng"},
+	{[]string{".avif"}, nil, "image/avif"},
+	{[]string{".bmp"}, nil, "image/bmp"},
+	{[]string{".gif"}, nil, "image/gif"},
+	{[]string{".heic"}, nil, "image/heic"},
+	{[]string{".heif"}, nil, "image/heif"}, // High Efficiency Image Format
+	{[]string{".jpeg", ".jpg"}, nil, "image/jpeg"},
+	{[]string{".png"}, nil, "image/png"},
+	{[]string{".raw"}, nil, "image/x-raw"}, // Raw Image Formats
+	{[]string{".svg"}, nil, "image/svg+xml"},
+	{[]string{".svgz"}, nil, "image/svg+xml"}, // Compressed SVG
+	{[]string{".tif", ".tiff"}, nil, "image/tiff"},
+	{[]string{".webp"}, nil, "image/webp"},
 
-	// Version control, configurations
-	{[]string{"Dockerfile"}, "text/x-dockerfile"},
-	{[]string{".gitignore"}, "text/plain"},
-	{[]string{"Makefile"}, "text/x-makefile"},
+	// Document Formats
+	{[]string{".doc"}, nil, "application/msword"},
+	{[]string{".docx"}, nil, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+	{[]string{".odf"}, nil, "application/vnd.oasis.opendocument.formula"}, // Open Document Format for Formula
+	{[]string{".pdf"}, nil, "application/pdf"},
+	{[]string{".rtf"}, nil, "application/rtf"},
+	{[]string{".txt", ".ini", ".env", ".lock", ".conf", ".dockerfile"}, nil, "text/plain"},
+	{[]string{".md"}, nil, "text/markdown"},
+	{[]string{".tex"}, nil, "application/x-tex"},
+	{[]string{".bib"}, nil, "application/x-bibtex"},
+
+	// Spreadsheet Formats
+	{[]string{".ods"}, nil, "application/vnd.oasis.opendocument.spreadsheet"},
+	{[]string{".xls"}, nil, "application/vnd.ms-excel"},
+	{[]string{".xlsx"}, nil, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+	{[]string{".xltx"}, nil, "application/vnd.openxmlformats-officedocument.spreadsheetml.template"}, // Excel Template
+
+	// Presentation Formats
+	{[]string{".odp"}, nil, "application/vnd.oasis.opendocument.presentation"},
+	{[]string{".ppt"}, nil, "application/vnd.ms-powerpoint"},
+	{[]string{".pptx"}, nil, "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+
+	// Programming Languages
+	{[]string{".c"}, nil, "text/x-csrc"},
+	{[]string{".cpp"}, nil, "text/x-c++src"},
+	{[]string{".h"}, nil, "text/x-chdr"},
+	{[]string{".hpp"}, nil, "text/x-c++hdr"},
+	{[]string{".dart"}, nil, "application/dart"}, // Dart Language
+	{[]string{".go"}, nil, "text/x-go"},
+	{[]string{".java"}, nil, "text/x-java-source"},
+	{[]string{".kt"}, nil, "text/x-kotlin"},
+	{[]string{".pl"}, nil, "application/x-perl"},
+	{[]string{".py"}, nil, "text/x-python"},
+	{[]string{".rb"}, nil, "application/x-ruby"},
+	{[]string{".rs"}, nil, "text/rust"},
+	{[]string{".scala"}, nil, "text/x-scala"},
+	{[]string{".sh"}, nil, "application/x-sh"},
+	{[]string{".swift"}, nil, "text/x-swift"},
+	{[]string{".bash"}, nil, "application/x-shellscript"},
+	{[]string{".bashrc"}, nil, "application/x-shellscript"},
+	{[]string{".js", ".mjs"}, nil, "text/javascript"},
+	{[]string{".jsx"}, nil, "text/jsx"},
+	{[]string{".tsx"}, nil, "text/tsx"},
+	{[]string{".sql"}, nil, "application/sql"}, // SQL Database Scripts
+
+	// Font Files
+	{[]string{".eot"}, nil, "application/vnd.ms-fontobject"},
+	{[]string{".otf"}, nil, "font/otf"},
+	{[]string{".ttf"}, nil, "font/ttf"},
+	{[]string{".woff"}, nil, "font/woff"},
+	{[]string{".woff2"}, nil, "font/woff2"},
+
+	// Compressed and Archive Files
+	{[]string{".7z"}, nil, "application/x-7z-compressed"},
+	{[]string{".arc"}, nil, "application/x-freearc"},
+	{[]string{".bin"}, nil, "application/octet-stream"},
+	{[]string{".bz"}, nil, "application/x-bzip"},
+	{[]string{".bz2"}, nil, "application/x-bzip2"},
+	{[]string{".gz"}, nil, "application/gzip"},
+	{[]string{".rar"}, nil, "application/vnd.rar"},
+	{[]string{".tar"}, nil, "application/x-tar"},
+	{[]string{".xz"}, nil, "application/x-xz"},   // XZ Compressed File
+	{[]string{".lz"}, nil, "application/x-lzip"}, // Lzip Compressed File
+	{[]string{".zip"}, nil, "application/zip"},
+
+	// Configuration and Dependency Files
+	{nil, []string{"Dockerfile"}, "text/x-dockerfile"},
+	{nil, []string{"Gemfile"}, "text/plain"},
+	{nil, []string{"Makefile"}, "text/x-makefile"},
+	{nil, []string{"Pipfile"}, "text/plain"},
+	{nil, []string{"package.json"}, "application/json"},
+	{nil, []string{"package-lock.json"}, "application/json"},
+	{nil, []string{"yarn.lock"}, "text/plain"},
+	{nil, []string{"pom.xml"}, "application/xml"},
+	{nil, []string{"build.gradle"}, "text/x-gradle"},
+	{nil, []string{"requirements.txt"}, "text/plain"}, // Python Requirements File
+	{nil, []string{"Cargo.toml"}, "text/plain"},       // Rust Package Manager File
+
+	// Security Files
+	{[]string{".crt"}, nil, "application/x-x509-ca-cert"},
+	{[]string{".pem"}, nil, "application/x-pem-file"},
+	{[]string{".p12"}, nil, "application/x-pkcs12"}, // PKCS#12 File
+	{[]string{".pfx"}, nil, "application/x-pkcs12"}, // PKCS#12 File
+
+	// Miscellaneous
+	{[]string{".json"}, nil, "application/json"},
+	{[]string{".json5"}, nil, "application/json5"}, // JSON with comments
+	{[]string{".csv"}, nil, "text/csv"},            // Comma-Separated Values
+	{[]string{".html", ".htm"}, nil, "text/html"},
+	{[]string{".ico"}, nil, "image/vnd.microsoft.icon"},
+	{[]string{".ics"}, nil, "text/calendar"},
+	{[]string{".scss"}, nil, "text/x-scss"},
+	{[]string{".sass"}, nil, "text/x-sass"},
+	{[]string{".less"}, nil, "text/css"},
+	{[]string{".xml"}, nil, "application/xml"},
+	{[]string{".xhtml"}, nil, "application/xhtml+xml"},
+	{[]string{".xul"}, nil, "application/vnd.mozilla.xul+xml"},
+	{[]string{".yaml", ".yml"}, nil, "application/x-yaml"},
+	{[]string{".log"}, nil, "text/plain"},
 }
 
-func getContentTypeForExtension(extension string) string {
+func getContentTypeForFilename(name string) string {
 	for _, ct := range ctypes {
+		for _, internalName := range ct.ExactNames {
+			if name == internalName {
+				return ct.ContentType
+			}
+		}
+
 		for _, ext := range ct.Extension {
-			if ext == extension {
+			if len(name) >= len(ext) && name[len(name)-len(ext):] == ext {
 				return ct.ContentType
 			}
 		}
