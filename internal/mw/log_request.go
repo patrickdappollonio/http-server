@@ -10,6 +10,7 @@ import (
 
 type logResponseWriter struct {
 	rw           http.ResponseWriter
+	wroteHeader  bool
 	statusCode   int
 	bytesWritten int64
 }
@@ -19,14 +20,23 @@ func (lrw *logResponseWriter) Header() http.Header {
 }
 
 func (lrw *logResponseWriter) Write(p []byte) (int, error) {
+	if !lrw.wroteHeader {
+		lrw.WriteHeader(http.StatusOK)
+	}
+
 	n, err := lrw.rw.Write(p)
 	lrw.bytesWritten += int64(n)
 	return n, err
 }
 
 func (lrw *logResponseWriter) WriteHeader(statusCode int) {
+	if lrw.wroteHeader {
+		return
+	}
+
 	lrw.rw.WriteHeader(statusCode)
 	lrw.statusCode = statusCode
+	lrw.wroteHeader = true
 }
 
 // LogRequest middleware

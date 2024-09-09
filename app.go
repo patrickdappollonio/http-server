@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -161,7 +162,7 @@ func bindCobraAndViper(rootCommand *cobra.Command) error {
 	if err := v.ReadInConfig(); err != nil {
 		// If the configuration file was not found, it's all good, we ignore
 		// the failure and proceed with the default settings
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
 			return err
 		}
 	}

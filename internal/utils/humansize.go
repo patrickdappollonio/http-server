@@ -5,9 +5,7 @@ import (
 	"math"
 )
 
-var (
-	symbols = []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
-)
+var symbols = []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
 
 func index(s int64) float64 {
 	x := math.Log(float64(s)) / math.Log(1024)

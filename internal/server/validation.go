@@ -14,7 +14,7 @@ const warnPrefix = "[WARNING] >>> "
 // if the fields are valid per those rules
 func (s *Server) Validate() error {
 	// Create a custom validator
-	var valid = validator.New()
+	valid := validator.New()
 
 	// Add custom validation rules
 	valid.RegisterValidation("ispathprefix", validateIsPathPrefix)

@@ -9,10 +9,16 @@ import (
 	"syscall"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/patrickdappollonio/http-server/internal/utils"
 )
 
 func (s *Server) ListenAndServe() error {
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
+
 	// Generate the appropriate templates for the entire server
 	dltemplates, err := s.generateTemplates()
 	if err != nil {

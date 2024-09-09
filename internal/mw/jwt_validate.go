@@ -38,7 +38,6 @@ func ValidateJWTHS256(warnFunction func(string, ...interface{}), loggedInFunctio
 
 				return []byte(jwtSigningKey), nil
 			})
-
 			// Check for errors during parsing
 			if err != nil {
 				warnFunction("error parsing token for URL %q: %s", r.URL.Path, err.Error())
