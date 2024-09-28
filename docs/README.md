@@ -6,3 +6,4 @@ This is the documentation for `http-server`, a simple, no-dependencies command-l
 * [CORS support](cors-requests.md)
 * [Directory listing](directory-listing.md)
 * [Authentication](authentication.md)
+* [Redirections](redirections.md)
