@@ -99,7 +99,7 @@ func run() error {
 	flags.StringVar(&server.Username, "username", "", "username for basic authentication")
 	flags.StringVar(&server.Password, "password", "", "password for basic authentication")
 	flags.StringVar(&server.PageTitle, "title", "", "title of the directory listing page")
-	flags.BoolVar(&server.HideLinks, "hide-links", false, "hide the links to this project's source code")
+	flags.BoolVar(&server.HideLinks, "hide-links", false, "hide the links to this project's source code visible in the header and footer")
 	flags.BoolVar(&server.DisableCacheBuster, "disable-cache-buster", false, "disable the cache buster for assets from the directory listing feature")
 	flags.BoolVar(&server.DisableMarkdown, "disable-markdown", false, "disable the markdown rendering feature")
 	flags.BoolVar(&server.MarkdownBeforeDir, "markdown-before-dir", false, "render markdown content before the directory listing")
