@@ -60,6 +60,11 @@ func run() error {
 				return err
 			}
 
+			// Load redirections file if enabled
+			if err := server.LoadRedirectionsIfEnabled(); err != nil {
+				return err
+			}
+
 			// Print some sane defaults and some information about the request
 			server.PrintStartup()
 
@@ -94,7 +99,7 @@ func run() error {
 	flags.StringVar(&server.Username, "username", "", "username for basic authentication")
 	flags.StringVar(&server.Password, "password", "", "password for basic authentication")
 	flags.StringVar(&server.PageTitle, "title", "", "title of the directory listing page")
-	flags.BoolVar(&server.HideLinks, "hide-links", false, "hide the links to this project's source code")
+	flags.BoolVar(&server.HideLinks, "hide-links", false, "hide the links to this project's source code visible in the header and footer")
 	flags.BoolVar(&server.DisableCacheBuster, "disable-cache-buster", false, "disable the cache buster for assets from the directory listing feature")
 	flags.BoolVar(&server.DisableMarkdown, "disable-markdown", false, "disable the markdown rendering feature")
 	flags.BoolVar(&server.MarkdownBeforeDir, "markdown-before-dir", false, "render markdown content before the directory listing")
@@ -103,6 +108,7 @@ func run() error {
 	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
 	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable ETag header generation")
 	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
+	flags.BoolVar(&server.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
 
 	return rootCmd.Execute()
 }

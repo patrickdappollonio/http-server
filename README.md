@@ -1,7 +1,7 @@
 # `http-server`, a simple HTTP file server
 
 [![Github Downloads](https://img.shields.io/github/downloads/patrickdappollonio/http-server/total?color=orange&label=github%20downloads)](https://github.com/patrickdappollonio/http-server/releases)
-[![Container Downloads](https://img.shields.io/badge/container%20downloads-206k-orange)](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server) [![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server)
+[![Container Downloads](https://img.shields.io/badge/container%20downloads-250k-orange)](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server) [![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server)
 
 <img src="internal/server/assets/file-server.svg" width="160" align="right" /> `http-server` is a static file server with zero dependencies: **just one binary to run**. It also supports:
 
@@ -10,6 +10,7 @@
 * **Directory listing:** if no `index.html` or `index.htm` files are present in the directory, a directory listing page will show instead.
 * **Markdown support:** if a `README.md` or `readme.md` file is present in the directory during directory listing, it will be rendered as HTML. Additional support for GitHub-flavored markdown is also available.
 * **Fully air-gapped:** the directory listing feature is fully air-gapped, meaning that it does not require any external resources to be loaded. This is useful for environments where internet access is not available.
+* **Redirections support:** if a `_redirections` file exists in the target directory, it will be used to redirect requests to other locations. Learn about the syntax [in the docs](docs/redirections.md).
 
 The app is available both as a standalone binary and as a Docker container image.
 

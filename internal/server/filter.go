@@ -1,7 +1,24 @@
 package server
 
+var forbiddenMatches = []string{
+	"_redirects",
+}
+
+var (
+	forbiddenPrefixes = []string{}
+	forbiddenSuffixes = []string{}
+)
+
 func (s *Server) isFiltered(filename string) bool {
-	for _, p := range append(s.forbiddenPrefixes, s.ConfigFilePrefix) {
+	// Adds the config prefix to the list of forbidden prefixes
+	allPrefixes := append(s.forbiddenPrefixes, s.ConfigFilePrefix)
+
+	// Adds the well known prefixes from this project
+	allPrefixes = append(allPrefixes, forbiddenPrefixes...)
+	allSuffixes := append(s.forbiddenSuffixes, forbiddenSuffixes...)
+	allMatches := append(s.forbiddenMatches, forbiddenMatches...)
+
+	for _, p := range allPrefixes {
 		if p == "" {
 			continue
 		}
@@ -11,7 +28,7 @@ func (s *Server) isFiltered(filename string) bool {
 		}
 	}
 
-	for _, s := range s.forbiddenSuffixes {
+	for _, s := range allSuffixes {
 		if s == "" {
 			continue
 		}
@@ -21,7 +38,7 @@ func (s *Server) isFiltered(filename string) bool {
 		}
 	}
 
-	for _, m := range s.forbiddenMatches {
+	for _, m := range allMatches {
 		if m == "" {
 			continue
 		}
