@@ -10,6 +10,7 @@
 * **Directory listing:** if no `index.html` or `index.htm` files are present in the directory, a directory listing page will show instead.
 * **Markdown support:** if a `README.md` or `readme.md` file is present in the directory during directory listing, it will be rendered as HTML. Additional support for GitHub-flavored markdown is also available.
 * **Fully air-gapped:** the directory listing feature is fully air-gapped, meaning that it does not require any external resources to be loaded. This is useful for environments where internet access is not available.
+* **Redirections support:** if a `_redirections` file exists in the target directory, it will be used to redirect requests to other locations. Learn about the syntax [in the docs](docs/redirections.md).
 
 The app is available both as a standalone binary and as a Docker container image.
 

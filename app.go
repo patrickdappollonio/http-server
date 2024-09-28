@@ -60,6 +60,11 @@ func run() error {
 				return err
 			}
 
+			// Load redirections file if enabled
+			if err := server.LoadRedirectionsIfEnabled(); err != nil {
+				return err
+			}
+
 			// Print some sane defaults and some information about the request
 			server.PrintStartup()
 
@@ -103,6 +108,7 @@ func run() error {
 	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
 	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable ETag header generation")
 	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
+	flags.BoolVar(&server.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
 
 	return rootCmd.Execute()
 }

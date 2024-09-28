@@ -3,6 +3,8 @@ package server
 import (
 	"html/template"
 	"io"
+
+	"github.com/patrickdappollonio/http-server/internal/redirects"
 )
 
 const repositoryURL = "https://github.com/patrickdappollonio/http-server/"
@@ -30,6 +32,10 @@ type Server struct {
 	DisableCacheBuster bool
 	DisableMarkdown    bool
 	MarkdownBeforeDir  bool
+
+	// Redirection handling
+	DisableRedirects bool
+	redirects        *redirects.Engine
 
 	// JWT Specific settings
 	JWTSigningKey    string `flagName:"jwt-key" validate:"omitempty,excluded_with=Username,excluded_with=Password"`

@@ -63,6 +63,12 @@ func (s *Server) router() http.Handler {
 		r.Use(mw.EnableCORS)
 	}
 
+	// Check if the redirect engine is enabled, and if so, load
+	// the middleware for it
+	if s.redirects != nil {
+		r.Use(s.redirects.Middleware(s.LogOutput))
+	}
+
 	// Check if the request is against a URL ending on a known
 	// index file, and if so, redirect to the directory
 	r.Use(mw.RedirectIndexes(http.StatusMovedPermanently))

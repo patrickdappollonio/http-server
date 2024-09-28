@@ -1,6 +1,8 @@
 package server
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const startupPrefix = " >"
 
@@ -56,6 +58,10 @@ func (s *Server) PrintStartup() {
 
 	if s.MarkdownBeforeDir {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Markdown rendering before directory listing enabled")
+	}
+
+	if !s.DisableRedirects {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Redirections enabled from:", s.getPathToRedirectionsFile())
 	}
 
 	s.printWarnings()
