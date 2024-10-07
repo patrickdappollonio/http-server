@@ -358,6 +358,15 @@ func TestRedirectionEngine(t *testing.T) {
 			rules:       "/foo:id/foo/* /foo:id/foo temporary",
 			expectError: true,
 		},
+		{
+			name: "path parameter empty - should not redirect",
+			rules: `
+              /docs/:name /docs/:name/overview permanent
+              /docs/:name/ /docs/:name/overview/ permanent`,
+			visitedPath:          "/docs/",
+			expectHittingHandler: true,
+			expectStatusCode:     http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
