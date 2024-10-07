@@ -438,6 +438,34 @@ func TestRedirectionEngine(t *testing.T) {
 			rules:       `regexp "^/user/(.+)$" "/profile/$2" temporary`,
 			expectError: true,
 		},
+		{
+			name:             "regex rule - escaped dollar sign in replacement",
+			rules:            `regexp "^/product/(\d+)$" "/store/item/$1?price=\$20" temporary`,
+			visitedPath:      "/product/123",
+			expectStatusCode: http.StatusFound,
+			expectLocation:   "/store/item/123?price=$20",
+		},
+		{
+			name:             "regex rule - multiple escaped dollar signs",
+			rules:            `regexp "^/donate$" "/contribute?amount=\$\$\$" permanent`,
+			visitedPath:      "/donate",
+			expectStatusCode: http.StatusMovedPermanently,
+			expectLocation:   "/contribute?amount=$$$",
+		},
+		{
+			name:             "regex rule - escaped dollar sign and placeholder",
+			rules:            `regexp "^/user/(?P<username>[^/]+)$" "/profile/\$$username" temporary`,
+			visitedPath:      "/user/johndoe",
+			expectStatusCode: http.StatusFound,
+			expectLocation:   "/profile/$johndoe",
+		},
+		{
+			name:             "regex rule - escaped backslash before dollar sign",
+			rules:            `regexp "^/path$" "/new\\path\$" permanent`,
+			visitedPath:      "/path",
+			expectStatusCode: http.StatusMovedPermanently,
+			expectLocation:   `/new\path$`,
+		},
 	}
 
 	for _, tt := range tests {

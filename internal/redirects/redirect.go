@@ -173,13 +173,8 @@ func parseRegexRuleLine(line string, lineNum int) (RedirectRule, error) {
 	return rule, nil
 }
 
-var rePlaceholder = regexp.MustCompile(`\$(\w+)`)
-
 // validateRegexPlaceholders checks that all placeholders in the replacement string correspond to capture groups.
 func validateRegexPlaceholders(pattern *regexp.Regexp, replacement string, lineNum int) error {
-	// Extract placeholders from the replacement string
-	placeholders := rePlaceholder.FindAllStringSubmatch(replacement, -1)
-
 	// Build a set of valid group names and indices
 	validGroups := make(map[string]struct{})
 	groupNames := pattern.SubexpNames()
@@ -193,11 +188,35 @@ func validateRegexPlaceholders(pattern *regexp.Regexp, replacement string, lineN
 		validGroups[fmt.Sprintf("%d", i)] = struct{}{} // Positional groups
 	}
 
-	// Validate each placeholder
-	for _, match := range placeholders {
-		placeholder := match[1] // The group name or index without the leading '$'
-		if _, ok := validGroups[placeholder]; !ok {
-			return fmt.Errorf("undefined placeholder \"$%s\" in replacement on line %d", placeholder, lineNum)
+	// Process the replacement string to find placeholders
+	i := 0
+	for i < len(replacement) {
+		c := replacement[i]
+		if c == '\\' && i+1 < len(replacement) {
+			// Skip escaped character
+			i += 2
+			continue
+		}
+		if c == '$' {
+			// Possible placeholder
+			j := i + 1
+			for j < len(replacement) && isWordChar(replacement[j]) {
+				j++
+			}
+			if j > i+1 {
+				// Found a placeholder
+				key := replacement[i+1 : j]
+				if _, ok := validGroups[key]; !ok {
+					return fmt.Errorf("undefined placeholder \"$%s\" in replacement on line %d", key, lineNum)
+				}
+				i = j
+				continue
+			} else {
+				// No valid placeholder after '$', skip it
+				i++
+			}
+		} else {
+			i++
 		}
 	}
 
@@ -337,17 +356,54 @@ func (rule *RedirectRule) MatchRegex(requestURI string) (string, bool) {
 }
 
 // replacePlaceholders replaces placeholders in the format $name or $1 with actual values from the groups map.
+// It handles escaped dollar signs (\$) and escaped backslashes (\\) in the template string.
 func replacePlaceholders(template string, groups map[string]string) string {
-	// Regex to find placeholders like $1, $name
-	result := rePlaceholder.ReplaceAllStringFunc(template, func(m string) string {
-		key := m[1:] // Remove the leading $
-		if val, ok := groups[key]; ok {
-			return val
+	// Process the template string to handle escapes
+	var result strings.Builder
+	i := 0
+	for i < len(template) {
+		c := template[i]
+		if c == '\\' && i+1 < len(template) {
+			nextChar := template[i+1]
+			if nextChar == '$' || nextChar == '\\' {
+				// Escaped dollar sign or backslash
+				result.WriteByte(nextChar)
+				i += 2
+				continue
+			}
 		}
-		// If the key is not found, leave the placeholder as is
-		return m
-	})
-	return result
+		if c == '$' {
+			// Possible placeholder
+			j := i + 1
+			for j < len(template) && (isWordChar(template[j])) {
+				j++
+			}
+			if j > i+1 {
+				// Found a placeholder
+				key := template[i+1 : j]
+				if val, ok := groups[key]; ok {
+					result.WriteString(val)
+					i = j
+					continue
+				}
+			}
+			// Not a valid placeholder, keep as is
+			result.WriteByte(c)
+			i++
+		} else {
+			result.WriteByte(c)
+			i++
+		}
+	}
+	return result.String()
+}
+
+// isWordChar checks if a byte is a valid word character (letter, digit, or underscore)
+func isWordChar(c byte) bool {
+	return (c >= 'A' && c <= 'Z') ||
+		(c >= 'a' && c <= 'z') ||
+		(c >= '0' && c <= '9') ||
+		c == '_'
 }
 
 // Match checks if the request path and query parameters match the rule.
