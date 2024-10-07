@@ -10,6 +10,12 @@ An example of what the directory listing page looks like is below:
 
 ![Directory listing](../img/sample-site.png)
 
+### Disabling directory listing
+
+If you want to disable the directory listing feature, you can use the `--disable-directory-listing` option (or one of the available options via environment variables or configuration file). This will prevent the directory listing page from showing up, and instead, the user will see a `404 Not Found` error.
+
+Disabling directory listing also disables the [Markdown rendering feature](#markdown-support), as the Markdown rendering feature is only available when the directory listing feature is enabled.
+
 ### Title change
 
 The page title can be changed with the `--title` option (or one of the available options via environment variables or configuration file). The default value is `HTTP File Server`, but you can change it to whatever you want.

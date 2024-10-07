@@ -109,6 +109,7 @@ func run() error {
 	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable ETag header generation")
 	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
 	flags.BoolVar(&server.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
+	flags.BoolVar(&server.DisableDirectoryList, "disable-directory-listing", false, "disable the directory listing feature and return 404s for directories without index")
 
 	return rootCmd.Execute()
 }
