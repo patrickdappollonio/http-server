@@ -246,6 +246,10 @@ func pathMatch(pattern, path string, params map[string]string) bool {
 				return false
 			} else {
 				// Regular placeholder
+				if pathSegment == "" {
+					// Do not match empty segments to parameters
+					return false
+				}
 				params[paramName] = pathSegment
 			}
 		} else if patternSegment == pathSegment {

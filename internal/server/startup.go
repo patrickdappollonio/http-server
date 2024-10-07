@@ -65,7 +65,11 @@ func (s *Server) PrintStartup() {
 	}
 
 	if !s.DisableRedirects {
-		fmt.Fprintln(s.LogOutput, startupPrefix, "Redirections enabled from:", s.getPathToRedirectionsFile())
+		if s.redirects == nil {
+			fmt.Fprintf(s.LogOutput, "%s Redirections enabled but no redirections found in %q\n", startupPrefix, s.getPathToRedirectionsFile())
+		} else {
+			fmt.Fprintf(s.LogOutput, "%s Redirections enabled from %q (found %d redirections)\n", startupPrefix, s.getPathToRedirectionsFile(), len(s.redirects.Rules))
+		}
 	}
 
 	s.printWarnings()
