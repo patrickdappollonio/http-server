@@ -367,6 +367,77 @@ func TestRedirectionEngine(t *testing.T) {
 			expectHittingHandler: true,
 			expectStatusCode:     http.StatusOK,
 		},
+		{
+			name:             "regex rule - simple capture group",
+			rules:            `regexp "^/blog/(.+)$" "/articles/$1" permanent`,
+			visitedPath:      "/blog/my-first-post",
+			expectStatusCode: http.StatusMovedPermanently,
+			expectLocation:   "/articles/my-first-post",
+		},
+		{
+			name:                 "regex rule - no match",
+			rules:                `regexp "^/blog/(.+)$" "/articles/$1" permanent`,
+			visitedPath:          "/blogs/my-first-post", // Note the extra 's' in '/blogs/'
+			expectHittingHandler: true,
+			expectStatusCode:     http.StatusOK,
+		},
+		{
+			name:             "regex rule - multiple capture groups",
+			rules:            `regexp "^/user/([^/]+)/posts/([^/]+)$" "/posts?author=$1&id=$2" temporary`,
+			visitedPath:      "/user/john/posts/123",
+			expectStatusCode: http.StatusFound,
+			expectLocation:   "/posts?author=john&id=123",
+		},
+		{
+			name:             "regex rule - with query parameters in replacement",
+			rules:            `regexp "^/search/(.+)$" "/find?q=$1" temporary`,
+			visitedPath:      "/search/golang",
+			expectStatusCode: http.StatusFound,
+			expectLocation:   "/find?q=golang",
+		},
+		{
+			name:             "regex rule - including query parameters in pattern",
+			rules:            `regexp "^/old-path\\?ref=(\\w+)$" "/new-path?source=$1" temporary`,
+			visitedPath:      "/old-path?ref=abc123",
+			expectStatusCode: http.StatusFound,
+			expectLocation:   "/new-path?source=abc123",
+		},
+		{
+			name:             "regex rule - positional capture group",
+			rules:            `regexp "^/foo/(.+)$" "/bar/$1" permanent`,
+			visitedPath:      "/foo/123",
+			expectStatusCode: http.StatusMovedPermanently,
+			expectLocation:   "/bar/123",
+		},
+		{
+			name:             "regex rule - named capture group",
+			rules:            `regexp "^/user/(?P<username>[^/]+)$" "/profile/$username" temporary`,
+			visitedPath:      "/user/johndoe",
+			expectStatusCode: http.StatusFound,
+			expectLocation:   "/profile/johndoe",
+		},
+		{
+			name:             "regex rule - mixed capture groups",
+			rules:            `regexp "^/order/(?P<orderId>\d+)/item/(\d+)$" "/orders/$orderId/items/$2" permanent`,
+			visitedPath:      "/order/456/item/789",
+			expectStatusCode: http.StatusMovedPermanently,
+			expectLocation:   "/orders/456/items/789",
+		},
+		{
+			name:        "regex rule - unmatched named capture group",
+			rules:       `regexp "^/user/(?P<foobar>[^/]+)$" "/profile/$username" temporary`,
+			expectError: true,
+		},
+		{
+			name:        "regex rule - unmatched positional capture group",
+			rules:       `regexp "^/user/(.+)$" "/profile/$username" temporary`,
+			expectError: true,
+		},
+		{
+			name:        "regex rule - unmatched capture group",
+			rules:       `regexp "^/user/(.+)$" "/profile/$2" temporary`,
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {

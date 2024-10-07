@@ -6,16 +6,21 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
 // RedirectRule represents a single redirect rule.
 type RedirectRule struct {
+	IsRegex      bool
+	RegexPattern *regexp.Regexp
+	To           string
+	StatusCode   int
+
+	// Fields for non-regex rules
 	FromPath        string            // The path part of the 'From' pattern
 	FromParams      map[string]string // Query parameters with optional placeholders
-	To              string            // The 'To' path
-	StatusCode      int
-	KeepQueryParams bool // Whether to keep original query parameters
+	KeepQueryParams bool              // Whether to keep original query parameters
 }
 
 // Engine holds the parsed redirect rules.
@@ -65,12 +70,20 @@ func (e *Engine) DereferenceDestination(requestURI string) (string, int, error) 
 	}
 
 	for _, rule := range e.Rules {
-		// Copy of request query parameters to avoid modifying the original
-		requestQueryParams := u.RawQuery
+		if rule.IsRegex {
+			destination, ok := rule.MatchRegex(u.RequestURI())
+			if ok {
+				return destination, rule.StatusCode, nil
+			}
+		} else {
+			// Non-regex rule matching
+			// Copy of request query parameters to avoid modifying the original
+			requestQueryParams := u.RawQuery
 
-		if params, ok := rule.Match(u.Path, requestQueryParams); ok {
-			destination := rule.buildDestination(params, requestQueryParams, rule.KeepQueryParams)
-			return destination, rule.StatusCode, nil
+			if params, ok := rule.Match(u.Path, requestQueryParams); ok {
+				destination := rule.buildDestination(params, requestQueryParams, rule.KeepQueryParams)
+				return destination, rule.StatusCode, nil
+			}
 		}
 	}
 	return "", 0, ErrNoMatchingRule
@@ -91,63 +104,167 @@ func parseRedirectRules(content string) ([]RedirectRule, error) {
 		// Remove comments from the line
 		if idx := strings.Index(line, "#"); idx != -1 {
 			line = line[:idx]
+			line = strings.TrimSpace(line)
 		}
 
-		// Split the line into parts
-		parts := strings.Fields(line)
-		if len(parts) != 3 {
-			return nil, fmt.Errorf("invalid redirect rule on line %d: %q", lineNum+1, line)
-		}
-
-		from, to, statusStr := parts[0], parts[1], parts[2]
-
-		statusCode, err := parseStatusCode(statusStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid status code on line %d: %v", lineNum+1, err)
-		}
-
-		keepQueryParams := false
-		// Check if the 'From' path ends with '?!'
-		if strings.HasSuffix(from, "?!") {
-			keepQueryParams = true
-			from = strings.TrimSuffix(from, "?!")
-		}
-
-		// Separate path and query parameters in the 'From' pattern
-		var fromPath string
-		fromParams := make(map[string]string)
-
-		if idx := strings.Index(from, "?"); idx != -1 {
-			fromPath = from[:idx]
-			queryStr := from[idx+1:]
-			fromParams, err = parseQueryParameters(queryStr)
+		// Check if the line starts with "regexp"
+		if strings.HasPrefix(line, "regexp") {
+			rule, err := parseRegexRuleLine(line, lineNum+1)
 			if err != nil {
-				return nil, fmt.Errorf("invalid query parameters on line %d: %v", lineNum+1, err)
+				return nil, err
 			}
-		} else {
-			fromPath = from
+			rules = append(rules, rule)
+			continue
 		}
 
-		// Unescape colons in the 'FromPath' pattern
-		fromPath = unescapeColons(fromPath)
-
-		// Validate the 'FromPath' pattern
-		if err := validateFromPathPattern(fromPath, lineNum+1); err != nil {
+		// Non-regex rule parsing
+		rule, err := parseNonRegexRuleLine(line, lineNum+1)
+		if err != nil {
 			return nil, err
 		}
-
-		rule := RedirectRule{
-			FromPath:        fromPath,
-			FromParams:      fromParams,
-			To:              to,
-			StatusCode:      statusCode,
-			KeepQueryParams: keepQueryParams,
-		}
-
 		rules = append(rules, rule)
 	}
 
 	return rules, nil
+}
+
+var reParseRuleLine = regexp.MustCompile(`^regexp\s+"((?:\\.|[^"\\])*)"\s+"((?:\\.|[^"\\])*)"\s+(\w+)$`)
+
+// parseRegexRuleLine parses a regex-based redirect rule.
+func parseRegexRuleLine(line string, lineNum int) (RedirectRule, error) {
+	// Expected format: regexp "<pattern>" "<replacement>" status
+	// Use a regular expression to parse the line
+	matches := reParseRuleLine.FindStringSubmatch(line)
+	if matches == nil {
+		return RedirectRule{}, fmt.Errorf("invalid regex rule format on line %d: %q", lineNum, line)
+	}
+
+	patternStr := matches[1]
+	replacement := matches[2]
+	statusStr := matches[3]
+
+	// Unescape any escaped quotes and backslashes in the pattern and replacement
+	patternStr = unescapeString(patternStr)
+	replacement = unescapeString(replacement)
+
+	statusCode, err := parseStatusCode(statusStr)
+	if err != nil {
+		return RedirectRule{}, fmt.Errorf("invalid status code on line %d: %v", lineNum, err)
+	}
+
+	compiledPattern, err := regexp.Compile(patternStr)
+	if err != nil {
+		return RedirectRule{}, fmt.Errorf("invalid regex pattern on line %d: %v", lineNum, err)
+	}
+
+	// Validate that all placeholders in the replacement string correspond to capture groups
+	err = validateRegexPlaceholders(compiledPattern, replacement, lineNum)
+	if err != nil {
+		return RedirectRule{}, err
+	}
+
+	rule := RedirectRule{
+		IsRegex:      true,
+		RegexPattern: compiledPattern,
+		To:           replacement,
+		StatusCode:   statusCode,
+	}
+
+	return rule, nil
+}
+
+var rePlaceholder = regexp.MustCompile(`\$(\w+)`)
+
+// validateRegexPlaceholders checks that all placeholders in the replacement string correspond to capture groups.
+func validateRegexPlaceholders(pattern *regexp.Regexp, replacement string, lineNum int) error {
+	// Extract placeholders from the replacement string
+	placeholders := rePlaceholder.FindAllStringSubmatch(replacement, -1)
+
+	// Build a set of valid group names and indices
+	validGroups := make(map[string]struct{})
+	groupNames := pattern.SubexpNames()
+	for i, name := range groupNames {
+		if i == 0 {
+			continue // Skip the whole match
+		}
+		if name != "" {
+			validGroups[name] = struct{}{}
+		}
+		validGroups[fmt.Sprintf("%d", i)] = struct{}{} // Positional groups
+	}
+
+	// Validate each placeholder
+	for _, match := range placeholders {
+		placeholder := match[1] // The group name or index without the leading '$'
+		if _, ok := validGroups[placeholder]; !ok {
+			return fmt.Errorf("undefined placeholder \"$%s\" in replacement on line %d", placeholder, lineNum)
+		}
+	}
+
+	return nil
+}
+
+// parseNonRegexRuleLine parses a non-regex redirect rule.
+func parseNonRegexRuleLine(line string, lineNum int) (RedirectRule, error) {
+	// Split the line into parts
+	parts := strings.Fields(line)
+	if len(parts) != 3 {
+		return RedirectRule{}, fmt.Errorf("invalid redirect rule on line %d: %q", lineNum, line)
+	}
+
+	from, to, statusStr := parts[0], parts[1], parts[2]
+
+	statusCode, err := parseStatusCode(statusStr)
+	if err != nil {
+		return RedirectRule{}, fmt.Errorf("invalid status code on line %d: %v", lineNum, err)
+	}
+
+	keepQueryParams := false
+	// Check if the 'From' path ends with '?!'
+	if strings.HasSuffix(from, "?!") {
+		keepQueryParams = true
+		from = strings.TrimSuffix(from, "?!")
+	}
+
+	// Separate path and query parameters in the 'From' pattern
+	var fromPath string
+	fromParams := make(map[string]string)
+
+	if idx := strings.Index(from, "?"); idx != -1 {
+		fromPath = from[:idx]
+		queryStr := from[idx+1:]
+		fromParams, err = parseQueryParameters(queryStr)
+		if err != nil {
+			return RedirectRule{}, fmt.Errorf("invalid query parameters on line %d: %v", lineNum, err)
+		}
+	} else {
+		fromPath = from
+	}
+
+	// Unescape colons in the 'FromPath' pattern
+	fromPath = unescapeColons(fromPath)
+
+	// Validate the 'FromPath' pattern
+	if err := validateFromPathPattern(fromPath, lineNum); err != nil {
+		return RedirectRule{}, err
+	}
+
+	rule := RedirectRule{
+		FromPath:        fromPath,
+		FromParams:      fromParams,
+		To:              to,
+		StatusCode:      statusCode,
+		KeepQueryParams: keepQueryParams,
+	}
+
+	return rule, nil
+}
+
+// unescapeString unescapes backslashes and quotes in a string.
+func unescapeString(s string) string {
+	s = strings.ReplaceAll(s, `\"`, `"`)
+	s = strings.ReplaceAll(s, `\\`, `\`)
+	return s
 }
 
 // unescapeColons replaces escaped colons "\:" with colonPlaceholder.
@@ -189,6 +306,48 @@ func parseQueryParameters(queryStr string) (map[string]string, error) {
 		params[key] = value
 	}
 	return params, nil
+}
+
+// MatchRegex checks if the request URI matches the regex pattern and performs substitution.
+func (rule *RedirectRule) MatchRegex(requestURI string) (string, bool) {
+	if rule.RegexPattern == nil {
+		return "", false
+	}
+	matches := rule.RegexPattern.FindStringSubmatch(requestURI)
+	if matches == nil {
+		return "", false
+	}
+
+	// Build a map of group names to values
+	groupNames := rule.RegexPattern.SubexpNames()
+	groups := make(map[string]string)
+	for i, name := range groupNames {
+		if i == 0 {
+			continue // Skip the whole match
+		}
+		if name != "" {
+			groups[name] = matches[i]
+		}
+		groups[fmt.Sprintf("%d", i)] = matches[i] // Positional groups
+	}
+
+	// Perform custom replacement
+	destination := replacePlaceholders(rule.To, groups)
+	return destination, true
+}
+
+// replacePlaceholders replaces placeholders in the format $name or $1 with actual values from the groups map.
+func replacePlaceholders(template string, groups map[string]string) string {
+	// Regex to find placeholders like $1, $name
+	result := rePlaceholder.ReplaceAllStringFunc(template, func(m string) string {
+		key := m[1:] // Remove the leading $
+		if val, ok := groups[key]; ok {
+			return val
+		}
+		// If the key is not found, leave the placeholder as is
+		return m
+	})
+	return result
 }
 
 // Match checks if the request path and query parameters match the rule.
@@ -494,7 +653,7 @@ func validateFromPathPattern(fromPath string, lineNum int) error {
 		for idx := startIdx; idx < len(segment); idx++ {
 			c := segment[idx]
 			if c == ':' {
-				return fmt.Errorf("invalid use of \":\" in segment \"%s\" on line %d: \":\" can only be used at the beginning of a path section", strings.ReplaceAll(segment, colonPlaceholder, ":"), lineNum+1)
+				return fmt.Errorf("invalid use of \":\" in segment \"%s\" on line %d: \":\" can only be used at the beginning of a path section", strings.ReplaceAll(segment, colonPlaceholder, ":"), lineNum)
 			}
 		}
 	}
