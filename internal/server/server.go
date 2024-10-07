@@ -19,6 +19,7 @@ type Server struct {
 	BannerMarkdown       string `flagName:"banner" validate:"omitempty,max=1000"`
 	cachedBannerMarkdown string
 	LogOutput            io.Writer
+	DisableDirectoryList bool
 
 	// Basic auth settings
 	Username string `flagName:"username" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`

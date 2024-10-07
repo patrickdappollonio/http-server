@@ -77,6 +77,13 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		}
 	}
 
+	// Check if directory listing is disabled, if so,
+	// return here with a 404 error
+	if s.DisableDirectoryList {
+		httpError(http.StatusNotFound, w, "404 not found")
+		return
+	}
+
 	// Open the directory path and read all files
 	dir, err := os.Open(requestedPath)
 	if err != nil {
