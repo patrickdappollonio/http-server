@@ -21,6 +21,10 @@ type Server struct {
 	LogOutput            io.Writer
 	DisableDirectoryList bool
 
+	// Custom NOTFOUND setting
+	CustomNotFoundPage       string
+	CustomNotFoundStatusCode int
+
 	// Basic auth settings
 	Username string `flagName:"username" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
 	Password string `flagName:"password" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
