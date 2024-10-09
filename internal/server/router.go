@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 
@@ -15,6 +16,16 @@ import (
 
 func (s *Server) router() http.Handler {
 	r := chi.NewRouter()
+
+	if s.CustomNotFound != "" {
+		r.NotFound(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+			if _, err := os.Stat(s.CustomNotFound); err == nil {
+				s.serveFile(s.CustomNotFound, w, r)
+				return
+			}
+		}))
+	}
 
 	// Allow logging all request to our custom logger
 	r.Use(mw.LogRequest(s.LogOutput, logFormat, "token"))

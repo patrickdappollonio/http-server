@@ -20,6 +20,7 @@ type Server struct {
 	cachedBannerMarkdown string
 	LogOutput            io.Writer
 	DisableDirectoryList bool
+	CustomNotFound       string
 
 	// Basic auth settings
 	Username string `flagName:"username" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
