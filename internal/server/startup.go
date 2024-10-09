@@ -21,7 +21,7 @@ func (s *Server) PrintStartup() {
 	}
 
 	if s.CustomNotFoundPage != "" {
-		fmt.Fprintln(s.LogOutput, startupPrefix, "Custom 404 page set:", s.CustomNotFoundPage)
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Using custom 404 page:", s.CustomNotFoundPage)
 	}
 
 	if s.GzipEnabled {
