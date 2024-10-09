@@ -63,7 +63,7 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If the path is not a directory, then it's a file, so we can render it
-	s.serveFile(http.StatusOK, currentPath, w, r)
+	s.serveFile(0, currentPath, w, r)
 }
 
 func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	for _, index := range []string{"index.html", "index.htm"} {
 		indexPath := filepath.Join(requestedPath, index)
 		if _, err := os.Stat(indexPath); err == nil {
-			s.serveFile(http.StatusOK, indexPath, w, r)
+			s.serveFile(0, indexPath, w, r)
 			return
 		}
 	}
@@ -179,9 +179,16 @@ func (s *statusCodeHijacker) WriteHeader(code int) {
 
 // serveFile serves a file with the appropriate headers, including support
 // for ETag and Last-Modified headers, as well as range requests.
-func (s *Server) serveFile(statusCode int, fp string, w http.ResponseWriter, r *http.Request) {
-	f, err := os.Open(fp)
+// If the status code is not 0, the status code provided will be used
+// when serving the file in the given path.
+func (s *Server) serveFile(statusCode int, location string, w http.ResponseWriter, r *http.Request) {
+	f, err := os.Open(location)
 	if err != nil {
+		if os.IsNotExist(err) {
+			httpError(http.StatusNotFound, w, "404 not found")
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -194,7 +201,7 @@ func (s *Server) serveFile(statusCode int, fp string, w http.ResponseWriter, r *
 	}
 
 	var ctype string
-	if local := getContentTypeForFilename(filepath.Base(fp)); local != "" {
+	if local := getContentTypeForFilename(filepath.Base(location)); local != "" {
 		ctype = local
 	}
 
@@ -230,16 +237,19 @@ func (s *Server) serveFile(statusCode int, fp string, w http.ResponseWriter, r *
 		w.Header().Set("Content-Type", ctype)
 	}
 
-	// If the status code is not 200, we need to hijack the response writer
-	// to capture the status code that would have been sent.
-	hijacker := &statusCodeHijacker{ResponseWriter: w}
+	// Check if the caller changed the status code, if not, simply call
+	// the appropriate handler/
+	if statusCode == 0 {
+		http.ServeContent(w, r, fi.Name(), fi.ModTime(), f)
+		return
+	}
 
 	// Write the status code sent by the caller.
 	w.WriteHeader(statusCode)
 
 	// Call serve content with the hijacked response writer, which won't
 	// be able to overwrite the status code.
-	http.ServeContent(hijacker, r, fi.Name(), fi.ModTime(), f)
+	http.ServeContent(&statusCodeHijacker{ResponseWriter: w}, r, fi.Name(), fi.ModTime(), f)
 }
 
 // healthCheck is a simple health check endpoint that returns 200 OK
