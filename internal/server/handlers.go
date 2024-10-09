@@ -39,6 +39,10 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 		// of the app the full path to the given location
 		if os.IsNotExist(err) {
 			s.printWarning("attempted to access non-existent path: %s", currentPath)
+			if s.CustomNotFoundPage != "" {
+				s.serveFile(s.CustomNotFoundPage, w, r)
+				return
+			}
 			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}

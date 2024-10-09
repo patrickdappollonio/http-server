@@ -16,12 +16,6 @@ import (
 func (s *Server) router() http.Handler {
 	r := chi.NewRouter()
 
-	if s.CustomNotFoundPage != "" {
-		r.NotFound(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			s.serveFile(s.CustomNotFoundPage, w, r)
-		}))
-	}
-
 	// Allow logging all request to our custom logger
 	r.Use(mw.LogRequest(s.LogOutput, logFormat, "token"))
 
