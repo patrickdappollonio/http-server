@@ -40,7 +40,6 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 		if os.IsNotExist(err) {
 			s.printWarning("attempted to access non-existent path: %s", currentPath)
 			if s.CustomNotFoundPage != "" {
-				fmt.Fprintf(s.LogOutput, "%s %q -- custom %d \n", r.Method, r.RequestURI, http.StatusNotFound)
 				s.serveFile(s.CustomNotFoundPage, w, r)
 				return
 			}
