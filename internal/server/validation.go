@@ -40,8 +40,8 @@ func (s *Server) Validate() error {
 		}
 	}
 
-	if !(s.CustomNotFoundStatusCode >= 100 && s.CustomNotFoundStatusCode <= 511) {
-		return fmt.Errorf(" invalid custom not found status code: %d", s.CustomNotFoundStatusCode)
+	if s := http.StatusText(s.CustomNotFoundStatusCode); s == "" {
+		return fmt.Errorf("invalid custom not found status code: %d", s.CustomNotFoundStatusCode)
 	}
 
 	// If the error isn't empty, and its type is of ValidationError
