@@ -63,7 +63,7 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If the path is not a directory, then it's a file, so we can render it
-	s.serveFile(currentPath, w, r)
+	s.serveFile(http.StatusOK, currentPath, w, r)
 }
 
 func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	for _, index := range []string{"index.html", "index.htm"} {
 		indexPath := filepath.Join(requestedPath, index)
 		if _, err := os.Stat(indexPath); err == nil {
-			s.serveFile(indexPath, w, r)
+			s.serveFile(http.StatusOK, indexPath, w, r)
 			return
 		}
 	}
@@ -165,9 +165,27 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// statusCodeHijacker is a response writer that captures the status code
+// and the body of the response that would have been sent to the client.
+type statusCodeHijacker struct {
+	http.ResponseWriter
+	givenStatusCode int
+	body            bytes.Buffer
+}
+
+// WriteHeader captures the status code that would have been sent to the client.
+func (s *statusCodeHijacker) WriteHeader(code int) {
+	s.givenStatusCode = code
+}
+
+// Write captures the body that would have been sent to the client.
+func (s *statusCodeHijacker) Write(b []byte) (int, error) {
+	return s.body.Write(b)
+}
+
 // serveFile serves a file with the appropriate headers, including support
 // for ETag and Last-Modified headers, as well as range requests.
-func (s *Server) serveFile(fp string, w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveFile(statusCode int, fp string, w http.ResponseWriter, r *http.Request) {
 	f, err := os.Open(fp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -218,7 +236,25 @@ func (s *Server) serveFile(fp string, w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", ctype)
 	}
 
-	http.ServeContent(w, r, fi.Name(), fi.ModTime(), f)
+	// If the status code is 200, we can serve the content directly,
+	// without hijacking the response writer.
+	if statusCode == http.StatusOK || statusCode == 0 {
+		http.ServeContent(w, r, fi.Name(), fi.ModTime(), f)
+		return
+	}
+
+	// If the status code is not 200, we need to hijack the response writer
+	// to capture the status code that would have been sent.
+	hijacker := &statusCodeHijacker{ResponseWriter: w}
+
+	// Call serve content with the hijacked response writer.
+	http.ServeContent(hijacker, r, fi.Name(), fi.ModTime(), f)
+
+	// Write now the customized status code and the body that would have
+	// been sent to the client without the hijacking. The headers were
+	// not hijacked and were already sent.
+	w.WriteHeader(statusCode)
+	w.Write(hijacker.body.Bytes())
 }
 
 // healthCheck is a simple health check endpoint that returns 200 OK
