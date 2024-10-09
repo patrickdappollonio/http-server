@@ -20,6 +20,10 @@ func (s *Server) PrintStartup() {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Directory listing disabled (including markdown rendering)")
 	}
 
+	if s.CustomNotFoundPage != "" {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Custom 404 page set:", s.CustomNotFoundPage)
+	}
+
 	if s.GzipEnabled {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Gzip compression enabled for supported content types")
 	}

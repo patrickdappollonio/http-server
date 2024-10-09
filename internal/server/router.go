@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 
@@ -17,13 +16,9 @@ import (
 func (s *Server) router() http.Handler {
 	r := chi.NewRouter()
 
-	if s.CustomNotFound != "" {
+	if s.CustomNotFoundPage != "" {
 		r.NotFound(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
-			if _, err := os.Stat(s.CustomNotFound); err == nil {
-				s.serveFile(s.CustomNotFound, w, r)
-				return
-			}
+			s.serveFile(s.CustomNotFoundPage, w, r)
 		}))
 	}
 

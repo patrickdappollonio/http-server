@@ -1,7 +1,9 @@
 package server
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 
@@ -27,6 +29,12 @@ func (s *Server) Validate() error {
 	// Attempt to validate the structure, and grab the errors
 	err := valid.Struct(s)
 	valerrs, ok := err.(validator.ValidationErrors)
+
+	if s.CustomNotFoundPage != "" {
+		if _, err := os.Stat(s.CustomNotFoundPage); errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
 
 	// If the error isn't empty, and its type is of ValidationError
 	// we can provide a better error message for its validation process
