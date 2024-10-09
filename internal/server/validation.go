@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
 	"regexp"
@@ -26,23 +27,30 @@ func (s *Server) Validate() error {
 		return fld.Tag.Get("flagName")
 	})
 
-	// Attempt to validate the structure, and grab the errors
-	err := valid.Struct(s)
-	valerrs, ok := err.(validator.ValidationErrors)
+	// Check that the status code is set only if the status page was also set
+	if s.CustomNotFoundStatusCode != 0 && s.CustomNotFoundPage == "" {
+		return errors.New("unable to set custom 404 status code if no custom page was set")
+	}
 
+	// Validate custom 404 page
 	if s.CustomNotFoundPage != "" {
 		if _, err := os.Stat(s.CustomNotFoundPage); err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return fmt.Errorf("custom not found file %q does not exist", s.CustomNotFoundPage)
 			}
 
-			return err
+			return fmt.Errorf("unable to process custom 404 page at %q: %w", s.CustomNotFoundPage, err)
 		}
 	}
 
-	if s := http.StatusText(s.CustomNotFoundStatusCode); s == "" {
-		return fmt.Errorf("invalid custom not found status code: %d", s.CustomNotFoundStatusCode)
+	// Validate custom not found status code if one was set
+	if str := http.StatusText(s.CustomNotFoundStatusCode); s.CustomNotFoundStatusCode != 0 && str == "" {
+		return fmt.Errorf("unsupported custom not found status code: %d", s.CustomNotFoundStatusCode)
 	}
+
+	// Attempt to validate the structure, and grab the errors
+	err := valid.Struct(s)
+	valerrs, ok := err.(validator.ValidationErrors)
 
 	// If the error isn't empty, and its type is of ValidationError
 	// we can provide a better error message for its validation process

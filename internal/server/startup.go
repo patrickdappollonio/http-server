@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 )
 
 const startupPrefix = " >"
@@ -22,6 +23,10 @@ func (s *Server) PrintStartup() {
 
 	if s.CustomNotFoundPage != "" {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Using custom 404 page:", s.CustomNotFoundPage)
+	}
+
+	if s.CustomNotFoundStatusCode != 0 {
+		fmt.Fprintf(s.LogOutput, "%s Using custom 404 status code: \"%d %s\"\n", startupPrefix, s.CustomNotFoundStatusCode, http.StatusText(s.CustomNotFoundStatusCode))
 	}
 
 	if s.GzipEnabled {
