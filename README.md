@@ -52,28 +52,28 @@ Usage:
   http-server [flags]
 
 Flags:
-      --banner string                      markdown text to be rendered at the top of the directory listing page
-      --cors                               enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
-      --custom-not-found-page string       custom "page not found" to serve
-      --custom-not-found-status-code int   custtom status code for pages not found (default 404)
-      --disable-cache-buster               disable the cache buster for assets from the directory listing feature
-      --disable-directory-listing          disable the directory listing feature and return 404s for directories without index
-      --disable-etag                       disable ETag header generation
-      --disable-markdown                   disable the markdown rendering feature
-      --disable-redirects                  disable redirection file handling
-      --ensure-unexpired-jwt               enable time validation for JWT claims "exp" and "nbf"
-      --gzip                               enable gzip compression for supported content-types
-  -h, --help                               help for http-server
-      --hide-links                         hide the links to this project's source code visible in the header and footer
-      --jwt-key string                     signing key for JWT authentication
-      --markdown-before-dir                render markdown content before the directory listing
-      --password string                    password for basic authentication
-  -d, --path string                        path to the directory you want to serve (default "./")
-      --pathprefix string                  path prefix for the URL where the server will listen on (default "/")
-  -p, --port int                           port to configure the server to listen on (default 5000)
-      --title string                       title of the directory listing page
-      --username string                    username for basic authentication
-  -v, --version                            version for http-server
+      --banner string               markdown text to be rendered at the top of the directory listing page
+      --cors                        enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
+      --custom-404 string           custom "page not found" to serve
+      --custom-404-code int         custtom status code for pages not found
+      --disable-cache-buster        disable the cache buster for assets from the directory listing feature
+      --disable-directory-listing   disable the directory listing feature and return 404s for directories without index
+      --disable-etag                disable ETag header generation
+      --disable-markdown            disable the markdown rendering feature
+      --disable-redirects           disable redirection file handling
+      --ensure-unexpired-jwt        enable time validation for JWT claims "exp" and "nbf"
+      --gzip                        enable gzip compression for supported content-types
+  -h, --help                        help for http-server
+      --hide-links                  hide the links to this project's source code visible in the header and footer
+      --jwt-key string              signing key for JWT authentication
+      --markdown-before-dir         render markdown content before the directory listing
+      --password string             password for basic authentication
+  -d, --path string                 path to the directory you want to serve (default "./")
+      --pathprefix string           path prefix for the URL where the server will listen on (default "/")
+  -p, --port int                    port to configure the server to listen on (default 5000)
+      --title string                title of the directory listing page
+      --username string             username for basic authentication
+  -v, --version                     version for http-server
 ```
 
 ### Detailed configuration
