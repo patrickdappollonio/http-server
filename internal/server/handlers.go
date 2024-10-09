@@ -40,10 +40,10 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 		if os.IsNotExist(err) {
 			s.printWarning("attempted to access non-existent path: %s", currentPath)
 			if s.CustomNotFoundPage != "" {
-				s.serveFile(s.CustomNotFoundPage, w, r)
+				s.serveFile(s.CustomNotFoundStatusCode, s.CustomNotFoundPage, w, r)
 				return
 			}
-			httpError(http.StatusNotFound, w, "404 not found")
+			httpError(s.CustomNotFoundStatusCode, w, "404 not found")
 			return
 		}
 
@@ -84,7 +84,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// Check if directory listing is disabled, if so,
 	// return here with a 404 error
 	if s.DisableDirectoryList {
-		httpError(http.StatusNotFound, w, "404 not found")
+		httpError(s.CustomNotFoundStatusCode, w, "404 not found")
 		return
 	}
 
@@ -94,7 +94,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		// If the directory doesn't exist, render an appropriate message
 		if os.IsNotExist(err) {
 			s.printWarning("attempted to access non-existent path: %s", requestedPath)
-			httpError(http.StatusNotFound, w, "404 not found")
+			httpError(s.CustomNotFoundStatusCode, w, "404 not found")
 			return
 		}
 
@@ -189,7 +189,7 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	f, err := os.Open(location)
 	if err != nil {
 		if os.IsNotExist(err) {
-			httpError(http.StatusNotFound, w, "404 not found")
+			httpError(s.CustomNotFoundStatusCode, w, "404 not found")
 			return
 		}
 

@@ -35,9 +35,13 @@ func (s *Server) Validate() error {
 			if errors.Is(err, os.ErrNotExist) {
 				return fmt.Errorf("custom not found file %q does not exist", s.CustomNotFoundPage)
 			}
-			
+
 			return err
 		}
+	}
+
+	if !(s.CustomNotFoundStatusCode >= 100 && s.CustomNotFoundStatusCode <= 511) {
+		return fmt.Errorf(" invalid custom not found status code: %d", s.CustomNotFoundStatusCode)
 	}
 
 	// If the error isn't empty, and its type is of ValidationError

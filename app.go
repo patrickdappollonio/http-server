@@ -110,7 +110,8 @@ func run() error {
 	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
 	flags.BoolVar(&server.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
 	flags.BoolVar(&server.DisableDirectoryList, "disable-directory-listing", false, "disable the directory listing feature and return 404s for directories without index")
-	flags.StringVar(&server.CustomNotFoundPage, "custom-not-found-page", "", "custom 404 page to display")
+	flags.StringVar(&server.CustomNotFoundPage, "custom-not-found-page", "", "custom \"page not found\" to serve")
+	flags.IntVarP(&server.CustomNotFoundStatusCode, "custom-not-found-status-code", "", 404, "custtom status code for pages not found")
 
 	return rootCmd.Execute()
 }

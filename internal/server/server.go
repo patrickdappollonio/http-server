@@ -20,7 +20,10 @@ type Server struct {
 	cachedBannerMarkdown string
 	LogOutput            io.Writer
 	DisableDirectoryList bool
-	CustomNotFoundPage   string
+
+	// Custom NOTFOUND setting
+	CustomNotFoundPage       string
+	CustomNotFoundStatusCode int
 
 	// Basic auth settings
 	Username string `flagName:"username" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
