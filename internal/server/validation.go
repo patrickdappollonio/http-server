@@ -31,7 +31,11 @@ func (s *Server) Validate() error {
 	valerrs, ok := err.(validator.ValidationErrors)
 
 	if s.CustomNotFoundPage != "" {
-		if _, err := os.Stat(s.CustomNotFoundPage); errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(s.CustomNotFoundPage); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return fmt.Errorf("custom not found file %q does not exist", s.CustomNotFoundPage)
+			}
+			
 			return err
 		}
 	}
