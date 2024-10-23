@@ -33,6 +33,8 @@ type Server struct {
 	CorsEnabled        bool
 	HideLinks          bool
 	ETagDisabled       bool
+	ETagMaxSize        string
+	etagMaxSizeBytes   int64
 	GzipEnabled        bool
 	DisableCacheBuster bool
 	DisableMarkdown    bool

@@ -3,94 +3,163 @@ package mw
 import (
 	"bytes"
 	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"hash"
+	"io"
 	"net/http"
 	"sync"
 )
 
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
-
-type etagResponseWriter struct {
-	hash    hash.Hash
-	headers map[string][]string
-	buf     *bytes.Buffer
-	status  int
-}
-
-// Header returns the header map that will be sent by WriteHeader
-func (e *etagResponseWriter) Header() http.Header {
-	return e.headers
-}
-
-// WriteHeader sends an HTTP response header with the provided status code
-func (e *etagResponseWriter) WriteHeader(status int) {
-	e.status = status
-}
-
-// Write writes the data to the connection as part of an HTTP reply
-func (e *etagResponseWriter) Write(p []byte) (int, error) {
-	// In Go, a call to Write will always
-	// set the status code to 200 if it's not set
-	if e.status == 0 {
-		e.status = http.StatusOK
+// Etag returns a middleware that generates an ETag for responses
+// with a body size less than or equal to maxBodySize. If 'enabled' is false,
+// it simply returns the next handler without wrapping it.
+func Etag(enabled bool, maxBodySize int64) func(http.Handler) http.Handler {
+	if !enabled {
+		// Middleware is disabled; return the next handler as-is.
+		return func(next http.Handler) http.Handler {
+			return next
+		}
 	}
 
-	// Write the data to the hash for ETag calculation
-	e.hash.Write(p)
+	bufferPool := sync.Pool{
+		New: func() interface{} {
+			return new(bytes.Buffer)
+		},
+	}
 
-	// Write the data to the actual response writer
-	return e.buf.Write(p)
-}
+	hashPool := sync.Pool{
+		New: func() interface{} {
+			return sha1.New()
+		},
+	}
 
-// Etag middleware
-func Etag(enabled bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !enabled {
-				next.ServeHTTP(w, r)
-				return
+			// Get a buffer and hasher from the pools.
+			buf := bufferPool.Get().(*bytes.Buffer)
+			buf.Reset()
+			defer bufferPool.Put(buf)
+
+			hasher := hashPool.Get().(hash.Hash)
+			hasher.Reset()
+			defer hashPool.Put(hasher)
+
+			// Wrap the ResponseWriter.
+			rw := &etagResponseWriter{
+				ResponseWriter: w,
+				buf:            buf,
+				hasher:         hasher,
+				maxSize:        maxBodySize,
+				headers:        w.Header(),
+				statusCode:     0, // Indicates no status code has been set yet
 			}
 
-			buf := bufPool.Get().(*bytes.Buffer)
-			defer func() {
-				buf.Reset()
-				bufPool.Put(buf)
-			}()
+			next.ServeHTTP(rw, r)
 
-			alternateWriter := &etagResponseWriter{
-				headers: http.Header{},
-				buf:     buf,
-				hash:    sha1.New(),
-			}
-
-			// Call the next handler and stream the data while hashing
-			next.ServeHTTP(alternateWriter, r)
-
-			// If the status is in the range of 200-399, calculate ETag
-			if alternateWriter.status >= http.StatusOK && alternateWriter.status < http.StatusBadRequest {
-				etag := fmt.Sprintf("%q", hex.EncodeToString(alternateWriter.hash.Sum(nil)))
-				alternateWriter.Header().Set("Etag", etag)
-
-				// Check if the ETag matches the client request
-				if r.Header.Get("If-None-Match") == etag {
-					alternateWriter.WriteHeader(http.StatusNotModified)
+			// If headers have not been written yet, proceed
+			if !rw.headerWritten {
+				// Ensure the status code is set
+				if rw.statusCode == 0 {
+					rw.statusCode = http.StatusOK
 				}
-			}
 
-			// Pass the response to the actual response writer
-			for key, vals := range alternateWriter.headers {
-				for _, val := range vals {
-					w.Header().Add(key, val)
+				// Only proceed if the response was fully buffered and status code is in the 200 range.
+				if rw.size <= rw.maxSize && rw.err == nil && rw.statusCode >= 200 && rw.statusCode < 300 {
+					// Compute the ETag.
+					etag := fmt.Sprintf("\"%x\"", hasher.Sum(nil))
+					// Set the ETag header.
+					rw.headers.Set("ETag", etag)
+
+					// Check If-None-Match header.
+					if match := r.Header.Get("If-None-Match"); match != "" && match == etag {
+						// Return 304 Not Modified.
+						rw.statusCode = http.StatusNotModified
+						rw.headers.Del("Content-Type")
+						rw.headers.Del("Content-Length")
+						rw.writeHeader()
+						return
+					}
 				}
+
+				// Write headers and buffered response.
+				rw.writeHeader()
+				_, _ = io.Copy(w, buf)
 			}
-			w.WriteHeader(alternateWriter.status)
-			w.Write(alternateWriter.buf.Bytes())
+			// For responses where headers have already been written, we do not alter the response.
 		})
+	}
+}
+
+// etagResponseWriter wraps http.ResponseWriter to compute the SHA1 hash
+// of the response body up to a maximum size.
+type etagResponseWriter struct {
+	http.ResponseWriter
+	buf           *bytes.Buffer
+	hasher        hash.Hash
+	size          int64
+	maxSize       int64
+	statusCode    int
+	headers       http.Header
+	headerWritten bool
+	err           error
+}
+
+// WriteHeader implements the http.ResponseWriter interface.
+func (w *etagResponseWriter) WriteHeader(statusCode int) {
+	if !w.headerWritten {
+		w.statusCode = statusCode
+	}
+}
+
+// writeHeader writes the headers to the underlying ResponseWriter.
+func (w *etagResponseWriter) writeHeader() {
+	if !w.headerWritten {
+		w.ResponseWriter.WriteHeader(w.statusCode)
+		w.headerWritten = true
+	}
+}
+
+// Write implements the http.ResponseWriter interface.
+func (w *etagResponseWriter) Write(p []byte) (int, error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+
+	n := len(p)
+	w.size += int64(n)
+
+	if w.size <= w.maxSize && !w.headerWritten {
+		// Buffer the data.
+		_, err := w.buf.Write(p)
+		if err != nil {
+			w.err = err
+			return 0, err
+		}
+		// Update the hash.
+		_, err = w.hasher.Write(p)
+		if err != nil {
+			w.err = err
+			return 0, err
+		}
+		return n, nil
+	} else {
+		// If headers have not been written yet, write them now.
+		if !w.headerWritten {
+			if w.statusCode == 0 {
+				w.statusCode = http.StatusOK
+			}
+			w.writeHeader()
+			// Write any buffered data.
+			if w.buf.Len() > 0 {
+				_, err := w.ResponseWriter.Write(w.buf.Bytes())
+				if err != nil {
+					w.err = err
+					return 0, err
+				}
+				w.buf.Reset()
+			}
+		}
+		// Write the current data directly.
+		return w.ResponseWriter.Write(p)
 	}
 }

@@ -47,8 +47,10 @@ func (s *Server) router() http.Handler {
 		)
 	}
 
-	// Enable etag support
-	r.Use(mw.Etag(!s.ETagDisabled))
+	// Enable etag support for files smaller than
+	// 10 MB, and only if the feature is enabled
+	maxBodySize := s.etagMaxSizeBytes
+	r.Use(mw.Etag(!s.ETagDisabled, maxBodySize))
 
 	// Check if gzip is enabled
 	if s.GzipEnabled {

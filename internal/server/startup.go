@@ -35,6 +35,8 @@ func (s *Server) PrintStartup() {
 
 	if s.ETagDisabled {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "ETag headers disabled")
+	} else {
+		fmt.Fprintf(s.LogOutput, "%s ETag headers enabled for files smaller than %s\n", startupPrefix, s.ETagMaxSize)
 	}
 
 	if s.CorsEnabled {
