@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/patrickdappollonio/http-server/internal/utils"
 )
 
 const warnPrefix = "[WARNING] >>> "
@@ -17,7 +18,7 @@ const warnPrefix = "[WARNING] >>> "
 // if the fields are valid per those rules
 func (s *Server) Validate() error {
 	// Create a custom validator
-	var valid = validator.New()
+	valid := validator.New()
 
 	// Add custom validation rules
 	valid.RegisterValidation("ispathprefix", validateIsPathPrefix)
@@ -46,6 +47,18 @@ func (s *Server) Validate() error {
 	// Validate custom not found status code if one was set
 	if str := http.StatusText(s.CustomNotFoundStatusCode); s.CustomNotFoundStatusCode != 0 && str == "" {
 		return fmt.Errorf("unsupported custom not found status code: %d", s.CustomNotFoundStatusCode)
+	}
+
+	// Validate max size for ETag
+	if s.ETagMaxSize == "" {
+		return errors.New("etag max size is required: set it with --etag-max-size")
+	} else {
+		size, err := utils.ParseSize(s.ETagMaxSize)
+		if err != nil {
+			return fmt.Errorf("unable to parse ETag max size: %w", err)
+		}
+
+		s.etagMaxSizeBytes = size
 	}
 
 	// Attempt to validate the structure, and grab the errors
