@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	_ "go.uber.org/automaxprocs"
 )
 
 func main() {
