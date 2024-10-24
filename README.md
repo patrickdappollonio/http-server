@@ -54,12 +54,15 @@ Usage:
 Flags:
       --banner string               markdown text to be rendered at the top of the directory listing page
       --cors                        enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
+      --custom-404 string           custom "page not found" to serve
+      --custom-404-code int         custtom status code for pages not found
       --disable-cache-buster        disable the cache buster for assets from the directory listing feature
       --disable-directory-listing   disable the directory listing feature and return 404s for directories without index
-      --disable-etag                disable ETag header generation
+      --disable-etag                disable etag header generation
       --disable-markdown            disable the markdown rendering feature
       --disable-redirects           disable redirection file handling
       --ensure-unexpired-jwt        enable time validation for JWT claims "exp" and "nbf"
+      --etag-max-size string        maximum size for etag header generation, where bigger size = more memory usage (default "5M")
       --gzip                        enable gzip compression for supported content-types
   -h, --help                        help for http-server
       --hide-links                  hide the links to this project's source code visible in the header and footer

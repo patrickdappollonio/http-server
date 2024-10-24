@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 )
 
 const startupPrefix = " >"
@@ -20,12 +21,22 @@ func (s *Server) PrintStartup() {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Directory listing disabled (including markdown rendering)")
 	}
 
+	if s.CustomNotFoundPage != "" {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Using custom 404 page:", s.CustomNotFoundPage)
+	}
+
+	if s.CustomNotFoundStatusCode != 0 {
+		fmt.Fprintf(s.LogOutput, "%s Using custom 404 status code: \"%d %s\"\n", startupPrefix, s.CustomNotFoundStatusCode, http.StatusText(s.CustomNotFoundStatusCode))
+	}
+
 	if s.GzipEnabled {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Gzip compression enabled for supported content types")
 	}
 
 	if s.ETagDisabled {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "ETag headers disabled")
+	} else {
+		fmt.Fprintf(s.LogOutput, "%s ETag headers enabled for files smaller than %s\n", startupPrefix, s.ETagMaxSize)
 	}
 
 	if s.CorsEnabled {
@@ -65,9 +76,7 @@ func (s *Server) PrintStartup() {
 	}
 
 	if !s.DisableRedirects {
-		if s.redirects == nil {
-			fmt.Fprintf(s.LogOutput, "%s Redirections enabled but no redirections found in %q\n", startupPrefix, s.getPathToRedirectionsFile())
-		} else {
+		if s.redirects != nil {
 			fmt.Fprintf(s.LogOutput, "%s Redirections enabled from %q (found %d redirections)\n", startupPrefix, s.getPathToRedirectionsFile(), len(s.redirects.Rules))
 		}
 	}

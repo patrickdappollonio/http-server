@@ -106,10 +106,13 @@ func run() error {
 	flags.StringVar(&server.JWTSigningKey, "jwt-key", "", "signing key for JWT authentication")
 	flags.BoolVar(&server.ValidateTimedJWT, "ensure-unexpired-jwt", false, "enable time validation for JWT claims \"exp\" and \"nbf\"")
 	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
-	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable ETag header generation")
+	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable etag header generation")
+	flags.StringVar(&server.ETagMaxSize, "etag-max-size", "5M", "maximum size for etag header generation, where bigger size = more memory usage")
 	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
 	flags.BoolVar(&server.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
 	flags.BoolVar(&server.DisableDirectoryList, "disable-directory-listing", false, "disable the directory listing feature and return 404s for directories without index")
+	flags.StringVar(&server.CustomNotFoundPage, "custom-404", "", "custom \"page not found\" to serve")
+	flags.IntVar(&server.CustomNotFoundStatusCode, "custom-404-code", 0, "custtom status code for pages not found")
 
 	return rootCmd.Execute()
 }
