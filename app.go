@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.uber.org/automaxprocs/maxprocs"
 )
 
 const (
@@ -29,6 +30,13 @@ func run() error {
 
 	// Create a logger
 	logger := log.New(os.Stdout, "", log.LstdFlags)
+
+	// Configure max processes
+	undoFn, err := maxprocs.Set()
+	if err != nil {
+		logger.Printf("Unable to set max procs: %s -- will continue without setting them", err)
+		undoFn()
+	}
 
 	// Create a piped reader/writer for logging
 	// then intercept logging statements as they
