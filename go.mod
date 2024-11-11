@@ -13,6 +13,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/yuin/goldmark v1.7.8
 	go.abhg.dev/goldmark/mermaid v0.5.0
+	go.uber.org/automaxprocs v1.6.0
 )
 
 require (
