@@ -41,6 +41,14 @@ There are three ways to configure the container:
 
 You can download the latest version from the [Releases page](https://github.com/patrickdappollonio/http-server/releases).
 
+### Homebrew
+
+You can also install the app using Homebrew. A Homebrew tap is available with the latest version:
+
+```bash
+brew install patrickdappollonio/tap/http-server
+```
+
 #### Usage options
 
 The following options are available.
