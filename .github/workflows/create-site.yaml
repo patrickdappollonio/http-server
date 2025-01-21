@@ -1,4 +1,4 @@
-name: Creating a website copy for Demo purposes
+name: Creating a browsable copy
 on:
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
         with:
           repo: patrickdappollonio/http-server
           platform: linux
-          arch: amd64
+          arch: x86_64
 
       - name: Run http-server and create a copy of the website
         run: |
