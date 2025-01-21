@@ -1,0 +1,39 @@
+name: Creating a website copy for Demo purposes
+on:
+  workflow_dispatch:
+
+permissions:
+  pages: write
+
+jobs:
+  test-app:
+    name: Build site bundle
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up http-server
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: patrickdappollonio/http-server
+          platform: linux
+          arch: amd64
+
+      - name: Run http-server and create a copy of the website
+        run: |
+          mkdir output
+          http-server -p 8080 &
+          sleep 5
+          cd output && wget -k -E -r -l 100 -p -N -F --restrict-file-names=windows -nH http://localhost:8080/
+          killall http-server
+
+      - name: Upload artifacts to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./output
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
