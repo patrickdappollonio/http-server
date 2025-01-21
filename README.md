@@ -14,7 +14,7 @@
 
 The app is available both as a standalone binary and as a Docker container image.
 
-For an example site built with `http-server`, check the demo page: [https://patrickdappollonio.github.io/http-server-testing-page/](https://patrickdappollonio.github.io/http-server-testing-page/). The [repository for the demo page](https://github.com/patrickdappollonio/http-server-testing-page) contains the folder being served.
+For an example site built with `http-server`, check the demo page: [`https://patrickdappollonio.github.io/http-server-testing-page/`](https://patrickdappollonio.github.io/http-server-testing-page/). The [repository for the demo page](https://github.com/patrickdappollonio/http-server-testing-page) contains the folder being served.
 
 ### Docker image
 
