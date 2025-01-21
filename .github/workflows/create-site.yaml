@@ -26,9 +26,10 @@ jobs:
         run: |
           mkdir output
           http-server -p 8080 &
+          SERVER_PID=$!
           sleep 5
           cd output && wget -k -E -r -l 100 -p -N -F --restrict-file-names=windows -nH http://localhost:8080/
-          killall http-server
+          kill $SERVER_PID
 
       - name: Upload artifacts to GitHub Pages
         uses: actions/upload-pages-artifact@v3
