@@ -55,13 +55,13 @@ func (e *Engine) Middleware(logger io.Writer) func(http.Handler) http.Handler {
 	}
 }
 
-var ErrNoMatchingRule = fmt.Errorf("no matching rule")
+var ErrNoMatchingRule = errors.New("no matching rule")
 
 // DereferenceDestination returns the destination URL and status code for a given request URI.
 func (e *Engine) DereferenceDestination(requestURI string) (string, int, error) {
 	u, err := url.ParseRequestURI(requestURI)
 	if err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("invalid request URI %q: %w", requestURI, err)
 	}
 
 	for _, rule := range e.Rules {
@@ -79,7 +79,7 @@ func (e *Engine) DereferenceDestination(requestURI string) (string, int, error) 
 // parseRedirectRules parses the redirect file content into a slice of RedirectRule structs.
 func parseRedirectRules(content string) ([]RedirectRule, error) {
 	lines := strings.Split(content, "\n")
-	var rules []RedirectRule
+	rules := make([]RedirectRule, 0, len(lines))
 
 	for lineNum, line := range lines {
 		line = strings.TrimSpace(line)
@@ -103,7 +103,7 @@ func parseRedirectRules(content string) ([]RedirectRule, error) {
 
 		statusCode, err := parseStatusCode(statusStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid status code on line %d: %v", lineNum+1, err)
+			return nil, fmt.Errorf("invalid status code on line %d: %w", lineNum+1, err)
 		}
 
 		keepQueryParams := false
@@ -120,10 +120,7 @@ func parseRedirectRules(content string) ([]RedirectRule, error) {
 		if idx := strings.Index(from, "?"); idx != -1 {
 			fromPath = from[:idx]
 			queryStr := from[idx+1:]
-			fromParams, err = parseQueryParameters(queryStr)
-			if err != nil {
-				return nil, fmt.Errorf("invalid query parameters on line %d: %v", lineNum+1, err)
-			}
+			fromParams = parseQueryParameters(queryStr)
 		} else {
 			fromPath = from
 		}
@@ -170,29 +167,32 @@ func parseStatusCode(s string) (int, error) {
 }
 
 // parseQueryParameters parses query parameters into a map.
-func parseQueryParameters(queryStr string) (map[string]string, error) {
+func parseQueryParameters(queryStr string) map[string]string {
 	params := make(map[string]string)
 	pairs := strings.Split(queryStr, "&")
 	for _, pair := range pairs {
 		if pair == "" {
 			continue
 		}
+
 		keyValue := strings.SplitN(pair, "=", 2)
-		key, value := "", ""
-		key = keyValue[0]
+		key := keyValue[0]
+		value := ""
+
 		if len(keyValue) > 1 {
 			value = keyValue[1]
 		}
+
 		// Unescape colons in key and value
 		key = unescapeColons(key)
 		value = unescapeColons(value)
 		params[key] = value
 	}
-	return params, nil
+	return params
 }
 
 // Match checks if the request path and query parameters match the rule.
-func (rule *RedirectRule) Match(requestPath string, requestRawQuery string) (map[string]string, bool) {
+func (rule *RedirectRule) Match(requestPath, requestRawQuery string) (map[string]string, bool) {
 	params := make(map[string]string)
 
 	// Match the path
@@ -231,20 +231,26 @@ func pathMatch(pattern, path string, params map[string]string) bool {
 		patternSegment = strings.ReplaceAll(patternSegment, colonPlaceholder, ":")
 		pathSegment = strings.ReplaceAll(pathSegment, colonPlaceholder, ":")
 
-		if patternSegment == "*" {
+		switch {
+		case patternSegment == "*":
 			// Splat matches the rest of the path
 			params["splat"] = strings.Join(pathSegments[j:], "/")
 			return true
-		} else if strings.HasPrefix(patternSegment, ":") {
+
+		case strings.HasPrefix(patternSegment, ":"):
 			paramName := patternSegment[1:]
-			if paramName == "splat" && i == len(patternSegments)-1 {
+
+			switch {
+			case paramName == "splat" && i == len(patternSegments)-1:
 				// ':splat' at the end captures the rest of the path
 				params["splat"] = strings.Join(pathSegments[j:], "/")
 				return true
-			} else if paramName == "splat" {
+
+			case paramName == "splat":
 				// ':splat' used not at the end (should have been caught during parsing)
 				return false
-			} else {
+
+			default:
 				// Regular placeholder
 				if pathSegment == "" {
 					// Do not match empty segments to parameters
@@ -252,12 +258,15 @@ func pathMatch(pattern, path string, params map[string]string) bool {
 				}
 				params[paramName] = pathSegment
 			}
-		} else if patternSegment == pathSegment {
+
+		case patternSegment == pathSegment:
 			// Exact match
-		} else {
+
+		default:
 			// No match
 			return false
 		}
+
 		i++
 		j++
 	}
@@ -274,15 +283,20 @@ func splitPathSegments(path string) []string {
 
 	for i := 0; i < len(path); i++ {
 		c := path[i]
-		if escaped {
+
+		switch {
+		case escaped:
 			segment.WriteByte(c)
 			escaped = false
-		} else if c == '\\' {
+
+		case c == '\\':
 			escaped = true
-		} else if c == '/' {
+
+		case c == '/':
 			segments = append(segments, segment.String())
 			segment.Reset()
-		} else {
+
+		default:
 			segment.WriteByte(c)
 		}
 	}
@@ -310,11 +324,9 @@ func queryParamsMatch(ruleParams map[string]string, requestQueryParams url.Value
 			// Placeholder, extract value
 			paramName := ruleValue[1:]
 			params[paramName] = requestValue
-		} else {
+		} else if requestValue != ruleValue {
 			// Literal value, compare
-			if requestValue != ruleValue {
-				return false
-			}
+			return false
 		}
 	}
 	return true
@@ -368,8 +380,7 @@ func (rule *RedirectRule) buildDestination(params map[string]string, requestRawQ
 		}
 
 		// Build final query string
-		allQueryParams := append(destQueryParams, additionalQueryParams...)
-		queryString := encodeQueryParams(allQueryParams)
+		queryString := encodeQueryParams(append(destQueryParams, additionalQueryParams...))
 
 		// Rebuild destination URL
 		destURL.RawQuery = queryString
@@ -422,18 +433,21 @@ type QueryParam struct {
 
 // parseQueryParamsPreserveOrder parses query parameters, preserving their order.
 func parseQueryParamsPreserveOrder(rawQuery string) []QueryParam {
-	var params []QueryParam
 	if rawQuery == "" {
-		return params
+		return nil
 	}
 	pairs := strings.Split(rawQuery, "&")
+	params := make([]QueryParam, 0, len(pairs))
+
 	for _, pair := range pairs {
 		if pair == "" {
 			continue
 		}
 		keyValue := strings.SplitN(pair, "=", 2)
-		key, value := "", ""
-		key = keyValue[0]
+
+		key := keyValue[0]
+		value := ""
+
 		if len(keyValue) > 1 {
 			value = keyValue[1]
 		}

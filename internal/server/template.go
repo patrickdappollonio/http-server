@@ -24,7 +24,7 @@ func (s *Server) generateTemplates() (*template.Template, error) {
 		"canonicalURL":   utils.CanonicalURL,
 		"getIconForFile": getIconForFile,
 		"unsafeHTML":     func(s string) template.HTML { return template.HTML(s) },
-		"default":        utils.DefaultValue,
+		"default":        utils.DefaultValue[any],
 		"serverVersion":  func() string { return s.version },
 		"bannerMessage":  s.generateBannerMarkdown,
 	}

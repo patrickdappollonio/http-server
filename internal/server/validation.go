@@ -62,38 +62,40 @@ func (s *Server) Validate() error {
 	// Validate max size for ETag
 	if s.ETagMaxSize == "" {
 		return errors.New("etag max size is required: set it with --etag-max-size")
-	} else {
-		size, err := utils.ParseSize(s.ETagMaxSize)
-		if err != nil {
-			return fmt.Errorf("unable to parse ETag max size: %w", err)
-		}
-
-		s.etagMaxSizeBytes = size
 	}
+
+	size, err := utils.ParseSize(s.ETagMaxSize)
+	if err != nil {
+		return fmt.Errorf("unable to parse ETag max size: %w", err)
+	}
+
+	s.etagMaxSizeBytes = size
 
 	// Attempt to validate the structure, and grab the errors
-	err := getValidator().Struct(s)
+	if err := getValidator().Struct(s); err != nil {
+		// If the error isn't empty, and its type is of ValidationError
+		// we can provide a better error message for its validation process
+		var valerrs validator.ValidationErrors
+		if errors.As(err, &valerrs) {
+			var merrs MultiError
 
-	// If the error isn't empty, and its type is of ValidationError
-	// we can provide a better error message for its validation process
-	var valerrs validator.ValidationErrors
-	if errors.As(err, &valerrs) {
-		var merrs MultiError
+			for _, e := range valerrs {
+				// Convert the error to a human-readable error
+				merrs.Append(FieldToValidationError(e))
+			}
 
-		for _, e := range valerrs {
-			// Convert the error to a human-readable error
-			merrs.Append(FieldToValidationError(e))
+			return &merrs
 		}
 
-		return &merrs
+		// If the error type is unknown or there's no error
+		// return the error as-is
+		return fmt.Errorf("unable to validate configuration: %w", err)
 	}
 
-	// If the error type is unknown or there's no error
-	// return the error as-is
-	return err
+	return nil
 }
 
-var reIsPathPrefix = regexp.MustCompile(`^\/[\w\-\_]+(\/[\w\-\_]+)*\/$`)
+var reIsPathPrefix = regexp.MustCompile(`^/[\w\-\_]+(/[\w\-\_]+)*/$`)
 
 // validateIsPathPrefix checks if the value is a valid path prefix
 // which needs to start or end with a forward slash, and include
@@ -106,7 +108,7 @@ func validateIsPathPrefix(field validator.FieldLevel) bool {
 	return reIsPathPrefix.MatchString(field.Field().String())
 }
 
-func (s *Server) printWarning(format string, args ...interface{}) {
+func (s *Server) printWarningf(format string, args ...interface{}) {
 	if s.LogOutput != nil {
 		fmt.Fprintf(s.LogOutput, warnPrefix+format+"\n", args...)
 	}

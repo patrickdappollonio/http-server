@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -23,10 +25,10 @@ var version = "development"
 
 func run() error {
 	// Server and settings holder
-	var server server.Server
+	var srv server.Server
 
 	// Define the config prefix for config files
-	server.ConfigFilePrefix = configFilePrefix
+	srv.ConfigFilePrefix = configFilePrefix
 
 	// Create a logger
 	logger := log.New(os.Stdout, "", log.LstdFlags)
@@ -53,31 +55,31 @@ func run() error {
 		SilenceErrors: true,
 
 		// Bind viper settings against the root command
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			return bindCobraAndViper(cmd)
 		},
 
 		// Execute the server
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			// Set the message output to the appropriate writer
-			server.LogOutput = cmd.OutOrStdout()
-			server.SetVersion(version)
+			srv.LogOutput = cmd.OutOrStdout()
+			srv.SetVersion(version)
 
 			// Validate fields to make sure they're correct
-			if err := server.Validate(); err != nil {
-				return err
+			if err := srv.Validate(); err != nil {
+				return fmt.Errorf("unable to validate configuration: %w", err)
 			}
 
 			// Load redirections file if enabled
-			if err := server.LoadRedirectionsIfEnabled(); err != nil {
-				return err
+			if err := srv.LoadRedirectionsIfEnabled(); err != nil {
+				return fmt.Errorf("unable to load redirections file: %w", err)
 			}
 
 			// Print some sane defaults and some information about the request
-			server.PrintStartup()
+			srv.PrintStartup()
 
 			// Run the server
-			return server.ListenAndServe()
+			return srv.ListenAndServe()
 		},
 	}
 
@@ -100,28 +102,29 @@ func run() error {
 
 	// Define the flags for the root command
 	flags := rootCmd.Flags()
-	flags.IntVarP(&server.Port, "port", "p", 5000, "port to configure the server to listen on")
-	flags.StringVarP(&server.Path, "path", "d", "./", "path to the directory you want to serve")
-	flags.StringVar(&server.PathPrefix, "pathprefix", "/", "path prefix for the URL where the server will listen on")
-	flags.BoolVar(&server.CorsEnabled, "cors", false, "enable CORS support by setting the \"Access-Control-Allow-Origin\" header to \"*\"")
-	flags.StringVar(&server.Username, "username", "", "username for basic authentication")
-	flags.StringVar(&server.Password, "password", "", "password for basic authentication")
-	flags.StringVar(&server.PageTitle, "title", "", "title of the directory listing page")
-	flags.BoolVar(&server.HideLinks, "hide-links", false, "hide the links to this project's source code visible in the header and footer")
-	flags.BoolVar(&server.DisableCacheBuster, "disable-cache-buster", false, "disable the cache buster for assets from the directory listing feature")
-	flags.BoolVar(&server.DisableMarkdown, "disable-markdown", false, "disable the markdown rendering feature")
-	flags.BoolVar(&server.MarkdownBeforeDir, "markdown-before-dir", false, "render markdown content before the directory listing")
-	flags.StringVar(&server.JWTSigningKey, "jwt-key", "", "signing key for JWT authentication")
-	flags.BoolVar(&server.ValidateTimedJWT, "ensure-unexpired-jwt", false, "enable time validation for JWT claims \"exp\" and \"nbf\"")
-	flags.StringVar(&server.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
-	flags.BoolVar(&server.ETagDisabled, "disable-etag", false, "disable etag header generation")
-	flags.StringVar(&server.ETagMaxSize, "etag-max-size", "5M", "maximum size for etag header generation, where bigger size = more memory usage")
-	flags.BoolVar(&server.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
-	flags.BoolVar(&server.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
-	flags.BoolVar(&server.DisableDirectoryList, "disable-directory-listing", false, "disable the directory listing feature and return 404s for directories without index")
-	flags.StringVar(&server.CustomNotFoundPage, "custom-404", "", "custom \"page not found\" to serve")
-	flags.IntVar(&server.CustomNotFoundStatusCode, "custom-404-code", 0, "custtom status code for pages not found")
+	flags.IntVarP(&srv.Port, "port", "p", 5000, "port to configure the server to listen on")
+	flags.StringVarP(&srv.Path, "path", "d", "./", "path to the directory you want to serve")
+	flags.StringVar(&srv.PathPrefix, "pathprefix", "/", "path prefix for the URL where the server will listen on")
+	flags.BoolVar(&srv.CorsEnabled, "cors", false, "enable CORS support by setting the \"Access-Control-Allow-Origin\" header to \"*\"")
+	flags.StringVar(&srv.Username, "username", "", "username for basic authentication")
+	flags.StringVar(&srv.Password, "password", "", "password for basic authentication")
+	flags.StringVar(&srv.PageTitle, "title", "", "title of the directory listing page")
+	flags.BoolVar(&srv.HideLinks, "hide-links", false, "hide the links to this project's source code visible in the header and footer")
+	flags.BoolVar(&srv.DisableCacheBuster, "disable-cache-buster", false, "disable the cache buster for assets from the directory listing feature")
+	flags.BoolVar(&srv.DisableMarkdown, "disable-markdown", false, "disable the markdown rendering feature")
+	flags.BoolVar(&srv.MarkdownBeforeDir, "markdown-before-dir", false, "render markdown content before the directory listing")
+	flags.StringVar(&srv.JWTSigningKey, "jwt-key", "", "signing key for JWT authentication")
+	flags.BoolVar(&srv.ValidateTimedJWT, "ensure-unexpired-jwt", false, "enable time validation for JWT claims \"exp\" and \"nbf\"")
+	flags.StringVar(&srv.BannerMarkdown, "banner", "", "markdown text to be rendered at the top of the directory listing page")
+	flags.BoolVar(&srv.ETagDisabled, "disable-etag", false, "disable etag header generation")
+	flags.StringVar(&srv.ETagMaxSize, "etag-max-size", "5M", "maximum size for etag header generation, where bigger size = more memory usage")
+	flags.BoolVar(&srv.GzipEnabled, "gzip", false, "enable gzip compression for supported content-types")
+	flags.BoolVar(&srv.DisableRedirects, "disable-redirects", false, "disable redirection file handling")
+	flags.BoolVar(&srv.DisableDirectoryList, "disable-directory-listing", false, "disable the directory listing feature and return 404s for directories without index")
+	flags.StringVar(&srv.CustomNotFoundPage, "custom-404", "", "custom \"page not found\" to serve")
+	flags.IntVar(&srv.CustomNotFoundStatusCode, "custom-404-code", 0, "custtom status code for pages not found")
 
+	//nolint:wrapcheck // no need to wrap this error
 	return rootCmd.Execute()
 }
 
@@ -179,8 +182,8 @@ func bindCobraAndViper(rootCommand *cobra.Command) error {
 	if err := v.ReadInConfig(); err != nil {
 		// If the configuration file was not found, it's all good, we ignore
 		// the failure and proceed with the default settings
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return err
+		if !errors.Is(err, &viper.ConfigFileNotFoundError{}) {
+			return fmt.Errorf("unable to read configuration file: %w", err)
 		}
 	}
 

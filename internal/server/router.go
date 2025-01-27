@@ -40,7 +40,7 @@ func (s *Server) router() http.Handler {
 	jwtAuth := func(next http.Handler) http.Handler { return next }
 	if s.JWTSigningKey != "" {
 		jwtAuth = middlewares.ValidateJWTHS256(
-			s.printWarning,
+			s.printWarningf,
 			func(str string) { fmt.Fprintln(s.LogOutput, str) },
 			s.JWTSigningKey,
 			s.ValidateTimedJWT,

@@ -21,14 +21,16 @@ func CanonicalURL(isDir bool, p ...string) string {
 	s := path.Join(p...)
 
 	if isDir {
-		s = s + "/"
+		s += "/"
 	}
 
 	return s
 }
 
 // DefaultValue returns the first non-empty value.
-func DefaultValue(d interface{}, given ...interface{}) interface{} {
+//
+//nolint:ireturn // used in go template functions that don't support generics
+func DefaultValue[T any](d T, given ...T) T {
 	if Empty(given) || Empty(given[0]) {
 		return d
 	}
@@ -43,6 +45,7 @@ func Empty(given interface{}) bool {
 	}
 
 	// Basically adapted from text/template.isTrue
+	//nolint:exhaustive // all types are handled with default
 	switch g.Kind() {
 	default:
 		return g.IsNil()

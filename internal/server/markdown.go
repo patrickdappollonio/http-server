@@ -104,7 +104,7 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 
 	s.BannerMarkdown = strings.ReplaceAll(s.BannerMarkdown, "\n", "")
 
-	parser := parser.NewParser(
+	srvParser := parser.NewParser(
 		parser.WithBlockParsers(
 			util.Prioritized(parser.NewParagraphParser(), 500),
 		),
@@ -116,7 +116,7 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 		),
 	)
 
-	md := goldmark.New(goldmark.WithParser(parser))
+	md := goldmark.New(goldmark.WithParser(srvParser))
 
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(s.BannerMarkdown), &buf); err != nil {

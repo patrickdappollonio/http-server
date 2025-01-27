@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,8 +21,12 @@ func (lrw *logResponseWriter) Header() http.Header {
 
 func (lrw *logResponseWriter) Write(p []byte) (int, error) {
 	n, err := lrw.rw.Write(p)
+	if err != nil {
+		return n, fmt.Errorf("failed to write response: %w", err)
+	}
+
 	lrw.bytesWritten += int64(n)
-	return n, err
+	return n, nil
 }
 
 func (lrw *logResponseWriter) WriteHeader(statusCode int) {
@@ -66,10 +71,10 @@ func LogRequest(output io.Writer, format string, redactedQuerystringFields ...st
 				"{http_method}", r.Method,
 				"{url}", urlpath,
 				"{proto}", r.Proto,
-				"{status_code}", fmt.Sprintf("%d", statusCode),
+				"{status_code}", strconv.Itoa(statusCode),
 				"{status_text}", http.StatusText(statusCode),
 				"{duration}", time.Since(start).String(),
-				"{bytes_written}", fmt.Sprintf("%d", lrw.bytesWritten),
+				"{bytes_written}", strconv.FormatInt(lrw.bytesWritten, 10),
 			).Replace(format)
 
 			fmt.Fprintln(output, s)

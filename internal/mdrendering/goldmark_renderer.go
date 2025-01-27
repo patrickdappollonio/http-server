@@ -29,16 +29,18 @@ func (r *HTTPServerRendering) renderImageAlign(w util.BufWriter, source []byte, 
 
 	if r.Unsafe || !html.IsDangerousURL(n.Destination) {
 		u := util.URLEscape(n.Destination, true)
-		if bytes.HasSuffix(n.Destination, []byte(`#align-right`)) {
+
+		switch {
+		case bytes.HasSuffix(n.Destination, []byte(`#align-right`)):
 			w.Write(util.EscapeHTML(bytes.TrimSuffix(u, []byte(`#align-right`))))
 			w.WriteString(`" align="right`)
-		} else if bytes.HasSuffix(n.Destination, []byte(`#align-center`)) {
+		case bytes.HasSuffix(n.Destination, []byte(`#align-center`)):
 			w.Write(util.EscapeHTML(bytes.TrimSuffix(u, []byte(`#align-center`))))
 			w.WriteString(`" align="center`)
-		} else if bytes.HasSuffix(n.Destination, []byte(`#align-left`)) {
+		case bytes.HasSuffix(n.Destination, []byte(`#align-left`)):
 			w.Write(util.EscapeHTML(bytes.TrimSuffix(u, []byte(`#align-left`))))
 			w.WriteString(`" align="left`)
-		} else {
+		default:
 			w.Write(util.EscapeHTML(u))
 		}
 	}
@@ -59,17 +61,17 @@ func (r *HTTPServerRendering) renderImageAlign(w util.BufWriter, source []byte, 
 	return ast.WalkSkipChildren, nil
 }
 
-func (r *HTTPServerRendering) renderHeading(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *HTTPServerRendering) renderHeading(w util.BufWriter, _ []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	hn := node.(*ast.Heading)
 
 	slug, _ := node.AttributeString("id")
 
 	if entering {
 		node.SetAttribute([]byte("id"), slug)
-		w.WriteString(fmt.Sprintf(`<h%d class="content-header" id="%s">`, hn.Level, slug))
+		fmt.Fprintf(w, `<h%d class="content-header" id="%s">`, hn.Level, slug)
 		return ast.WalkContinue, nil
 	}
 
-	w.WriteString(fmt.Sprintf(`<a href="#%s" tabindex="-1"><i class="fas fa-link"></i></a></h%d>`, slug, hn.Level))
+	fmt.Fprintf(w, `<a href="#%s" tabindex="-1"><i class="fas fa-link"></i></a></h%d>`, slug, hn.Level)
 	return ast.WalkContinue, nil
 }

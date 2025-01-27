@@ -92,6 +92,6 @@ func (s *Server) PrintStartup() {
 // still boot.
 func (s *Server) printWarnings() {
 	if s.JWTSigningKey != "" && len(s.JWTSigningKey) < 32 {
-		s.printWarning("JWT key is less than 32 characters. It can be brute forced easily.")
+		s.printWarningf("JWT key is less than 32 characters. It can be brute forced easily.")
 	}
 }
