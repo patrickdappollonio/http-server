@@ -14,17 +14,27 @@ import (
 
 const warnPrefix = "[WARNING] >>> "
 
+// _valid is a global validator instance
+var _valid *validator.Validate
+
+// getValidator returns a global validator instance or
+// initializes it if it's not set
+func getValidator() *validator.Validate {
+	if _valid == nil {
+		// Create a custom validator
+		_valid = validator.New()
+		// Add custom validation rules
+		_valid.RegisterValidation("ispathprefix", validateIsPathPrefix)
+	}
+
+	return _valid
+}
+
 // Validate checks the configuration using struct tags and validate
 // if the fields are valid per those rules
 func (s *Server) Validate() error {
-	// Create a custom validator
-	valid := validator.New()
-
-	// Add custom validation rules
-	valid.RegisterValidation("ispathprefix", validateIsPathPrefix)
-
 	// Read tag names from struct fields
-	valid.RegisterTagNameFunc(func(fld reflect.StructField) string {
+	getValidator().RegisterTagNameFunc(func(fld reflect.StructField) string {
 		return fld.Tag.Get("flagName")
 	})
 
@@ -62,17 +72,17 @@ func (s *Server) Validate() error {
 	}
 
 	// Attempt to validate the structure, and grab the errors
-	err := valid.Struct(s)
-	valerrs, ok := err.(validator.ValidationErrors)
+	err := getValidator().Struct(s)
 
 	// If the error isn't empty, and its type is of ValidationError
 	// we can provide a better error message for its validation process
-	if err != nil && ok {
+	var valerrs validator.ValidationErrors
+	if errors.As(err, &valerrs) {
 		var merrs MultiError
 
 		for _, e := range valerrs {
 			// Convert the error to a human-readable error
-			merrs.Errors = append(merrs.Errors, FieldToValidationError(e))
+			merrs.Append(FieldToValidationError(e))
 		}
 
 		return &merrs

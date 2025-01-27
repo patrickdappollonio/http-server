@@ -8,9 +8,16 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+var _ error = &MultiError{}
+
 // MultiError is a collection of errors
 type MultiError struct {
 	Errors []error
+}
+
+// Append adds an error to the collection
+func (m *MultiError) Append(err error) {
+	m.Errors = append(m.Errors, err)
 }
 
 // Error implements the error interface
