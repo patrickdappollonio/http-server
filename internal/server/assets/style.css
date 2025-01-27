@@ -148,6 +148,10 @@ nav ul li a {
   box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%), inset 0 -1px 0 rgb(255 255 255 / 15%);
 }
 
+#banner p {
+  line-height: 1.4;
+}
+
 #banner strong {
   font-weight: bold;
 }
@@ -165,6 +169,16 @@ nav ul li a {
 #banner a:hover,
 #banner a:focus {
   color: #6e5302;
+}
+
+#banner code {
+  font-family: "Roboto Mono", monospace;
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 95%;
+  background-color: rgba(175, 184, 193, 0.2);
+  border-radius: 6px;
+  font-size: 0.9em;
 }
 
 .card-large {

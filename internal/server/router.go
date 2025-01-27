@@ -10,23 +10,23 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/klauspost/compress/gzhttp"
-	"github.com/patrickdappollonio/http-server/internal/mw"
+	"github.com/patrickdappollonio/http-server/internal/middlewares"
 )
 
 func (s *Server) router() http.Handler {
 	r := chi.NewRouter()
 
 	// Allow logging all request to our custom logger
-	r.Use(mw.LogRequest(s.LogOutput, logFormat, "token"))
+	r.Use(middlewares.LogRequest(s.LogOutput, logFormat, "token"))
 
 	// Recover the request in case of a panic
 	r.Use(middleware.Recoverer)
 
 	// Only allow specific methods in all our requests
-	r.Use(mw.VerbsAllowed("GET", "HEAD"))
+	r.Use(middlewares.VerbsAllowed("GET", "HEAD"))
 
 	// Disable access to specific files
-	r.Use(mw.DisableAccessToFile(s.isFiltered, http.StatusNotFound))
+	r.Use(middlewares.DisableAccessToFile(s.isFiltered, http.StatusNotFound))
 
 	// Enable basic authentication if needed
 	basicAuth := func(next http.Handler) http.Handler { return next }
@@ -39,8 +39,8 @@ func (s *Server) router() http.Handler {
 	// Check if JWT authentication is enabled
 	jwtAuth := func(next http.Handler) http.Handler { return next }
 	if s.JWTSigningKey != "" {
-		jwtAuth = mw.ValidateJWTHS256(
-			s.printWarning,
+		jwtAuth = middlewares.ValidateJWTHS256(
+			s.printWarningf,
 			func(str string) { fmt.Fprintln(s.LogOutput, str) },
 			s.JWTSigningKey,
 			s.ValidateTimedJWT,
@@ -50,7 +50,7 @@ func (s *Server) router() http.Handler {
 	// Enable etag support for files smaller than
 	// 10 MB, and only if the feature is enabled
 	maxBodySize := s.etagMaxSizeBytes
-	r.Use(mw.Etag(!s.ETagDisabled, maxBodySize))
+	r.Use(middlewares.Etag(!s.ETagDisabled, maxBodySize))
 
 	// Check if gzip is enabled
 	if s.GzipEnabled {
@@ -62,7 +62,7 @@ func (s *Server) router() http.Handler {
 
 	// Enable CORS if needed
 	if s.CorsEnabled {
-		r.Use(mw.EnableCORS)
+		r.Use(middlewares.EnableCORS)
 	}
 
 	// Check if the redirect engine is enabled, and if so, load
@@ -73,7 +73,7 @@ func (s *Server) router() http.Handler {
 
 	// Check if the request is against a URL ending on a known
 	// index file, and if so, redirect to the directory
-	r.Use(mw.RedirectIndexes(http.StatusMovedPermanently))
+	r.Use(middlewares.RedirectIndexes(http.StatusMovedPermanently))
 
 	// Handle emptiness of path prefix
 	if s.PathPrefix == "" {

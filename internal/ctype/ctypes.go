@@ -1,4 +1,4 @@
-package server
+package ctype
 
 var ctypes = []struct {
 	Extension   []string
@@ -191,7 +191,7 @@ var ctypes = []struct {
 	{[]string{".tgz"}, nil, "application/x-gzip"},
 }
 
-func getContentTypeForFilename(name string) string {
+func GetContentTypeForFilename(name string) string {
 	for _, ct := range ctypes {
 		for _, internalName := range ct.ExactNames {
 			if name == internalName {

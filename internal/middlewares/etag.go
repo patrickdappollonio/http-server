@@ -1,4 +1,4 @@
-package mw
+package middlewares
 
 import (
 	"bytes"
@@ -133,33 +133,39 @@ func (w *etagResponseWriter) Write(p []byte) (int, error) {
 		_, err := w.buf.Write(p)
 		if err != nil {
 			w.err = err
-			return 0, err
+			return 0, fmt.Errorf("failed to buffer response: %w", err)
 		}
 		// Update the hash.
 		_, err = w.hasher.Write(p)
 		if err != nil {
 			w.err = err
-			return 0, err
+			return 0, fmt.Errorf("failed to hash response: %w", err)
 		}
 		return n, nil
-	} else {
-		// If headers have not been written yet, write them now.
-		if !w.headerWritten {
-			if w.statusCode == 0 {
-				w.statusCode = http.StatusOK
-			}
-			w.writeHeader()
-			// Write any buffered data.
-			if w.buf.Len() > 0 {
-				_, err := w.ResponseWriter.Write(w.buf.Bytes())
-				if err != nil {
-					w.err = err
-					return 0, err
-				}
-				w.buf.Reset()
-			}
-		}
-		// Write the current data directly.
-		return w.ResponseWriter.Write(p)
 	}
+
+	// If headers have not been written yet, write them now.
+	if !w.headerWritten {
+		if w.statusCode == 0 {
+			w.statusCode = http.StatusOK
+		}
+		w.writeHeader()
+		// Write any buffered data.
+		if w.buf.Len() > 0 {
+			_, err := w.ResponseWriter.Write(w.buf.Bytes())
+			if err != nil {
+				w.err = err
+				return 0, fmt.Errorf("failed to write buffered response: %w", err)
+			}
+			w.buf.Reset()
+		}
+	}
+	// Write the current data directly.
+	n, err := w.ResponseWriter.Write(p)
+	if err != nil {
+		w.err = err
+		return 0, fmt.Errorf("failed to write response: %w", err)
+	}
+
+	return n, nil
 }

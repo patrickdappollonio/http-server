@@ -8,14 +8,18 @@ import (
 	"path"
 	"strings"
 
+	"github.com/patrickdappollonio/http-server/internal/mdrendering"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer"
+	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/util"
 	mermaid "go.abhg.dev/goldmark/mermaid"
 )
 
+// allowedIndexFiles is a list of filenames that are allowed to be rendered
+// in the directory listing page.
 var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "readme.markdown", "index.md", "index.markdown"}
 
 // generateMarkdown generates the markdown needed to render the content
@@ -73,8 +77,9 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 		),
 		goldmark.WithRendererOptions(
 			renderer.WithNodeRenderers(
-				util.Prioritized(&customizedRenderer{}, 500),
+				util.Prioritized(&mdrendering.HTTPServerRendering{}, 500),
 			),
+			html.WithUnsafe(),
 		),
 	)
 
@@ -86,6 +91,8 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 	return nil
 }
 
+// generateBannerMarkdown generates the markdown needed to render the banner
+// in the directory listing page.
 func (s *Server) generateBannerMarkdown() (string, error) {
 	if s.cachedBannerMarkdown != "" {
 		return s.cachedBannerMarkdown, nil
@@ -97,7 +104,7 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 
 	s.BannerMarkdown = strings.ReplaceAll(s.BannerMarkdown, "\n", "")
 
-	parser := parser.NewParser(
+	srvParser := parser.NewParser(
 		parser.WithBlockParsers(
 			util.Prioritized(parser.NewParagraphParser(), 500),
 		),
@@ -109,7 +116,7 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 		),
 	)
 
-	md := goldmark.New(goldmark.WithParser(parser))
+	md := goldmark.New(goldmark.WithParser(srvParser))
 
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(s.BannerMarkdown), &buf); err != nil {
@@ -117,6 +124,5 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 	}
 
 	s.cachedBannerMarkdown = buf.String()
-
 	return s.cachedBannerMarkdown, nil
 }

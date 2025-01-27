@@ -42,7 +42,7 @@ func Humansize(s int64) string {
 // ParseSize converts a size string (e.g., "2M") to its equivalent in bytes.
 func ParseSize(s string) (int64, error) {
 	s = strings.TrimSpace(s)
-	if len(s) == 0 {
+	if s == "" {
 		return 0, errors.New("empty size string")
 	}
 
@@ -63,10 +63,10 @@ func ParseSize(s string) (int64, error) {
 
 	num, err := strconv.ParseInt(numStr, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("invalid number: %v", err)
+		return 0, fmt.Errorf("invalid number: %w", err)
 	}
 
-	var multiplier int64 = 1
+	var multiplier int64
 
 	switch suffix {
 	case "", "B":

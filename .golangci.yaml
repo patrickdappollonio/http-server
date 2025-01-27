@@ -1,0 +1,122 @@
+run:
+  tests: false
+  concurrency: 5
+  timeout: 3m
+
+linters:
+  disable-all: true
+  enable:
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - copyloopvar
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocritic
+    - gocyclo
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - grouper
+    - importas
+    - inamedparam
+    - ireturn
+    - loggercheck
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - stylecheck
+    - tenv
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    - zerologlint
+
+linters-settings:
+  perfsprint:
+    int-conversion: false
+    err-error: false
+    errorf: true
+    sprintf1: true
+    strconcat: false
+
+  ireturn:
+    allow:
+      - error
+      - http.Handler
+
+  gosec:
+    confidence: medium
+    excludes:
+      - G401 # Use of weak cryptographic primitive: we're using sha1 for etag generation
+      - G505 # Blocklisted import crypto/sha1: we're using sha1 for etag generation
+
+  stylecheck:
+    checks:
+      - "all"
+      - "-ST1003" # this is covered by a different linter
+
+  gocyclo:
+    min-complexity: 60
+
+  staticcheck:
+    checks:
+      - "all"
+      - "-SA1019" # keeping some deprecated code for compatibility
+
+  gocritic:
+    enable-all: true
+    disabled-checks:
+      - appendAssign
+      - unnamedResult
+      - badRegexp
