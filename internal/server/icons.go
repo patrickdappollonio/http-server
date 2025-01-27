@@ -6,10 +6,12 @@ import (
 	"strings"
 )
 
+// filenameToIcon is a map of filenames to their respective icons
 var filenameToIcon = map[string]string{
 	"LICENSE": "fas fa-certificate",
 }
 
+// extensionToIcon is a map of file extensions to their respective icons
 var extensionToIcon = map[string]string{
 	".lock": "fas fa-lock",
 	".go":   "fab fa-golang",
@@ -19,6 +21,7 @@ var extensionToIcon = map[string]string{
 	".log":  "fas fa-file-lines",
 }
 
+// groupToExtension is a map of file groups to their respective extensions
 var groupToExtension = map[string][]string{
 	"audio": {
 		"aac",
@@ -107,6 +110,7 @@ var groupToExtension = map[string][]string{
 	},
 }
 
+// groupToFilenames is a map of file groups to their respective filenames
 var groupToFilenames = map[string][]string{
 	"golang": {"go.mod", "go.sum"},
 	"git":    {".gitignore", ".gitconfig"},
@@ -114,11 +118,13 @@ var groupToFilenames = map[string][]string{
 	"bash":   {"Makefile", ".profile", ".bashrc", ".bash_history"},
 }
 
+// groupToPrefixes is a map of file groups to their respective prefixes
 var groupToPrefixes = map[string][]string{
 	"docker": {"docker-compose", "Dockerfile", "dockerfile"},
 	"python": {"Pipfile", "pipfile"},
 }
 
+// groupToIcon is a map of file groups to their respective icons
 var groupToIcon = map[string]string{
 	"video":      "fas fa-file-video",
 	"audio":      "fas fa-file-audio",
@@ -134,6 +140,8 @@ var groupToIcon = map[string]string{
 	"compressed": "fas fa-file-zipper",
 }
 
+// getIconForFile returns the icon class for a file based on its name
+// and whether it's a folder or not.
 func getIconForFile(isFolder bool, filename string) template.HTMLAttr {
 	// If it's a folder, it's a quick find
 	if isFolder {

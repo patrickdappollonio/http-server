@@ -11,6 +11,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/patrickdappollonio/http-server/internal/ctype"
+	isort "github.com/patrickdappollonio/http-server/internal/sort"
 	"github.com/saintfish/chardet"
 )
 
@@ -124,7 +126,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Render the directory listing
-	sort.Sort(foldersFirst(list))
+	sort.Sort(isort.FoldersFirst(list))
 
 	// Generate a list of FileInfo objects
 	files := make([]os.FileInfo, 0, len(list))
@@ -212,9 +214,9 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		return
 	}
 
-	var ctype string
-	if local := getContentTypeForFilename(filepath.Base(location)); local != "" {
-		ctype = local
+	var contentType string
+	if local := ctype.GetContentTypeForFilename(filepath.Base(location)); local != "" {
+		contentType = local
 	}
 
 	var data [512]byte
@@ -223,9 +225,9 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		return
 	}
 
-	if ctype == "" {
+	if contentType == "" {
 		if local := http.DetectContentType(data[:]); local != "application/octet-stream" {
-			ctype = local
+			contentType = local
 		}
 	}
 
@@ -241,12 +243,12 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		}
 	}
 
-	if ctype != "" && ctype != "application/octet-stream" {
+	if contentType != "" && contentType != "application/octet-stream" {
 		if charset != "" {
-			ctype += "; charset=" + charset
+			contentType += "; charset=" + charset
 		}
 
-		w.Header().Set("Content-Type", ctype)
+		w.Header().Set("Content-Type", contentType)
 	}
 
 	// Check if the caller changed the status code, if not, simply call

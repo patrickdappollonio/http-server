@@ -5,8 +5,11 @@ import (
 	"net/http"
 )
 
+// startupPrefix is the prefix used for all startup messages
 const startupPrefix = " >"
 
+// PrintStartup prints the startup message to the log output, which
+// tells the user about the configuration of the server.
 func (s *Server) PrintStartup() {
 	fmt.Fprintln(s.LogOutput, "SETUP:")
 
@@ -84,6 +87,9 @@ func (s *Server) PrintStartup() {
 	s.printWarnings()
 }
 
+// printWarning prints a warning message to the log output if the server
+// considers any of the settings to be inaccurate but the server can
+// still boot.
 func (s *Server) printWarnings() {
 	if s.JWTSigningKey != "" && len(s.JWTSigningKey) < 32 {
 		s.printWarning("JWT key is less than 32 characters. It can be brute forced easily.")

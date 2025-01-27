@@ -1,14 +1,23 @@
 package server
 
+import "strings"
+
+// forbiddenMatches is a list of filenames that are forbidden to be served.
+// This list is used to prevent sensitive files from being
+// served.
 var forbiddenMatches = []string{
 	"_redirects",
 }
 
+// forbiddenPrefixes and forbiddenSuffixes are a list of prefixes that are
+// forbidden to be served. This list is used to prevent sensitive
+// files from being served.
 var (
 	forbiddenPrefixes = []string{}
 	forbiddenSuffixes = []string{}
 )
 
+// isFiltered returns true if the filename is forbidden to be served.
 func (s *Server) isFiltered(filename string) bool {
 	// Adds the config prefix to the list of forbidden prefixes
 	allPrefixes := append(s.forbiddenPrefixes, s.ConfigFilePrefix)
@@ -23,7 +32,7 @@ func (s *Server) isFiltered(filename string) bool {
 			continue
 		}
 
-		if len(filename) >= len(p) && filename[:len(p)] == p {
+		if strings.HasPrefix(filename, p) {
 			return true
 		}
 	}
@@ -33,7 +42,7 @@ func (s *Server) isFiltered(filename string) bool {
 			continue
 		}
 
-		if len(filename) >= len(s) && filename[len(filename)-len(s):] == s {
+		if strings.HasSuffix(filename, s) {
 			return true
 		}
 	}

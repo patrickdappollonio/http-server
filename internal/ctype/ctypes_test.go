@@ -1,4 +1,4 @@
-package server
+package ctype
 
 import "testing"
 
@@ -54,7 +54,7 @@ func Test_getContentTypeForExtension(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.filename, func(t *testing.T) {
-			if got := getContentTypeForFilename(tt.filename); got != tt.want {
+			if got := GetContentTypeForFilename(tt.filename); got != tt.want {
 				t.Errorf("getContentTypeForFilename() filename: %q -- got: %q, want %q", tt.filename, got, tt.want)
 			}
 		})

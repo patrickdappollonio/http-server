@@ -8,12 +8,16 @@ import (
 	"github.com/patrickdappollonio/http-server/internal/redirects"
 )
 
+// redirectionsPath is the path to the redirections file
 const redirectionsPath = "_redirections"
 
+// getPathToRedirectionsFile returns the path to the redirections file
+// with the current http-server "served" directory
 func (s *Server) getPathToRedirectionsFile() string {
 	return path.Join(s.Path, redirectionsPath)
 }
 
+// LoadRedirectionsIfEnabled loads the redirections file if redirections are enabled
 func (s *Server) LoadRedirectionsIfEnabled() error {
 	// If redirections are disabled, return immediately
 	if s.DisableRedirects {
