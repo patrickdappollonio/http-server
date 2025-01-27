@@ -6,14 +6,17 @@ import (
 	"time"
 )
 
+// RFC1123 returns the time formatted as RFC1123.
 func RFC1123(t time.Time) string {
 	return t.Format(time.RFC1123)
 }
 
+// PrettyTime returns the time formatted as "Jan 2, 2006 3:04pm MST".
 func PrettyTime(t time.Time) string {
 	return t.Format("Jan 2, 2006 3:04pm MST")
 }
 
+// CanonicalURL returns a canonical URL for the given path.
 func CanonicalURL(isDir bool, p ...string) string {
 	s := path.Join(p...)
 
