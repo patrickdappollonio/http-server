@@ -206,9 +206,15 @@ nav ul li a {
   gap: 2rem;
 }
 
-@media (max-width: 500px) {
+@media (min-width: 846px) and (max-width: 1000px) {
   .columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
+  }
+}
+
+@media (max-width: 845px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto;
   }
 }
