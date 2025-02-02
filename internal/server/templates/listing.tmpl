@@ -4,11 +4,10 @@
 <section id="directory-listing">
   <div class="container">
     {{- if .MarkdownBeforeDir }}{{- with .MarkdownContent }}
-    <div class="card-large">
-      <div class="markdown-body">{{- . | unsafeHTML }}</div>
-    </div>
+    {{ template "markdown" . }}
     {{- end }}{{- end }}
 
+    {{- if .ShouldRenderFiles }}
     <div class="card-large">
       <ul class="files">
         <li>
@@ -44,13 +43,19 @@
         {{- end }}
       </ul>
     </div>
+    {{- end }}
 
     {{- if not .MarkdownBeforeDir }}{{- with .MarkdownContent }}
-    <div class="card-large">
-      <div class="markdown-body">{{- . | unsafeHTML }}</div>
-    </div>
+    {{ template "markdown" . }}
     {{- end }}{{- end }}
   </div>
 </section>
 
+{{- end }}
+
+
+{{- define "markdown" }}
+<div class="card-large">
+  <div class="markdown-body">{{- . | unsafeHTML }}</div>
+</div>
 {{- end }}
