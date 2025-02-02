@@ -123,6 +123,7 @@ func run() error {
 	flags.BoolVar(&srv.DisableDirectoryList, "disable-directory-listing", false, "disable the directory listing feature and return 404s for directories without index")
 	flags.StringVar(&srv.CustomNotFoundPage, "custom-404", "", "custom \"page not found\" to serve")
 	flags.IntVar(&srv.CustomNotFoundStatusCode, "custom-404-code", 0, "custtom status code for pages not found")
+	flags.BoolVar(&srv.HideFilesInMarkdown, "hide-files-in-markdown", false, "hide file and directory listing in markdown rendering")
 
 	//nolint:wrapcheck // no need to wrap this error
 	return rootCmd.Execute()
