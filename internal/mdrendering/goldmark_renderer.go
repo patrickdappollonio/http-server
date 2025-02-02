@@ -18,6 +18,23 @@ type HTTPServerRendering struct {
 func (r *HTTPServerRendering) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(ast.KindHeading, r.renderHeading)
 	reg.Register(ast.KindImage, r.renderImageAlign)
+	reg.Register(DivKind, r.renderDiv)
+}
+
+func (r *HTTPServerRendering) renderDiv(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if entering {
+		w.WriteString("<div")
+		if id, ok := node.AttributeString("id"); ok {
+			fmt.Fprintf(w, ` id="%s"`, id)
+		}
+		if class, ok := node.AttributeString("class"); ok {
+			fmt.Fprintf(w, ` class="%s"`, class)
+		}
+		w.WriteString(">")
+	} else {
+		w.WriteString("</div>")
+	}
+	return ast.WalkContinue, nil
 }
 
 func (r *HTTPServerRendering) renderImageAlign(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {

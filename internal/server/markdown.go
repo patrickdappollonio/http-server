@@ -10,12 +10,15 @@ import (
 
 	"github.com/patrickdappollonio/http-server/internal/mdrendering"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 	mermaid "go.abhg.dev/goldmark/mermaid"
+	"go.abhg.dev/goldmark/toc"
 )
 
 // allowedIndexFiles is a list of filenames that are allowed to be rendered
@@ -83,8 +86,35 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 		),
 	)
 
+	src := buf.Bytes()
+	doc := md.Parser().Parse(text.NewReader(src))
+	tree, err := toc.Inspect(doc, src, toc.Compact(true))
+	if err != nil {
+		return fmt.Errorf("unable to inspect markdown file %q: %w", fullpath, err)
+	}
+
+	if list := toc.RenderList(tree); list != nil {
+		tocWrapper := &mdrendering.Div{}
+		tocWrapper.SetAttributeString("class", "toc")
+
+		boldTitle := ast.NewEmphasis(2)
+		boldTitle.AppendChild(boldTitle, ast.NewString([]byte("Table of Contents")))
+
+		tocWrapper.AppendChild(tocWrapper, boldTitle)
+		tocWrapper.AppendChild(tocWrapper, list)
+
+		body := &mdrendering.Div{}
+		body.SetAttributeString("id", "full-content")
+		body.AppendChild(body, doc)
+
+		doc = &mdrendering.Div{}
+		doc.SetAttributeString("class", "columns")
+		doc.AppendChild(doc, body)
+		doc.AppendChild(doc, tocWrapper)
+	}
+
 	// Render the markdown
-	if err := md.Convert(buf.Bytes(), placeholder); err != nil {
+	if err := md.Renderer().Render(placeholder, src, doc); err != nil {
 		return fmt.Errorf("unable to render markdown file %q: %w", fullpath, err)
 	}
 

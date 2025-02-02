@@ -199,6 +199,20 @@ nav ul li a {
   margin-top: 30px;
 }
 
+.columns {
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+  gap: 2rem;
+}
+
+@media (max-width: 500px) {
+  .columns {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+}
+
 .files {
   display: flex;
   flex-direction: column;

@@ -1,4 +1,5 @@
 .markdown-body {
+  display: block;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   margin: 0;
@@ -55,6 +56,16 @@
   padding-bottom: .3em;
   font-size: 2em;
   border-bottom: 1px solid hsla(210, 18%, 87%, 1);
+}
+
+.markdown-body h1:first-child,
+.markdown-body h2:first-child,
+.markdown-body h3:first-child,
+.markdown-body h4:first-child,
+.markdown-body h5:first-child,
+.markdown-body h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .markdown-body mark {
