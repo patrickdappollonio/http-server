@@ -196,6 +196,7 @@ nav ul li a {
 
 #directory-listing > .container > .card-large:first-child {
   margin-top: 0;
+  margin-top: 30px;
 }
 
 .files {
