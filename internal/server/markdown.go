@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/gomarkdown/markdown"
@@ -94,6 +95,10 @@ func mdToHTML(md []byte, dest *bytes.Buffer, htmlFlags html.Flags) error {
 	return nil
 }
 
+// reMultipleNewLines is a regular expression that matches multiple new lines
+// in a row.
+var reMultipleNewLines = regexp.MustCompile(`\n{2,}`)
+
 // generateBannerMarkdown generates the markdown needed to render the banner
 // in the directory listing page.
 func (s *Server) generateBannerMarkdown() (string, error) {
@@ -105,7 +110,8 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 		return "", nil
 	}
 
-	s.BannerMarkdown = strings.ReplaceAll(s.BannerMarkdown, "\n", "")
+	s.BannerMarkdown = reMultipleNewLines.ReplaceAllString(s.BannerMarkdown, "\n")
+	s.BannerMarkdown = strings.ReplaceAll(s.BannerMarkdown, "\n", " ")
 
 	opts := html.CommonFlags |
 		html.SkipHTML |
