@@ -29,12 +29,15 @@ func CanonicalURL(isDir bool, p ...string) string {
 
 // DefaultValue returns the first non-empty value.
 //
-//nolint:ireturn // used in go template functions that don't support generics
-func DefaultValue[T any](d T, given ...T) T {
-	if Empty(given) || Empty(given[0]) {
-		return d
+//nolint:ireturn
+func DefaultValue(defaultValue any, given ...any) any {
+	for _, g := range given {
+		if !Empty(g) {
+			return g
+		}
 	}
-	return given[0]
+
+	return defaultValue
 }
 
 // Empty returns true if the given value has the zero value for its type.

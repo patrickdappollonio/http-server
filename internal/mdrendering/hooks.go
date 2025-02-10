@@ -20,14 +20,14 @@ func Hooks(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 }
 
 // processHeading is a hook that adds a link to each heading.
-func processHeading(w io.Writer, node *ast.Heading, entering bool) (ast.WalkStatus, bool) {
+func processHeading(_ io.Writer, node *ast.Heading, _ bool) (ast.WalkStatus, bool) {
 	if node.Attribute == nil {
 		node.Attribute = &ast.Attribute{}
 	}
 
 	node.Classes = append(node.Classes, []byte("content-header"))
 	link := &ast.Link{
-		Destination:          []byte("#" + string(node.HeadingID)),
+		Destination:          []byte("#" + node.HeadingID),
 		AdditionalAttributes: []string{"tabindex=\"-1\""},
 	}
 
@@ -46,21 +46,23 @@ func processHeading(w io.Writer, node *ast.Heading, entering bool) (ast.WalkStat
 // processImages is a hook that processes images for alignment markers
 // It checks if an image's Destination has a suffix like "#align-right", "#align-center" or "#align-left".
 // It then removes that marker and stores the alignment value in the Title field.
-func processImages(w io.Writer, node *ast.Image, entering bool) (ast.WalkStatus, bool) {
+func processImages(_ io.Writer, node *ast.Image, entering bool) (ast.WalkStatus, bool) {
 	// Only modify on entering.
 	if !entering {
 		return ast.GoToNext, false
 	}
 
 	dest := node.Destination
+
 	var align string
-	if bytes.HasSuffix(dest, []byte("#align-right")) {
+	switch {
+	case bytes.HasSuffix(dest, []byte("#align-right")):
 		align = "right"
 		dest = bytes.TrimSuffix(dest, []byte("#align-right"))
-	} else if bytes.HasSuffix(dest, []byte("#align-center")) {
+	case bytes.HasSuffix(dest, []byte("#align-center")):
 		align = "center"
 		dest = bytes.TrimSuffix(dest, []byte("#align-center"))
-	} else if bytes.HasSuffix(dest, []byte("#align-left")) {
+	case bytes.HasSuffix(dest, []byte("#align-left")):
 		align = "left"
 		dest = bytes.TrimSuffix(dest, []byte("#align-left"))
 	}
