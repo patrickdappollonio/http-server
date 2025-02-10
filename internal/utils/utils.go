@@ -29,7 +29,7 @@ func CanonicalURL(isDir bool, p ...string) string {
 
 // DefaultValue returns the first non-empty value.
 //
-//nolint:ireturn
+//nolint:ireturn // works with any type and used from templates
 func DefaultValue(defaultValue any, given ...any) any {
 	for _, g := range given {
 		if !Empty(g) {
