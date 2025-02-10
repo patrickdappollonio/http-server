@@ -306,6 +306,7 @@
 .markdown-body h6>a:focus {
   opacity: 0.9;
   color: #0969da;
+  text-decoration: none;
 }
 
 .markdown-body p {

@@ -113,27 +113,27 @@ header {
   box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%), inset 0 -1px 0 rgb(255 255 255 / 15%);
 }
 
-nav {
+header nav {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
-nav .page-title {
+header nav .page-title {
   color: #fff;
   font-size: 1.3rem;
 }
 
-nav ul {
+header nav ul {
   margin: 0;
 }
 
-nav ul li {
+header nav ul li {
   display: inline-block;
   margin-left: 24px;
 }
 
-nav ul li a {
+header nav ul li a {
   color: #fff;
   font-size: 1rem;
 }

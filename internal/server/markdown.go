@@ -8,19 +8,21 @@ import (
 	"path"
 	"strings"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/patrickdappollonio/http-server/internal/mdrendering"
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
-	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer"
-	"github.com/yuin/goldmark/renderer/html"
-	"github.com/yuin/goldmark/util"
-	mermaid "go.abhg.dev/goldmark/mermaid"
 )
 
 // allowedIndexFiles is a list of filenames that are allowed to be rendered
 // in the directory listing page.
 var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "readme.markdown", "index.md", "index.markdown"}
+
+// supportedFullExtensions is the list of markdown extensions that are supported
+// by the markdown parser.
+var supportedFullExtensions = parser.CommonExtensions |
+	parser.AutoHeadingIDs |
+	parser.NoEmptyLineBeforeBlock
 
 // generateMarkdown generates the markdown needed to render the content
 // in the directory listing page
@@ -63,29 +65,30 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 		return fmt.Errorf("unable to read markdown file %q: %w", fullpath, err)
 	}
 
-	// Configure goldmark
-	md := goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			&mermaid.Extender{
-				RenderMode: mermaid.RenderModeClient,
-				MermaidURL: s.assetpath("mermaid-11.4.1.min.js"),
-			},
-		),
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-		),
-		goldmark.WithRendererOptions(
-			renderer.WithNodeRenderers(
-				util.Prioritized(&mdrendering.HTTPServerRendering{}, 500),
-			),
-			html.WithUnsafe(),
-		),
-	)
-
 	// Render the markdown
-	if err := md.Convert(buf.Bytes(), placeholder); err != nil {
+	if err := mdToHTML(buf.Bytes(), placeholder, 0); err != nil {
 		return fmt.Errorf("unable to render markdown file %q: %w", fullpath, err)
+	}
+
+	return nil
+}
+
+// mdToHTML converts markdown to HTML
+func mdToHTML(md []byte, dest *bytes.Buffer, htmlFlags html.Flags) error {
+	doc := parser.NewWithExtensions(supportedFullExtensions).Parse(md)
+
+	if htmlFlags == 0 {
+		htmlFlags = html.CommonFlags
+	}
+
+	r := html.NewRenderer(html.RendererOptions{
+		Flags:          htmlFlags,
+		RenderNodeHook: mdrendering.Hooks,
+	})
+
+	b := markdown.Render(doc, r)
+	if _, err := dest.Write(b); err != nil {
+		return fmt.Errorf("unable to write rendered markdown: %w", err)
 	}
 
 	return nil
@@ -104,22 +107,15 @@ func (s *Server) generateBannerMarkdown() (string, error) {
 
 	s.BannerMarkdown = strings.ReplaceAll(s.BannerMarkdown, "\n", "")
 
-	srvParser := parser.NewParser(
-		parser.WithBlockParsers(
-			util.Prioritized(parser.NewParagraphParser(), 500),
-		),
-		parser.WithInlineParsers(
-			util.Prioritized(parser.NewEmphasisParser(), 500),
-			util.Prioritized(parser.NewLinkParser(), 501),
-			util.Prioritized(parser.NewAutoLinkParser(), 502),
-			util.Prioritized(parser.NewCodeSpanParser(), 503),
-		),
-	)
-
-	md := goldmark.New(goldmark.WithParser(srvParser))
+	opts := html.CommonFlags |
+		html.SkipHTML |
+		html.SkipImages |
+		html.NofollowLinks |
+		html.NoreferrerLinks |
+		html.NoopenerLinks
 
 	var buf bytes.Buffer
-	if err := md.Convert([]byte(s.BannerMarkdown), &buf); err != nil {
+	if err := mdToHTML([]byte(s.BannerMarkdown), &buf, opts); err != nil {
 		return "", fmt.Errorf("unable to render banner markdown: %w", err)
 	}
 

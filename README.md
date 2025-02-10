@@ -1,5 +1,10 @@
 # `http-server`, a simple HTTP file server
 
+> [!NOTE]
+> Testing notes, **please wait**. [Link to Google](https://www.google.com)
+
+> Normal blockquote.
+
 [![Github Downloads](https://img.shields.io/github/downloads/patrickdappollonio/http-server/total?color=orange&label=github%20downloads)](https://github.com/patrickdappollonio/http-server/releases)
 [![Container Downloads](https://img.shields.io/badge/container%20downloads-250k-orange)](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server) [![Go Report Card](https://goreportcard.com/badge/github.com/patrickdappollonio/http-server)](https://goreportcard.com/report/github.com/patrickdappollonio/http-server)
 
