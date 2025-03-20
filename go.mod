@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/go-chi/chi/v5 v5.2.0
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/klauspost/compress v1.18.0
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
