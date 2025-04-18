@@ -22,36 +22,12 @@ import (
 // in the directory listing page.
 var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "readme.markdown", "index.md", "index.markdown"}
 
-// generateMarkdown generates the markdown needed to render the content
-// in the directory listing page
-func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, placeholder *bytes.Buffer) error {
-	// Check if markdown is enabled or not, if not, don't bother running
-	// the rest of the code
-	if s.DisableMarkdown {
-		return nil
-	}
-
-	// Find a file name among the available options that can be rendered
-	var foundFilename string
-	for _, f := range files {
-		for _, allowed := range allowedIndexFiles {
-			if f.Name() == allowed {
-				foundFilename = allowed
-				break
-			}
-		}
-	}
-
-	// If we couldn't find one, we exit
-	if foundFilename == "" {
-		return nil
-	}
-
+// renderMarkdownFile renders a markdown file from a given location
+func (s *Server) renderMarkdownFile(location string, v *bytes.Buffer) error {
 	// Generate a full path then open the file
-	fullpath := path.Join(pathLocation, foundFilename)
-	f, err := os.Open(fullpath)
+	f, err := os.Open(location)
 	if err != nil {
-		return fmt.Errorf("unable to open markdown file %q: %w", fullpath, err)
+		return fmt.Errorf("unable to open markdown file %q: %w", location, err)
 	}
 
 	// Close the file when we're done
@@ -60,7 +36,7 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 	// Copy the file contents to an intermediate buffer
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, f); err != nil {
-		return fmt.Errorf("unable to read markdown file %q: %w", fullpath, err)
+		return fmt.Errorf("unable to read markdown file %q: %w", location, err)
 	}
 
 	// Configure goldmark
@@ -84,11 +60,41 @@ func (s *Server) generateMarkdown(pathLocation string, files []os.FileInfo, plac
 	)
 
 	// Render the markdown
-	if err := md.Convert(buf.Bytes(), placeholder); err != nil {
-		return fmt.Errorf("unable to render markdown file %q: %w", fullpath, err)
+	if err := md.Convert(buf.Bytes(), v); err != nil {
+		return fmt.Errorf("unable to render markdown file %q: %w", location, err)
 	}
 
 	return nil
+}
+
+// generateMarkdown generates the markdown needed to render the content
+// in the directory listing page
+func (s *Server) findAndGenerateMarkdown(pathLocation string, files []os.FileInfo, placeholder *bytes.Buffer) error {
+	// Check if markdown is enabled or not, if not, don't bother running
+	// the rest of the code
+	if s.DisableMarkdown {
+		return nil
+	}
+
+	// Find a file name among the available options that can be rendered
+	var foundFilename string
+	for _, f := range files {
+		for _, allowed := range allowedIndexFiles {
+			if f.Name() == allowed {
+				foundFilename = allowed
+				break
+			}
+		}
+	}
+
+	// If we couldn't find one, we exit
+	if foundFilename == "" {
+		return nil
+	}
+
+	// Generate the full path of the found file
+	fullpath := path.Join(pathLocation, foundFilename)
+	return s.renderMarkdownFile(fullpath, placeholder)
 }
 
 // generateBannerMarkdown generates the markdown needed to render the banner

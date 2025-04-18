@@ -78,6 +78,10 @@ func (s *Server) PrintStartup() {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Markdown rendering before directory listing enabled")
 	}
 
+	if s.FullMarkdownRender {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "All markdown file rendering enabled")
+	}
+
 	if !s.DisableRedirects {
 		if s.redirects != nil {
 			fmt.Fprintf(s.LogOutput, "%s Redirections enabled from %q (found %d redirections)\n", startupPrefix, s.getPathToRedirectionsFile(), len(s.redirects.Rules))

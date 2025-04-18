@@ -40,6 +40,7 @@ type Server struct {
 	DisableMarkdown     bool
 	MarkdownBeforeDir   bool
 	HideFilesInMarkdown bool
+	FullMarkdownRender  bool
 
 	// Redirection handling
 	DisableRedirects bool

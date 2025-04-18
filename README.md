@@ -73,8 +73,10 @@ Flags:
       --disable-redirects           disable redirection file handling
       --ensure-unexpired-jwt        enable time validation for JWT claims "exp" and "nbf"
       --etag-max-size string        maximum size for etag header generation, where bigger size = more memory usage (default "5M")
+      --render-all-markdown         if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs
       --gzip                        enable gzip compression for supported content-types
   -h, --help                        help for http-server
+      --hide-files-in-markdown      hide file and directory listing in markdown rendering
       --hide-links                  hide the links to this project's source code visible in the header and footer
       --jwt-key string              signing key for JWT authentication
       --markdown-before-dir         render markdown content before the directory listing
