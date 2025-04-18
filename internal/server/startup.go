@@ -46,6 +46,10 @@ func (s *Server) PrintStartup() {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "CORS headers enabled: adding \"Access-Control-Allow-Origin=*\" header")
 	}
 
+	if s.CustomCSS != "" {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Using custom CSS file:", s.CustomCSS)
+	}
+
 	if s.IsBasicAuthEnabled() {
 		fmt.Fprintln(s.LogOutput, startupPrefix, "Basic authentication enabled with username:", s.Username)
 	}

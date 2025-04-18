@@ -171,6 +171,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		"HideLinks":         s.HideLinks,
 		"MarkdownContent":   markdownContent.String(),
 		"MarkdownBeforeDir": s.MarkdownBeforeDir,
+		"CustomCSS":         s.getCustomCSSURL(),
 	}
 
 	if err := s.templates.ExecuteTemplate(w, "app.tmpl", content); err != nil {

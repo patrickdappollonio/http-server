@@ -3,6 +3,8 @@ package server
 import (
 	"html/template"
 	"io"
+	"path"
+	"strings"
 
 	"github.com/patrickdappollonio/http-server/internal/redirects"
 )
@@ -49,6 +51,9 @@ type Server struct {
 	JWTSigningKey    string `flagName:"jwt-key" validate:"omitempty,excluded_with=Username,excluded_with=Password"`
 	ValidateTimedJWT bool
 
+	// Custom CSS settings
+	CustomCSS string `flagName:"custom-css-file" validate:"omitempty,file"`
+
 	// Viper config settings
 	ConfigFilePrefix string
 
@@ -70,4 +75,24 @@ func (s *Server) IsBasicAuthEnabled() bool {
 // SetVersion sets the server version
 func (s *Server) SetVersion(version string) {
 	s.version = version
+}
+
+// Get path to custom CSS for rendering on the web and ensuring
+// path prefix is set if needed
+func (s *Server) getCustomCSSURL() string {
+	if s.CustomCSS == "" {
+		return ""
+	}
+
+	css := s.CustomCSS
+
+	if s.PathPrefix != "" {
+		css = path.Join(s.PathPrefix, s.CustomCSS)
+	}
+
+	if !strings.HasPrefix(css, "/") {
+		css = "/" + css
+	}
+
+	return css
 }

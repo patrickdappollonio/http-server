@@ -11,7 +11,9 @@
   <link rel="stylesheet" href="{{ assetpath "roboto-font.css" }}">
   <link rel="stylesheet" href="{{ assetpath "fontawesome-6.2.0.css" }}">
   <link rel="icon" type="image/svg+xml" href="{{ assetpath "file-server.svg" }}">
-  {{ if not .DisableMarkdown }}<link rel="stylesheet" href="{{ assetpath "gfm.css" }}">{{ end }}
+  {{- if not .DisableMarkdown }}<link rel="stylesheet" href="{{ assetpath "gfm.css" }}">{{ end }}
+  <!-- {{ printf "custom css: %#v" .CustomCSS }} -->
+  {{- if .CustomCSS }}<link rel="stylesheet" href="{{ .CustomCSS }}">{{ end }}
 </head>
 
 

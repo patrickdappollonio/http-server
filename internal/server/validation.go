@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/patrickdappollonio/http-server/internal/utils"
@@ -64,6 +66,14 @@ func (s *Server) Validate() error {
 		return errors.New("etag max size is required: set it with --etag-max-size")
 	}
 
+	// Validate that if custom CSS is set, that it lives in the path where
+	// we're serving files
+	if s.CustomCSS != "" {
+		if !validateIsFileInPath(s.Path, s.CustomCSS) {
+			return fmt.Errorf("css file path %q is outside the server's path %q: it must be served from the server itself", s.CustomCSS, s.Path)
+		}
+	}
+
 	size, err := utils.ParseSize(s.ETagMaxSize)
 	if err != nil {
 		return fmt.Errorf("unable to parse ETag max size: %w", err)
@@ -106,6 +116,20 @@ func validateIsPathPrefix(field validator.FieldLevel) bool {
 	}
 
 	return reIsPathPrefix.MatchString(field.Field().String())
+}
+
+func validateIsFileInPath(basepath, file string) bool {
+	absbasepath, err := filepath.Abs(basepath)
+	if err != nil {
+		return false
+	}
+
+	absfile, err := filepath.Abs(file)
+	if err != nil {
+		return false
+	}
+
+	return strings.HasPrefix(absfile, absbasepath)
 }
 
 func (s *Server) printWarningf(format string, args ...interface{}) {
