@@ -31,6 +31,25 @@ docker pull ghcr.io/patrickdappollonio/docker-http-server:v2.0.0
 docker pull ghcr.io/patrickdappollonio/docker-http-server:latest
 ```
 
+Usage with `docker compose`:
+
+```yaml
+services:
+  http-server:
+    image: ghcr.io/patrickdappollonio/docker-http-server:v2
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/html:ro # Use the current directory as the source
+    environment:
+      - PORT=5000 # Configures the port (the default is 5000)
+      - TITLE=HTTP Server Test Site # Changes the site name
+      - CORS=true # Enable CORS for testing purposes
+      # Other configuration options:
+      # - BANNER=Welcome to the HTTP Server Test Site! # Changes the banner
+```
+
 #### Configuring the container
 
 There are three ways to configure the container:
