@@ -1,6 +1,8 @@
 package server
 
-import "strings"
+import (
+	"strings"
+)
 
 // forbiddenMatches is a list of filenames that are forbidden to be served.
 // This list is used to prevent sensitive files from being

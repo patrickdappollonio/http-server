@@ -1,21 +1,16 @@
+version: "2"
 run:
-  tests: false
   concurrency: 5
-  timeout: 3m
-
+  tests: false
 linters:
-  disable-all: true
+  default: none
   enable:
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
     - asasalint
     - asciicheck
     - bidichk
     - bodyclose
     - contextcheck
+    - copyloopvar
     - decorder
     - dogsled
     - dupl
@@ -25,23 +20,21 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - copyloopvar
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
     - gocritic
     - gocyclo
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
     - gomodguard
     - goprintffuncname
     - gosec
     - gosmopolitan
+    - govet
     - grouper
     - importas
     - inamedparam
+    - ineffassign
     - ireturn
     - loggercheck
     - makezero
@@ -52,7 +45,6 @@ linters:
     - nilerr
     - nilnil
     - noctx
-    - nolintlint
     - nonamedreturns
     - nosprintfhostport
     - paralleltest
@@ -67,8 +59,7 @@ linters:
     - sloglint
     - spancheck
     - sqlclosecheck
-    - stylecheck
-    - tenv
+    - staticcheck
     - testableexamples
     - testifylint
     - testpackage
@@ -76,47 +67,60 @@ linters:
     - tparallel
     - unconvert
     - unparam
+    - unused
     - usestdlibvars
     - wastedassign
     - whitespace
     - wrapcheck
     - zerologlint
-
-linters-settings:
-  perfsprint:
-    int-conversion: false
-    err-error: false
-    errorf: true
-    sprintf1: true
-    strconcat: false
-
-  ireturn:
-    allow:
-      - error
-      - http.Handler
-
-  gosec:
-    confidence: medium
-    excludes:
-      - G401 # Use of weak cryptographic primitive: we're using sha1 for etag generation
-      - G505 # Blocklisted import crypto/sha1: we're using sha1 for etag generation
-
-  stylecheck:
-    checks:
-      - "all"
-      - "-ST1003" # this is covered by a different linter
-
-  gocyclo:
-    min-complexity: 60
-
-  staticcheck:
-    checks:
-      - "all"
-      - "-SA1019" # keeping some deprecated code for compatibility
-
-  gocritic:
-    enable-all: true
-    disabled-checks:
-      - appendAssign
-      - unnamedResult
-      - badRegexp
+  settings:
+    gocritic:
+      enable-all: true
+      disabled-checks:
+        - appendAssign
+        - unnamedResult
+        - badRegexp
+    gocyclo:
+      min-complexity: 60
+    gosec:
+      excludes:
+        - G401
+        - G505
+      confidence: medium
+    ireturn:
+      allow:
+        - error
+        - http.Handler
+    perfsprint:
+      int-conversion: false
+      err-error: false
+      errorf: true
+      sprintf1: true
+      strconcat: false
+    staticcheck:
+      checks:
+        - -SA1019
+        - -ST1003
+        - all
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
