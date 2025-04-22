@@ -46,6 +46,8 @@ func (r *HTTPServerRendering) renderImageAlign(w util.BufWriter, source []byte, 
 	}
 
 	w.WriteString(`" alt="`)
+
+	//nolint:staticcheck // skipping temporarily until we decide on keeping goldmark
 	w.Write(util.EscapeHTML(n.Text(source)))
 	w.WriteString(`"`)
 	if n.Title != nil {
