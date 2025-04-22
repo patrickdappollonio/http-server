@@ -28,8 +28,8 @@ type Server struct {
 	CustomNotFoundStatusCode int
 
 	// Basic auth settings
-	Username string `flagName:"username" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
-	Password string `flagName:"password" validate:"omitempty,alphanum,excluded_with=JWTSigningKey"`
+	Username string `flagName:"username" validate:"omitempty,excluded_with=JWTSigningKey"`
+	Password string `flagName:"password" validate:"omitempty,excluded_with=JWTSigningKey"`
 
 	// Boolean specific settings
 	CorsEnabled         bool
@@ -42,6 +42,7 @@ type Server struct {
 	DisableMarkdown     bool
 	MarkdownBeforeDir   bool
 	HideFilesInMarkdown bool
+	FullMarkdownRender  bool
 
 	// Redirection handling
 	DisableRedirects bool

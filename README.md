@@ -103,6 +103,7 @@ Flags:
   -d, --path string                 path to the directory you want to serve (default "./")
       --pathprefix string           path prefix for the URL where the server will listen on (default "/")
   -p, --port int                    port to configure the server to listen on (default 5000)
+      --render-all-markdown         if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs
       --title string                title of the directory listing page
       --username string             username for basic authentication
   -v, --version                     version for http-server

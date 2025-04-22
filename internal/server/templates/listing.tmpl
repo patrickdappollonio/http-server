@@ -45,7 +45,7 @@
     </div>
     {{- end }}
 
-    {{- if not .MarkdownBeforeDir }}{{- with .MarkdownContent }}
+    {{- if not .MarkdownBeforeDir }}{{- if .MarkdownContent }}
     {{ template "markdown" . }}
     {{- end }}{{- end }}
   </div>
@@ -53,9 +53,8 @@
 
 {{- end }}
 
-
 {{- define "markdown" }}
 <div class="card-large">
-  <div class="markdown-body">{{- . | unsafeHTML }}</div>
+  <div class="markdown-body">{{- .MarkdownContent | unsafeHTML }}</div>
 </div>
 {{- end }}

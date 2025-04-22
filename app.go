@@ -125,6 +125,7 @@ func run() error {
 	flags.IntVar(&srv.CustomNotFoundStatusCode, "custom-404-code", 0, "custtom status code for pages not found")
 	flags.BoolVar(&srv.HideFilesInMarkdown, "hide-files-in-markdown", false, "hide file and directory listing in markdown rendering")
 	flags.StringVar(&srv.CustomCSS, "custom-css-file", "", "path within the served files to a custom CSS file")
+	flags.BoolVar(&srv.FullMarkdownRender, "render-all-markdown", false, "if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs")
 
 	//nolint:wrapcheck // no need to wrap this error
 	return rootCmd.Execute()
