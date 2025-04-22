@@ -76,8 +76,50 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If the path is not a directory, then it's a file, so we can render it
+	// If the path is not a directory, then it's a file, so we can render it,
+	// let's check first if it's a markdown file
+	if ext := strings.ToLower(filepath.Ext(currentPath)); ext == ".md" || ext == ".markdown" {
+		s.serveMarkdown(currentPath, w, r)
+		return
+	}
+
 	s.serveFile(0, currentPath, w, r)
+}
+
+func (s *Server) serveMarkdown(requestedPath string, w http.ResponseWriter, r *http.Request) {
+	// Find if among the files there's a markdown readme
+	var markdownContent bytes.Buffer
+	if err := s.renderMarkdownFile(requestedPath, &markdownContent); err != nil {
+		s.printWarningf("unable to generate markdown: %s", err)
+		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
+		return
+	}
+
+	// Define the parent directory
+	parent := getParentURL(s.PathPrefix, r.URL.Path)
+
+	// Render the directory listing
+	content := map[string]any{
+		"DirectoryRootPath":      s.PathPrefix,
+		"PageTitle":              s.PageTitle,
+		"CurrentPath":            r.URL.Path,
+		"CacheBuster":            s.cacheBuster,
+		"RequestedPath":          requestedPath,
+		"IsRoot":                 s.PathPrefix == r.URL.Path,
+		"UpDirectory":            parent,
+		"Files":                  nil,
+		"ShouldRenderFiles":      false, // we don't want file rendering for non index pages
+		"IsSingleMarkdownRender": true,  // we want to differentiate single markdown render pages
+		"HideLinks":              s.HideLinks,
+		"MarkdownContent":        markdownContent.String(),
+		"MarkdownBeforeDir":      s.MarkdownBeforeDir,
+	}
+
+	if err := s.templates.ExecuteTemplate(w, "app.tmpl", content); err != nil {
+		s.printWarningf("unable to render directory listing: %s", err)
+		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
+		return
+	}
 }
 
 func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Request) {
@@ -148,7 +190,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 
 	// Find if among the files there's a markdown readme
 	var markdownContent bytes.Buffer
-	if err := s.generateMarkdown(requestedPath, files, &markdownContent); err != nil {
+	if err := s.findAndGenerateMarkdown(requestedPath, files, &markdownContent); err != nil {
 		s.printWarningf("unable to generate markdown: %s", err)
 		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
 		return
