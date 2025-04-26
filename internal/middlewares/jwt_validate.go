@@ -6,13 +6,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
+
+func signMethod(signingKey []byte) func(*jwt.Token) (interface{}, error) {
+	return func(token *jwt.Token) (interface{}, error) {
+		// Validate the signing method
+		hm, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok || hm.Hash != jwt.SigningMethodHS256.Hash {
+			// This error will be caught by the err check below
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return signingKey, nil
+	}
+}
 
 // ValidateJWTHS256 validates a JWT token using the HS256 algorithm,
 // the token can be passed in the "Authorization" header or in the
 // "token" query parameter.
-func ValidateJWTHS256(warnFunction func(string, ...interface{}), loggedInFunction func(string), jwtSigningKey string, validateTimedJWT bool) func(http.Handler) http.Handler {
+func ValidateJWTHS256(warnFunctionf func(string, ...interface{}), loggedInFunction func(string), jwtSigningKey string, validateTimedJWT bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var claims jwt.MapClaims
@@ -29,45 +42,72 @@ func ValidateJWTHS256(warnFunction func(string, ...interface{}), loggedInFunctio
 				return
 			}
 
-			// Parse token and validate signing algorithm
-			tkn, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
-				hm, ok := token.Method.(*jwt.SigningMethodHMAC)
-				if !ok || hm.Hash != jwt.SigningMethodHS256.Hash {
-					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-				}
-
-				return []byte(jwtSigningKey), nil
-			})
-			// Check for errors during parsing
+			// Check for errors during parsing (includes signature validation errors and method mismatch errors)
+			tkn, err := jwt.ParseWithClaims(token, &claims, signMethod([]byte(jwtSigningKey)))
 			if err != nil {
-				warnFunction("error parsing token for URL %q: %s", r.URL.Path, err.Error())
+				warnFunctionf("error parsing token for URL %q: %s", r.URL.Path, err.Error())
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 
-			// Check if the token is valid
+			// Basic token validity check (mainly signature and structure if no options passed)
 			if !tkn.Valid {
-				warnFunction("JWT token validation failed: invalid token for url: %s", r.URL.Path)
+				// This case should ideally not be hit if err is nil above, unless custom validation
+				// options were passed which they are not. Including defensively.
+				warnFunctionf("JWT token basic validation failed: invalid token for url: %s", r.URL.Path)
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 
 			if validateTimedJWT {
-				t := time.Now().Unix()
+				now := time.Now()
 
-				if !claims.VerifyExpiresAt(t, true) {
-					warnFunction("JWT token validation failed: token expired for url: %s", r.URL.Path)
+				// Check for missing 'exp' claim first
+				if _, ok := claims["exp"]; !ok {
+					warnFunctionf("JWT token validation failed: missing 'exp' claim for url: %s", r.URL.Path)
 					http.Error(w, "unauthorized", http.StatusUnauthorized)
 					return
 				}
 
-				if !claims.VerifyIssuedAt(t, true) {
-					warnFunction("JWT token validation failed: token issued in the future for url: %s", r.URL.Path)
+				// Claim exists, now try to get it as a NumericDate
+				exp, err := claims.GetExpirationTime()
+				if err != nil {
+					warnFunctionf("JWT token validation failed: invalid 'exp' claim value for url: %s: %s", r.URL.Path, err.Error())
+					http.Error(w, "unauthorized", http.StatusUnauthorized)
+					return
+				}
+
+				// Now compare the time directly
+				if now.After(exp.Time) {
+					warnFunctionf("JWT token validation failed: token expired for url: %s", r.URL.Path)
+					http.Error(w, "unauthorized", http.StatusUnauthorized)
+					return
+				}
+
+				// We check for 'iat' existence first
+				if _, ok := claims["iat"]; !ok {
+					warnFunctionf("JWT token validation failed: missing 'iat' claim for url: %s", r.URL.Path)
+					http.Error(w, "unauthorized", http.StatusUnauthorized)
+					return
+				}
+
+				// Claim exists, now try to get it as a NumericDate
+				iss, err := claims.GetIssuedAt()
+				if err != nil {
+					warnFunctionf("JWT token validation failed: invalid 'iat' claim value for url: %s: %s", r.URL.Path, err.Error())
+					http.Error(w, "unauthorized", http.StatusUnauthorized)
+					return
+				}
+
+				// Now compare the time directly
+				if now.Before(iss.Time) {
+					warnFunctionf("JWT token validation failed: token issued in the future for url: %s", r.URL.Path)
 					http.Error(w, "unauthorized", http.StatusUnauthorized)
 					return
 				}
 			}
 
+			// Logging successful authentication
 			if user := claims["sub"]; user != nil {
 				s := fmt.Sprintf("JWT auth passed for url %q: user: %q", r.URL.Path, user)
 
