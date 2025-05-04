@@ -962,7 +962,7 @@
 }
 
 .markdown-body .admonition {
-border-radius: 6px;
+  border-radius: 6px;
   padding: 10px 16px;
   padding-left: 16px;
   border-left: 4px solid #ccc;
