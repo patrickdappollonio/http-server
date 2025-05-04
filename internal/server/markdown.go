@@ -42,10 +42,12 @@ func (s *Server) renderMarkdownFile(location string, v *bytes.Buffer) error {
 	// Configure goldmark
 	md := goldmark.New(
 		goldmark.WithExtensions(
-			extension.GFM,
+			extension.GFM, // enables Table, Strikethrough, Linkify and TaskList
+			extension.Footnote,
+			extension.DefinitionList,
 			&mermaid.Extender{
 				RenderMode: mermaid.RenderModeClient,
-				MermaidURL: s.assetpath("mermaid-11.4.1.min.js"),
+				MermaidURL: s.assetpath("mermaid-11.6.0.min.js"),
 			},
 		),
 		goldmark.WithParserOptions(
