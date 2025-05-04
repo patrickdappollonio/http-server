@@ -49,6 +49,7 @@ func (s *Server) renderMarkdownFile(location string, v *bytes.Buffer) error {
 				RenderMode: mermaid.RenderModeClient,
 				MermaidURL: s.assetpath("mermaid-11.6.0.min.js"),
 			},
+			&mdrendering.AdmonitionExtension{},
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
