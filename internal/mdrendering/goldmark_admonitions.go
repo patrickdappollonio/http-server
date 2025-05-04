@@ -36,13 +36,19 @@ func (n *Admonition) Dump(source []byte, level int) {
 type admonitionParser struct{}
 
 // NewAdmonitionParser returns a parser that recognizes GitHub-style admonitions.
+//
+//nolint:ireturn // This interface is required by the goldmark parser.
 func NewAdmonitionParser() parser.BlockParser {
 	return &admonitionParser{}
 }
 
+// Trigger implements the BlockParser interface and returns the trigger byte for this parser.
 func (b *admonitionParser) Trigger() []byte { return []byte{'>'} }
 
-func (b *admonitionParser) Open(parent ast.Node, reader text.Reader, pc parser.Context) (ast.Node, parser.State) {
+// Open implements the BlockParser interface and checks if the line starts with "> [!".
+//
+//nolint:ireturn // This interface is required by the goldmark parser.
+func (b *admonitionParser) Open(_ ast.Node, reader text.Reader, _ parser.Context) (ast.Node, parser.State) {
 	line, seg := reader.PeekLine()
 	trimmed := bytes.TrimSpace(line)
 	// Must start with "> [!"
@@ -59,7 +65,7 @@ func (b *admonitionParser) Open(parent ast.Node, reader text.Reader, pc parser.C
 	return node, parser.HasChildren
 }
 
-func (b *admonitionParser) Continue(node ast.Node, reader text.Reader, pc parser.Context) parser.State {
+func (b *admonitionParser) Continue(_ ast.Node, reader text.Reader, _ parser.Context) parser.State {
 	line, _ := reader.PeekLine()
 	trimmed := bytes.TrimLeft(line, " \t")
 	if len(trimmed) > 0 && trimmed[0] == '>' {
@@ -68,9 +74,9 @@ func (b *admonitionParser) Continue(node ast.Node, reader text.Reader, pc parser
 	return parser.Close
 }
 
-func (b *admonitionParser) Close(node ast.Node, reader text.Reader, pc parser.Context) {}
-func (b *admonitionParser) CanInterruptParagraph() bool                                { return true }
-func (b *admonitionParser) CanAcceptIndentedLine() bool                                { return false }
+func (b *admonitionParser) Close(_ ast.Node, _ text.Reader, _ parser.Context) {}
+func (b *admonitionParser) CanInterruptParagraph() bool                       { return true }
+func (b *admonitionParser) CanAcceptIndentedLine() bool                       { return false }
 
 // ────────────────────────────────────────────────────────────────────────────────
 // AST Transformer
@@ -78,11 +84,13 @@ func (b *admonitionParser) CanAcceptIndentedLine() bool                         
 type admonitionTransformer struct{}
 
 // NewAdmonitionTransformer returns an ASTTransformer that unwraps nested blockquotes.
+//
+//nolint:ireturn // This interface is required by the goldmark parser.
 func NewAdmonitionTransformer() parser.ASTTransformer {
 	return &admonitionTransformer{}
 }
 
-func (t *admonitionTransformer) Transform(root *ast.Document, reader text.Reader, pc parser.Context) {
+func (t *admonitionTransformer) Transform(root *ast.Document, _ text.Reader, _ parser.Context) {
 	ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
@@ -115,6 +123,8 @@ func (t *admonitionTransformer) Transform(root *ast.Document, reader text.Reader
 type admonitionHTMLRenderer struct{ html.Config }
 
 // NewAdmonitionHTMLRenderer returns a renderer for our admonition node.
+//
+//nolint:ireturn // This interface is required by the goldmark parser.
 func NewAdmonitionHTMLRenderer(opts ...html.Option) renderer.NodeRenderer {
 	r := &admonitionHTMLRenderer{Config: html.NewConfig()}
 	for _, opt := range opts {
@@ -136,7 +146,7 @@ func (r *admonitionHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegi
 	reg.Register(KindAdmonition, r.renderAdmonition)
 }
 
-func (r *admonitionHTMLRenderer) renderAdmonition(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *admonitionHTMLRenderer) renderAdmonition(w util.BufWriter, _ []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*Admonition)
 	if entering {
 		// open admonition wrapper
@@ -170,9 +180,10 @@ func (r *admonitionHTMLRenderer) renderAdmonition(w util.BufWriter, source []byt
 }
 
 func uppercaseFirstCharacter(s string) string {
-	if len(s) == 0 {
+	if s == "" {
 		return s
 	}
+
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
