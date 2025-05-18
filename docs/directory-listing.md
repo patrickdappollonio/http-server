@@ -54,6 +54,7 @@ When using markdown, consider:
   * Code fences' syntax highlighting is not supported
   * Title anchors are not supported when file highlighting is in use, and viceversa
   * Direct links straight to a Markdown file are not rendered as HTML. Markdown files are only rendered within the directory listing feature.
+  * Markdown files in directory listing mode won't be affected by the `--force-download-extensions` flag since they're rendered as HTML before the file serving logic is applied.
 
 #### Image alignment
 
