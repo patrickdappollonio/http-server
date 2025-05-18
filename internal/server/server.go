@@ -114,7 +114,7 @@ func (s *Server) ShouldForceDownload(filename string) bool {
 	}
 
 	for _, forceExt := range s.ForceDownloadExtensions {
-		if strings.ToLower(forceExt) == ext {
+		if strings.EqualFold(forceExt, ext) {
 			return true
 		}
 	}
