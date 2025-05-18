@@ -296,6 +296,12 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		w.Header().Set("Content-Type", contentType)
 	}
 
+	// Check if we should force download this file based on its extension
+	if s.ShouldForceDownload(location) {
+		filename := filepath.Base(location)
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	}
+
 	// Check if the caller changed the status code, if not, simply call
 	// the appropriate handler/
 	if statusCode == 0 {

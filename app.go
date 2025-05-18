@@ -126,6 +126,7 @@ func run() error {
 	flags.BoolVar(&srv.HideFilesInMarkdown, "hide-files-in-markdown", false, "hide file and directory listing in markdown rendering")
 	flags.StringVar(&srv.CustomCSS, "custom-css-file", "", "path within the served files to a custom CSS file")
 	flags.BoolVar(&srv.FullMarkdownRender, "render-all-markdown", false, "if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs")
+	flags.StringSliceVar(&srv.ForceDownloadExtensions, "force-download-extensions", nil, "file extensions that should be downloaded instead of displayed in browser")
 
 	//nolint:wrapcheck // no need to wrap this error
 	return rootCmd.Execute()

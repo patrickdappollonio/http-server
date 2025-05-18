@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"io"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/patrickdappollonio/http-server/internal/redirects"
@@ -65,6 +66,9 @@ type Server struct {
 	forbiddenPrefixes []string
 	forbiddenSuffixes []string
 	forbiddenMatches  []string
+
+	// Force download settings
+	ForceDownloadExtensions []string
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with
@@ -96,4 +100,24 @@ func (s *Server) getCustomCSSURL() string {
 	}
 
 	return css
+}
+
+// ShouldForceDownload returns true if the given file extension should be force-downloaded.
+func (s *Server) ShouldForceDownload(filename string) bool {
+	if len(s.ForceDownloadExtensions) == 0 {
+		return false
+	}
+
+	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(filename)), ".")
+	if ext == "" {
+		return false
+	}
+
+	for _, forceExt := range s.ForceDownloadExtensions {
+		if strings.ToLower(forceExt) == ext {
+			return true
+		}
+	}
+
+	return false
 }

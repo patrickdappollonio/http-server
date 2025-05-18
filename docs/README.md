@@ -7,3 +7,4 @@ This is the documentation for `http-server`, a simple, no-dependencies command-l
 * [Directory listing](directory-listing.md)
 * [Authentication](authentication.md)
 * [Redirections](redirections.md)
+* [Force Download Extensions](force-download.md)
