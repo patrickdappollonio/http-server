@@ -113,8 +113,8 @@ func (s *Server) ShouldForceDownload(filename string) bool {
 		return false
 	}
 
-	for _, forceExt := range s.ForceDownloadExtensions {
-		if strings.EqualFold(forceExt, ext) {
+	for _, e := range s.ForceDownloadExtensions {
+		if e := strings.TrimPrefix(e, "."); strings.EqualFold(e, ext) {
 			return true
 		}
 	}
