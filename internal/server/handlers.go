@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/patrickdappollonio/http-server/internal/ctype"
+	"github.com/patrickdappollonio/http-server/internal/renderer"
 	isort "github.com/patrickdappollonio/http-server/internal/sort"
 	"github.com/saintfish/chardet"
 )
@@ -123,6 +125,15 @@ func (s *Server) serveMarkdown(requestedPath string, w http.ResponseWriter, r *h
 	}
 }
 
+// FileInfo represents a file's metadata for JSON output
+type FileInfo struct {
+	Name        string `json:"name"`
+	Size        int64  `json:"size"`
+	IsDirectory bool   `json:"is_directory"`
+	ModTime     string `json:"mod_time"`
+	Path        string `json:"path"`
+}
+
 func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Request) {
 	// Append index.html or index.htm to the path and see if the index
 	// file exists, if so, return it instead
@@ -187,6 +198,34 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		}
 
 		files = append(files, fi)
+	}
+
+	// Handle different output formats
+	if outputFormat := r.URL.Query().Get("output"); outputFormat != "" {
+		// Get parent directory URL
+		parent := getParentURL(s.PathPrefix, r.URL.Path)
+
+		// Create renderer configuration
+		config := renderer.Config{
+			CurrentPath: r.URL.Path,
+			ParentPath:  parent,
+			Logger:      s.LogOutput,
+		}
+
+		// Render the directory listing
+		if err := renderer.Render(outputFormat, config, w, files); err != nil {
+			if errors.Is(err, renderer.UnsupportedFormatError{}) {
+				s.printWarningf("unsupported output format: %s", err)
+				httpError(http.StatusBadRequest, w, "unsupported output format: %q (supported formats: %s)",
+					outputFormat, renderer.GetSupportedFormatsString())
+				return
+			}
+
+			s.printWarningf("error rendering directory listing: %s", err)
+			httpError(http.StatusInternalServerError, w, "error rendering directory listing -- see application logs for more information")
+			return
+		}
+		return
 	}
 
 	// Find if among the files there's a markdown readme
@@ -323,11 +362,13 @@ func (s *Server) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+// httpError writes an error message to the response writer.
 func httpError(statusCode int, w http.ResponseWriter, format string, args ...any) {
 	w.WriteHeader(statusCode)
 	fmt.Fprintf(w, format, args...)
 }
 
+// getParentURL returns the parent URL for the given location.
 func getParentURL(base, loc string) string {
 	if loc == base {
 		return ""
