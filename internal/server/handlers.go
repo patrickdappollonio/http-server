@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/patrickdappollonio/http-server/internal/ctype"
+	"github.com/patrickdappollonio/http-server/internal/fileutil"
 	"github.com/patrickdappollonio/http-server/internal/renderer"
 	isort "github.com/patrickdappollonio/http-server/internal/sort"
 	"github.com/saintfish/chardet"
@@ -336,7 +337,7 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	}
 
 	// Check if we should force download this file based on its extension
-	if s.ShouldForceDownload(location) {
+	if fileutil.ShouldForceDownload(location, s.ForceDownloadExtensions, s.SkipForceDownloadFiles) {
 		filename := filepath.Base(location)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	}
