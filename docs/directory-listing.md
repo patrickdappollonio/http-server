@@ -10,6 +10,62 @@ An example of what the directory listing page looks like is below:
 
 ![Directory listing](../img/sample-site.png)
 
+### Alternative output formats
+
+By default, directory listings are rendered as HTML pages. However, you can request alternative formats using the `output` query parameter:
+
+* `?output=json` - Returns a JSON representation of the directory contents
+* `?output=terminal` - Returns a terminal-friendly tabular representation of the directory contents
+* `?output=plain-list` - Returns a minimal list of filenames with directories having trailing slashes
+
+For example, to get a JSON listing of a directory:
+```
+GET /example/?output=json
+```
+
+The JSON output includes the current path, parent path, and an array of files with their metadata:
+```json
+{
+  "current_path": "/example/",
+  "parent_path": "/",
+  "files": [
+    {
+      "name": "file.txt",
+      "size": 1024,
+      "is_directory": false,
+      "mod_time": "2023-04-15 10:30:45",
+      "path": "/example/file.txt"
+    },
+    {
+      "name": "subfolder",
+      "size": 0,
+      "is_directory": true,
+      "mod_time": "2023-04-15 09:20:30",
+      "path": "/example/subfolder/"
+    }
+  ]
+}
+```
+
+The terminal output provides a formatted tabular listing suitable for terminal display:
+```
+Current directory: /example/
+Parent directory: /
+
+Type  Name       Size  Modified
+----  ----       ----  --------
+FILE  file.txt   1024  2023-04-15 10:30:45
+DIR   subfolder  0     2023-04-15 09:20:30
+```
+
+The plain-list output provides a minimal list of files and directories:
+```
+file.txt
+subfolder/
+```
+
+If an unsupported format is specified, the server will return a 400 Bad Request error with a message indicating the supported formats.
+
 ### Disabling directory listing
 
 If you want to disable the directory listing feature, you can use the `--disable-directory-listing` option (or one of the available options via environment variables or configuration file). This will prevent the directory listing page from showing up, and instead, the user will see a `404 Not Found` error.

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/tabwriter"
 	"unicode/utf8"
 
 	"github.com/patrickdappollonio/http-server/internal/ctype"
@@ -123,7 +125,19 @@ func (s *Server) serveMarkdown(requestedPath string, w http.ResponseWriter, r *h
 	}
 }
 
+// FileInfo represents a file's metadata for JSON output
+type FileInfo struct {
+	Name        string `json:"name"`
+	Size        int64  `json:"size"`
+	IsDirectory bool   `json:"is_directory"`
+	ModTime     string `json:"mod_time"`
+	Path        string `json:"path"`
+}
+
 func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Request) {
+	// Get the output format from query parameters
+	outputFormat := r.URL.Query().Get("output")
+
 	// Append index.html or index.htm to the path and see if the index
 	// file exists, if so, return it instead
 	for _, index := range []string{"index.html", "index.htm"} {
@@ -189,6 +203,27 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		files = append(files, fi)
 	}
 
+	// Handle different output formats
+	if outputFormat != "" {
+		switch strings.ToLower(outputFormat) {
+		case "json":
+			s.renderJSONListing(files, r.URL.Path, w)
+			return
+		case "terminal":
+			s.renderTerminalListing(files, r.URL.Path, w)
+			return
+		case "plain-list":
+			s.renderPlainListListing(files, w)
+			return
+		default:
+			// Return an error for unsupported output formats
+			s.printWarningf("unsupported output format requested: %s", outputFormat)
+			httpError(http.StatusBadRequest, w, "unsupported output format: %s (supported formats: json, terminal, plain-list)", outputFormat)
+			return
+		}
+	}
+	// If no output format is specified, continue with HTML rendering
+
 	// Find if among the files there's a markdown readme
 	var markdownContent bytes.Buffer
 	if err := s.findAndGenerateMarkdown(requestedPath, files, &markdownContent); err != nil {
@@ -222,6 +257,95 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
 		return
 	}
+}
+
+// renderJSONListing renders a directory listing in JSON format
+func (s *Server) renderJSONListing(files []os.FileInfo, currentPath string, w http.ResponseWriter) {
+	parent := getParentURL(s.PathPrefix, currentPath)
+
+	fileList := make([]FileInfo, 0, len(files))
+
+	for _, file := range files {
+		filePath := filepath.Join(currentPath, file.Name())
+		if !strings.HasSuffix(filePath, "/") && file.IsDir() {
+			filePath += "/"
+		}
+
+		fileList = append(fileList, FileInfo{
+			Name:        file.Name(),
+			Size:        file.Size(),
+			IsDirectory: file.IsDir(),
+			ModTime:     file.ModTime().Format("2006-01-02 15:04:05"),
+			Path:        filePath,
+		})
+	}
+
+	response := map[string]interface{}{
+		"current_path": currentPath,
+		"parent_path":  parent,
+		"files":        fileList,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		s.printWarningf("unable to render JSON directory listing: %s", err)
+		httpError(http.StatusInternalServerError, w, "unable to render JSON directory listing -- see application logs for more information")
+	}
+}
+
+// renderTerminalListing renders a directory listing in terminal-friendly format
+func (s *Server) renderTerminalListing(files []os.FileInfo, currentPath string, w http.ResponseWriter) {
+	parent := getParentURL(s.PathPrefix, currentPath)
+
+	var buf bytes.Buffer
+	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
+
+	fmt.Fprintf(tw, "Current directory: %s\n", currentPath)
+	if parent != "" {
+		fmt.Fprintf(tw, "Parent directory: %s\n", parent)
+	}
+	fmt.Fprintf(tw, "\n")
+
+	// Write headers
+	fmt.Fprintf(tw, "Type\tName\tSize\tModified\n")
+	fmt.Fprintf(tw, "----\t----\t----\t--------\n")
+
+	// Write file data
+	for _, file := range files {
+		fileType := "FILE"
+		if file.IsDir() {
+			fileType = "DIR"
+		}
+
+		fmt.Fprintf(tw, "%s\t%s\t%d\t%s\n",
+			fileType,
+			file.Name(),
+			file.Size(),
+			file.ModTime().Format("2006-01-02 15:04:05"),
+		)
+	}
+
+	tw.Flush()
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write(buf.Bytes())
+}
+
+// renderPlainListListing renders a simple list of filenames with directories having trailing slashes
+func (s *Server) renderPlainListListing(files []os.FileInfo, w http.ResponseWriter) {
+	var output strings.Builder
+
+	for _, file := range files {
+		name := file.Name()
+		if file.IsDir() {
+			name += "/"
+		}
+		output.WriteString(name + "\n")
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(output.String()))
 }
 
 // statusCodeHijacker is a response writer that captures the status code
