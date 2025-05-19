@@ -26,21 +26,21 @@ type jsonResponse struct {
 	Files       []fileInfo `json:"files"`
 }
 
-// jsonRenderer implements the Renderer interface for JSON output.
-type jsonRenderer struct{}
+// JSONRenderer implements the Renderer interface for JSON output.
+type JSONRenderer struct{}
 
 // NewJSONRenderer creates a new JSON renderer.
-func NewJSONRenderer() *jsonRenderer {
-	return &jsonRenderer{}
+func NewJSONRenderer() *JSONRenderer {
+	return &JSONRenderer{}
 }
 
 // Format returns the format identifier for this renderer.
-func (r *jsonRenderer) Format() string {
+func (r *JSONRenderer) Format() string {
 	return "json"
 }
 
 // Render renders a directory listing in JSON format.
-func (r *jsonRenderer) Render(config Config, w http.ResponseWriter, files []os.FileInfo) error {
+func (r *JSONRenderer) Render(config Config, w http.ResponseWriter, files []os.FileInfo) error {
 	fileList := make([]fileInfo, 0, len(files))
 
 	for _, file := range files {

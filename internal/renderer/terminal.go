@@ -9,21 +9,21 @@ import (
 	"time"
 )
 
-// terminalRenderer implements the Renderer interface for terminal-friendly output.
-type terminalRenderer struct{}
+// TerminalRenderer implements the Renderer interface for terminal-friendly output.
+type TerminalRenderer struct{}
 
 // NewTerminalRenderer creates a new terminal renderer.
-func NewTerminalRenderer() *terminalRenderer {
-	return &terminalRenderer{}
+func NewTerminalRenderer() *TerminalRenderer {
+	return &TerminalRenderer{}
 }
 
 // Format returns the format identifier for this renderer.
-func (r *terminalRenderer) Format() string {
+func (r *TerminalRenderer) Format() string {
 	return "terminal"
 }
 
 // Render renders a directory listing in terminal-friendly format.
-func (r *terminalRenderer) Render(config Config, w http.ResponseWriter, files []os.FileInfo) error {
+func (r *TerminalRenderer) Render(config Config, w http.ResponseWriter, files []os.FileInfo) error {
 	var buf bytes.Buffer
 	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
 

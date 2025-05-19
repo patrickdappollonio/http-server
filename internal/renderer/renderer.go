@@ -51,7 +51,7 @@ func Render(format string, config Config, w http.ResponseWriter, files []os.File
 		}
 	}
 
-	return UnsupportedFormatError{Format: string(format)}
+	return UnsupportedFormatError{Format: format}
 }
 
 // GetSupportedFormats returns a list of supported formats.
@@ -67,12 +67,7 @@ func GetSupportedFormats() []string {
 
 // GetSupportedFormatsString returns a comma-separated string of supported formats.
 func GetSupportedFormatsString() string {
-	formats := GetSupportedFormats()
-	result := make([]string, len(formats))
-	for i, f := range formats {
-		result[i] = string(f)
-	}
-	return strings.Join(result, ", ")
+	return strings.Join(GetSupportedFormats(), ", ")
 }
 
 // ParseFormat converts a string to a Format, returning

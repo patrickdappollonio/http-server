@@ -7,21 +7,21 @@ import (
 	"strings"
 )
 
-// plainListRenderer implements the Renderer interface for plain list output.
-type plainListRenderer struct{}
+// PlainListRenderer implements the Renderer interface for plain list output.
+type PlainListRenderer struct{}
 
 // NewPlainListRenderer creates a new plainlist renderer.
-func NewPlainListRenderer() *plainListRenderer {
-	return &plainListRenderer{}
+func NewPlainListRenderer() *PlainListRenderer {
+	return &PlainListRenderer{}
 }
 
 // Format returns the format identifier for this renderer.
-func (r *plainListRenderer) Format() string {
+func (r *PlainListRenderer) Format() string {
 	return "plain-list"
 }
 
 // Render renders a directory listing as a simple list of filenames.
-func (r *plainListRenderer) Render(config Config, w http.ResponseWriter, files []os.FileInfo) error {
+func (r *PlainListRenderer) Render(_ Config, w http.ResponseWriter, files []os.FileInfo) error {
 	var output strings.Builder
 
 	for _, file := range files {
