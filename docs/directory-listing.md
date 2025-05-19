@@ -58,10 +58,11 @@ FILE  file.txt   1024  2023-04-15 10:30:45
 DIR   subfolder  0     2023-04-15 09:20:30
 ```
 
-The plain-list output provides a minimal list of files and directories:
+The plain-list output provides a minimal list of files and directories, with directories being at the top and having a trailing slash:
+
 ```
-file.txt
 subfolder/
+file.txt
 ```
 
 If an unsupported format is specified, the server will return a 400 Bad Request error with a message indicating the supported formats.
