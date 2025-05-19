@@ -70,6 +70,11 @@ func run() error {
 				return fmt.Errorf("unable to validate configuration: %w", err)
 			}
 
+			// Add custom CSS file to skip force download list if specified
+			if srv.CustomCSS != "" {
+				srv.SkipForceDownloadFiles = append(srv.SkipForceDownloadFiles, srv.CustomCSS)
+			}
+
 			// Load redirections file if enabled
 			if err := srv.LoadRedirectionsIfEnabled(); err != nil {
 				return fmt.Errorf("unable to load redirections file: %w", err)
