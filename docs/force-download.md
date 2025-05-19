@@ -65,9 +65,8 @@ When a client requests a file, the server checks if the file's extension or full
 ## Limitations
 
 - **Markdown in directory listing**: When using the directory listing feature, Markdown files (like `README.md`) that are rendered as part of the page won't be affected by this flag, since they're processed before the file serving logic is applied.
-- **Direct markdown links**: If a user directly accesses a Markdown file via URL (not through directory listing), the force-download setting will apply if `.md` or `.markdown` is in the list of extensions.
+- **Direct markdown links**: If a user directly accesses a Markdown file and the directory listing is enabled, then Markdown files will not be force downloaded.
 - **Case sensitivity**: All matches are case-insensitive for consistency across different operating systems.
-- **Skip list precedence**: The skip list (`--skip-force-download-files`) takes precedence over the force-download list. If a file matches both lists, it will be served normally (not force-downloaded).
 
 ## Examples
 
@@ -92,8 +91,4 @@ When a client requests a file, the server checks if the file's extension or full
      - css
      - js
      - png
-   skip-force-download-files:
-     - styles.css
-     - scripts/main.js
-     - assets/logo.png
    ```
