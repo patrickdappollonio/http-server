@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -305,24 +306,30 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	}
 
 	var data [512]byte
-	if _, err := f.Read(data[:]); err != nil {
+	n, err := f.Read(data[:])
+	if err != nil && !errors.Is(err, io.EOF) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	
+	// If the file is empty, set n to 0 to ensure we're handling empty files correctly
+	if errors.Is(err, io.EOF) && fi.Size() == 0 {
+		n = 0
+	}
 
-	if contentType == "" {
-		if local := http.DetectContentType(data[:]); local != "application/octet-stream" {
+	if contentType == "" && n > 0 {
+		if local := http.DetectContentType(data[:n]); local != "application/octet-stream" {
 			contentType = local
 		}
 	}
 
 	charset := ""
-	if utf8.Valid(data[:]) {
+	if n > 0 && utf8.Valid(data[:n]) {
 		charset = "utf-8"
 	}
 
-	if charset == "" {
-		res, err := chardet.NewTextDetector().DetectBest(data[:])
+	if charset == "" && n > 0 {
+		res, err := chardet.NewTextDetector().DetectBest(data[:n])
 		if err == nil && res.Confidence > 50 && res.Charset != "" {
 			charset = res.Charset
 		}
