@@ -47,8 +47,12 @@ func (r *HTTPServerRendering) renderImageAlign(w util.BufWriter, source []byte, 
 
 	w.WriteString(`" alt="`)
 
-	//nolint:staticcheck // skipping temporarily until we decide on keeping goldmark
-	w.Write(util.EscapeHTML(n.Text(source)))
+	// Render alt text by walking through child nodes
+	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+		if t, ok := c.(*ast.Text); ok {
+			w.Write(util.EscapeHTML(t.Segment.Value(source)))
+		}
+	}
 	w.WriteString(`"`)
 	if n.Title != nil {
 		w.WriteString(` title="`)

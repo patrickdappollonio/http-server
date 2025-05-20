@@ -2,9 +2,9 @@ package middlewares
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"fmt"
 	"hash"
+	"hash/fnv"
 	"io"
 	"net/http"
 	"sync"
@@ -29,12 +29,18 @@ func Etag(enabled bool, maxBodySize int64) func(http.Handler) http.Handler {
 
 	hashPool := sync.Pool{
 		New: func() interface{} {
-			return sha1.New()
+			return fnv.New64a()
 		},
 	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip ETag generation for HEAD requests since they don't return a body
+			if r.Method == http.MethodHead {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Get a buffer and hasher from the pools.
 			buf := bufferPool.Get().(*bytes.Buffer)
 			buf.Reset()
