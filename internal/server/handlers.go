@@ -311,7 +311,7 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	// If the file is empty, set n to 0 to ensure we're handling empty files correctly
 	if errors.Is(err, io.EOF) && fi.Size() == 0 {
 		n = 0
