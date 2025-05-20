@@ -8,11 +8,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"unicode/utf8"
-
-	"slices"
 
 	"github.com/patrickdappollonio/http-server/internal/ctype"
 	"github.com/patrickdappollonio/http-server/internal/fileutil"
