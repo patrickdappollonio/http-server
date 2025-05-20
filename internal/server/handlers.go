@@ -12,6 +12,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"slices"
+
 	"github.com/patrickdappollonio/http-server/internal/ctype"
 	"github.com/patrickdappollonio/http-server/internal/fileutil"
 	"github.com/patrickdappollonio/http-server/internal/renderer"
@@ -82,7 +84,21 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	// If the path is not a directory, then it's a file, so we can render it,
 	// let's check first if it's a markdown file
 	if ext := strings.ToLower(filepath.Ext(currentPath)); ext == ".md" || ext == ".markdown" {
-		s.serveMarkdown(currentPath, w, r)
+		// Check if this is an index-like markdown file or if FullMarkdownRender is enabled
+		isIndexFile := false
+		filename := filepath.Base(currentPath)
+
+		if slices.Contains(allowedIndexFiles, filename) {
+			isIndexFile = true
+		}
+
+		if isIndexFile || s.FullMarkdownRender {
+			s.serveMarkdown(currentPath, w, r)
+			return
+		}
+
+		// If not an index file and FullMarkdownRender is disabled, serve as plain text
+		s.serveFile(0, currentPath, w, r)
 		return
 	}
 
