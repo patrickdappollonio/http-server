@@ -312,11 +312,6 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		return
 	}
 
-	// If the file is empty, set n to 0 to ensure we're handling empty files correctly
-	if errors.Is(err, io.EOF) && fi.Size() == 0 {
-		n = 0
-	}
-
 	if contentType == "" && n > 0 {
 		if local := http.DetectContentType(data[:n]); local != "application/octet-stream" {
 			contentType = local
@@ -347,6 +342,12 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	if fileutil.ShouldForceDownload(location, s.ForceDownloadExtensions, s.SkipForceDownloadFiles) {
 		filename := filepath.Base(location)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	}
+
+	// Reset file position to beginning after reading first bytes for content detection
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Check if the caller changed the status code, if not, simply call
