@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// DisableAccessToFile returns a middleware that disables access to files
+// that match the given function.
 func DisableAccessToFile(fn func(string) bool, statusCode int) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

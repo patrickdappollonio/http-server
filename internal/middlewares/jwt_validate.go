@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,12 +10,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func signMethod(signingKey []byte) func(*jwt.Token) (interface{}, error) {
-	return func(token *jwt.Token) (interface{}, error) {
+// sendUnauthorized sends a 401 response with a warning message.
+func sendUnauthorized(w http.ResponseWriter, warnFunctionf func(string, ...any), format string, args ...any) {
+	warnFunctionf(format, args...)
+	http.Error(w, "unauthorized", http.StatusUnauthorized)
+}
+
+// signMethod returns a key function that validates the signing method is HS256.
+func signMethod(signingKey []byte) func(*jwt.Token) (any, error) {
+	return func(token *jwt.Token) (any, error) {
 		// Validate the signing method
 		hm, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok || hm.Hash != jwt.SigningMethodHS256.Hash {
-			// This error will be caught by the err check below
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
@@ -25,9 +32,31 @@ func signMethod(signingKey []byte) func(*jwt.Token) (interface{}, error) {
 // ValidateJWTHS256 validates a JWT token using the HS256 algorithm,
 // the token can be passed in the "Authorization" header or in the
 // "token" query parameter.
-func ValidateJWTHS256(warnFunctionf func(string, ...interface{}), loggedInFunction func(string), jwtSigningKey string, validateTimedJWT bool) func(http.Handler) http.Handler {
+func ValidateJWTHS256(warnFunctionf func(string, ...any), loggedInFunction func(string), jwtSigningKey string, validateTimedJWT bool) func(http.Handler) http.Handler {
+	// Cache the signing key bytes
+	signingKeyBytes := []byte(jwtSigningKey)
+	keyfunc := signMethod(signingKeyBytes)
+
+	// Configure parser options based on validation requirements
+	options := []jwt.ParserOption{
+		jwt.WithValidMethods([]string{"HS256"}),
+	}
+
+	if validateTimedJWT {
+		// Add time validation options
+		options = append(options,
+			jwt.WithLeeway(time.Second*5), // Small leeway for clock skew
+			jwt.WithExpirationRequired(),
+			jwt.WithIssuedAt(),
+		)
+	}
+
+	// Create a parser with the specified options
+	parser := jwt.NewParser(options...)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			path := r.URL.Path // Cache path to avoid repeated access
 			var claims jwt.MapClaims
 
 			// Get the token from the "Authorization" header or from the "token" query parameter
@@ -42,82 +71,47 @@ func ValidateJWTHS256(warnFunctionf func(string, ...interface{}), loggedInFuncti
 				return
 			}
 
-			// Check for errors during parsing (includes signature validation errors and method mismatch errors)
-			tkn, err := jwt.ParseWithClaims(token, &claims, signMethod([]byte(jwtSigningKey)))
+			// Parse token with claims using the configured parser
+			tkn, err := parser.ParseWithClaims(token, &claims, keyfunc)
+
+			// Handle parsing errors with more specific messages based on error type
 			if err != nil {
-				warnFunctionf("error parsing token for URL %q: %s", r.URL.Path, err.Error())
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				// Check specific JWT error types for better error messages
+				switch {
+				case errors.Is(err, jwt.ErrTokenExpired):
+					sendUnauthorized(w, warnFunctionf, "JWT token validation failed: token expired for URL: %s", path)
+				case errors.Is(err, jwt.ErrTokenUsedBeforeIssued), errors.Is(err, jwt.ErrTokenNotValidYet):
+					sendUnauthorized(w, warnFunctionf, "JWT token validation failed: token not valid yet for URL: %s", path)
+				case errors.Is(err, jwt.ErrTokenMalformed):
+					sendUnauthorized(w, warnFunctionf, "JWT token validation failed: malformed token for URL: %s", path)
+				case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+					sendUnauthorized(w, warnFunctionf, "JWT token validation failed: invalid signature for URL: %s", path)
+				case errors.Is(err, jwt.ErrTokenRequiredClaimMissing):
+					sendUnauthorized(w, warnFunctionf, "JWT token validation failed: required claim missing for URL: %s", path)
+				default:
+					sendUnauthorized(w, warnFunctionf, "Error parsing token for URL %q: %s", path, err.Error())
+				}
 				return
 			}
 
-			// Basic token validity check (mainly signature and structure if no options passed)
+			// Basic token validity check
 			if !tkn.Valid {
-				// This case should ideally not be hit if err is nil above, unless custom validation
-				// options were passed which they are not. Including defensively.
-				warnFunctionf("JWT token basic validation failed: invalid token for url: %s", r.URL.Path)
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				sendUnauthorized(w, warnFunctionf, "JWT token basic validation failed: invalid token for URL: %s", path)
 				return
 			}
 
-			if validateTimedJWT {
-				now := time.Now()
-
-				// Check for missing 'exp' claim first
-				if _, ok := claims["exp"]; !ok {
-					warnFunctionf("JWT token validation failed: missing 'exp' claim for url: %s", r.URL.Path)
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
-					return
-				}
-
-				// Claim exists, now try to get it as a NumericDate
-				exp, err := claims.GetExpirationTime()
-				if err != nil {
-					warnFunctionf("JWT token validation failed: invalid 'exp' claim value for url: %s: %s", r.URL.Path, err.Error())
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
-					return
-				}
-
-				// Now compare the time directly
-				if now.After(exp.Time) {
-					warnFunctionf("JWT token validation failed: token expired for url: %s", r.URL.Path)
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
-					return
-				}
-
-				// We check for 'iat' existence first
-				if _, ok := claims["iat"]; !ok {
-					warnFunctionf("JWT token validation failed: missing 'iat' claim for url: %s", r.URL.Path)
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
-					return
-				}
-
-				// Claim exists, now try to get it as a NumericDate
-				iss, err := claims.GetIssuedAt()
-				if err != nil {
-					warnFunctionf("JWT token validation failed: invalid 'iat' claim value for url: %s: %s", r.URL.Path, err.Error())
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
-					return
-				}
-
-				// Now compare the time directly
-				if now.Before(iss.Time) {
-					warnFunctionf("JWT token validation failed: token issued in the future for url: %s", r.URL.Path)
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
-					return
-				}
-			}
-
-			// Logging successful authentication
+			// Log successful authentication
 			if user := claims["sub"]; user != nil {
-				s := fmt.Sprintf("JWT auth passed for url %q: user: %q", r.URL.Path, user)
+				log := fmt.Sprintf("JWT auth passed for URL %q: user: %q", path, user)
 
 				if issuer := claims["iss"]; issuer != nil {
-					s += fmt.Sprintf(" (issuer: %q)", issuer)
+					log += fmt.Sprintf(" (issuer: %q)", issuer)
 				}
 
-				loggedInFunction(s)
+				loggedInFunction(log)
 			}
 
+			// Continue to the next handler
 			next.ServeHTTP(w, r)
 		})
 	}
