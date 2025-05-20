@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -305,31 +306,35 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	}
 
 	var data [512]byte
-	if _, err := f.Read(data[:]); err != nil {
+	n, err := f.Read(data[:])
+	if err != nil && !errors.Is(err, io.EOF) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if contentType == "" {
-		if local := http.DetectContentType(data[:]); local != "application/octet-stream" {
+	// Only detect content type if we have content to examine
+	if contentType == "" && n > 0 {
+		if local := http.DetectContentType(data[:n]); local != "application/octet-stream" {
 			contentType = local
 		}
 	}
 
+	// Only attempt charset detection if we have content to examine
 	charset := ""
-	if utf8.Valid(data[:]) {
-		charset = "utf-8"
-	}
-
-	if charset == "" {
-		res, err := chardet.NewTextDetector().DetectBest(data[:])
-		if err == nil && res.Confidence > 50 && res.Charset != "" {
-			charset = res.Charset
+	if n > 0 && contentType != "" && !strings.HasPrefix(contentType, "application/octet-stream") {
+		if utf8.Valid(data[:n]) {
+			charset = "utf-8"
+		} else {
+			res, err := chardet.NewTextDetector().DetectBest(data[:n])
+			if err == nil && res.Confidence > 50 && res.Charset != "" {
+				charset = res.Charset
+			}
 		}
 	}
 
-	if contentType != "" && contentType != "application/octet-stream" {
-		if charset != "" {
+	if contentType != "" {
+		// Add charset for text-based content types only
+		if charset != "" && contentType != "application/octet-stream" {
 			contentType += "; charset=" + charset
 		}
 
@@ -340,6 +345,12 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	if fileutil.ShouldForceDownload(location, s.ForceDownloadExtensions, s.SkipForceDownloadFiles) {
 		filename := filepath.Base(location)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	}
+
+	// Reset file position to beginning after reading first bytes for content detection
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Check if the caller changed the status code, if not, simply call

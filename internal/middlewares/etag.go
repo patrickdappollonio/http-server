@@ -64,7 +64,7 @@ func Etag(enabled bool, maxBodySize int64) func(http.Handler) http.Handler {
 				}
 
 				// Only proceed if the response was fully buffered and status code is in the 200 range.
-				if rw.size <= rw.maxSize && rw.err == nil && rw.statusCode >= 200 && rw.statusCode < 300 {
+				if rw.size > 0 && rw.size <= rw.maxSize && rw.err == nil && rw.statusCode >= 200 && rw.statusCode < 300 {
 					// Compute the ETag.
 					etag := fmt.Sprintf("\"%x\"", hasher.Sum(nil))
 					// Set the ETag header.
