@@ -83,15 +83,15 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	// If the path is not a directory, then it's a file, so we can render it,
 	// let's check first if it's a markdown file
 	if ext := strings.ToLower(filepath.Ext(currentPath)); ext == ".md" || ext == ".markdown" {
-		// Check if this is an index-like markdown file or if FullMarkdownRender is enabled
-		isIndexFile := false
-		filename := filepath.Base(currentPath)
-
-		if slices.Contains(allowedIndexFiles, filename) {
-			isIndexFile = true
+		// Check FullMarkdownRender first to avoid unnecessary filename extraction
+		if s.FullMarkdownRender {
+			s.serveMarkdown(currentPath, w, r)
+			return
 		}
 
-		if isIndexFile || s.FullMarkdownRender {
+		// Not rendering all markdown, check if this is an index-like file
+		filename := filepath.Base(currentPath)
+		if slices.Contains(allowedIndexFiles, filename) {
 			s.serveMarkdown(currentPath, w, r)
 			return
 		}
