@@ -312,26 +312,29 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 		return
 	}
 
+	// Only detect content type if we have content to examine
 	if contentType == "" && n > 0 {
 		if local := http.DetectContentType(data[:n]); local != "application/octet-stream" {
 			contentType = local
 		}
 	}
 
+	// Only attempt charset detection if we have content to examine
 	charset := ""
-	if n > 0 && utf8.Valid(data[:n]) {
-		charset = "utf-8"
-	}
-
-	if charset == "" && n > 0 {
-		res, err := chardet.NewTextDetector().DetectBest(data[:n])
-		if err == nil && res.Confidence > 50 && res.Charset != "" {
-			charset = res.Charset
+	if n > 0 && contentType != "" && !strings.HasPrefix(contentType, "application/octet-stream") {
+		if utf8.Valid(data[:n]) {
+			charset = "utf-8"
+		} else {
+			res, err := chardet.NewTextDetector().DetectBest(data[:n])
+			if err == nil && res.Confidence > 50 && res.Charset != "" {
+				charset = res.Charset
+			}
 		}
 	}
 
-	if contentType != "" && contentType != "application/octet-stream" {
-		if charset != "" {
+	if contentType != "" {
+		// Add charset for text-based content types only
+		if charset != "" && contentType != "application/octet-stream" {
 			contentType += "; charset=" + charset
 		}
 
