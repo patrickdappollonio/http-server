@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"io"
+	"os" // Ensure os package is imported
 	"path"
 	"strings"
 
@@ -71,7 +72,7 @@ type Server struct {
 	SkipForceDownloadFiles  []string
 
 	// Root context for sandboxed file operations
-	RootCtx *os.Root
+	RootCtx *os.Root // This line should now be valid
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with
