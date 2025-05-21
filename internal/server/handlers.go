@@ -357,8 +357,6 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	if err != nil && !errors.Is(err, io.EOF) {
 		s.printWarningf("error reading file %q (relative: %q) for content type detection: %s", location, relativePath, err)
 		http.Error(w, "error reading file", http.StatusInternalServerError)
-		s.printWarningf("error reading file %q (relative: %q) for content type detection: %s", location, relativePath, err)
-		http.Error(w, "error reading file", http.StatusInternalServerError)
 		return
 	}
 
