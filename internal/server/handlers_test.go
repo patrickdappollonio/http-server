@@ -47,10 +47,6 @@ func newTestServer(t *testing.T) (*Server, string) {
 		DisableDirectoryList: false, // Ensure walk is tested
 	}
 
-	// *os.Root does not have a Close method, so no t.Cleanup for s.RootCtx.Close() is needed.
-	// The underlying file descriptor for the directory opened by os.OpenRoot is managed by the runtime
-	// and typically closed when the *os.Root object is garbage collected or the process exits.
-
 	return s, tempRoot
 }
 

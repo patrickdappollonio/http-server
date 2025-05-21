@@ -183,13 +183,13 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		// If the directory doesn't exist, render an appropriate message
 		if os.IsNotExist(err) {
-			s.printWarningf("attempted to access non-existent path via RootCtx.Open: %s (relative: %s)", requestedPath, relativePath)
+			s.printWarningf("attempted to access non-existent path %q (relative: %q) using sandboxed context: %s", requestedPath, relativePath, err)
 			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
 		// Otherwise handle it generically speaking
-		s.printWarningf("unable to open directory via RootCtx.Open %q (relative: %s): %s", requestedPath, relativePath, err)
+		s.printWarningf("unable to open directory %q (relative: %q) using sandboxed context: %s", requestedPath, relativePath, err)
 		httpError(http.StatusInternalServerError, w, "unable to open directory -- see application logs for more information")
 		return
 	}
@@ -327,11 +327,11 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	f, err := s.RootCtx.Open(relativePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			s.printWarningf("file not found via RootCtx.Open %q (relative: %q): %s", location, relativePath, err)
+			s.printWarningf("file not found %q (relative: %q) using sandboxed context: %s", location, relativePath, err)
 			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}
-		s.printWarningf("error opening file via RootCtx.Open %q (relative: %q): %s", location, relativePath, err)
+		s.printWarningf("error opening file %q (relative: %q) using sandboxed context: %s", location, relativePath, err)
 		http.Error(w, "error opening file", http.StatusInternalServerError)
 		return
 	}
