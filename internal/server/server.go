@@ -69,6 +69,9 @@ type Server struct {
 	// Force download settings
 	ForceDownloadExtensions []string
 	SkipForceDownloadFiles  []string
+
+	// Root context for sandboxed file operations
+	RootCtx *os.Root
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with

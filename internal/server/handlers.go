@@ -169,29 +169,38 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Open the directory path and read all files
-	dir, err := os.Open(requestedPath)
+	// Calculate the relative path
+	relativePath, err := filepath.Rel(s.Path, requestedPath)
+	if err != nil {
+		s.printWarningf("unable to calculate relative path for %q: %s", requestedPath, err)
+		httpError(http.StatusInternalServerError, w, "internal error calculating relative path -- see application logs for details")
+		return
+	}
+
+	// Open the directory path using the root context and relative path.
+	// s.RootCtx is an *os.Root context for s.Path.
+	dir, err := s.RootCtx.Open(relativePath)
 	if err != nil {
 		// If the directory doesn't exist, render an appropriate message
 		if os.IsNotExist(err) {
-			s.printWarningf("attempted to access non-existent path: %s", requestedPath)
+			s.printWarningf("attempted to access non-existent path via RootCtx.Open: %s (relative: %s)", requestedPath, relativePath)
 			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
 		// Otherwise handle it generically speaking
-		s.printWarningf("unable to open directory %q: %s", requestedPath, err)
+		s.printWarningf("unable to open directory via RootCtx.Open %q (relative: %s): %s", requestedPath, relativePath, err)
 		httpError(http.StatusInternalServerError, w, "unable to open directory -- see application logs for more information")
 		return
 	}
+	defer dir.Close() // Ensure directory is closed
 
-	// Read all files in the directory then close the directory
+	// Read all files in the directory. os.File.ReadDir is used.
 	list, err := dir.ReadDir(-1)
-	dir.Close()
 
 	// Handle error on readdir call
 	if err != nil {
-		s.printWarningf("unable to read directory %q: %s", requestedPath, err)
+		s.printWarningf("unable to read directory %q (relative: %s): %s", requestedPath, relativePath, err)
 		httpError(http.StatusInternalServerError, w, "unable to read directory -- see application logs for more information")
 		return
 	}
@@ -204,8 +213,9 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	for _, f := range list {
 		fi, err := f.Info()
 		if err != nil {
-			s.printWarningf("unable to stat file %q: %s", f.Name(), err)
-			httpError(http.StatusInternalServerError, w, "unable to stat file %q -- see application logs for more information", f.Name())
+			// When using fs.DirEntry, f.Name() is the base name. For full path for logging, we might need to reconstruct or log relative path.
+			s.printWarningf("unable to stat file %q in %q: %s", f.Name(), relativePath, err)
+			httpError(http.StatusInternalServerError, w, "unable to stat file -- see application logs for more information")
 			return
 		}
 
@@ -247,8 +257,15 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 
 	// Find if among the files there's a markdown readme
 	var markdownContent bytes.Buffer
+	// Pass s.Path and relativePath to findAndGenerateMarkdown if it needs to construct full paths.
+	// For now, assuming findAndGenerateMarkdown works with requestedPath or can be adapted.
+	// If it directly uses file paths, it might need s.Path and the relative paths of entries.
+	// However, `files` contains os.FileInfo, which doesn't inherently know its full path if obtained from fs.FS.
+	// This might be a concern for findAndGenerateMarkdown if it relies on absolute paths from os.FileInfo.
+	// For now, we'll assume it works or will be adapted in a future step.
+	// The `requestedPath` is still the absolute path to the directory being walked.
 	if err := s.findAndGenerateMarkdown(requestedPath, files, &markdownContent); err != nil {
-		s.printWarningf("unable to generate markdown: %s", err)
+		s.printWarningf("unable to generate markdown for %q: %s", requestedPath, err)
 		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
 		return
 	}
@@ -297,33 +314,51 @@ func (s *statusCodeHijacker) WriteHeader(code int) {
 // If the status code is not 0, the status code provided will be used
 // when serving the file in the given path.
 func (s *Server) serveFile(statusCode int, location string, w http.ResponseWriter, r *http.Request) {
-	f, err := os.Open(location)
+	// Calculate the relative path from the server's root path
+	relativePath, err := filepath.Rel(s.Path, location)
+	if err != nil {
+		s.printWarningf("unable to calculate relative path for %q (root: %q): %s", location, s.Path, err)
+		http.Error(w, "internal error calculating relative path", http.StatusInternalServerError)
+		return
+	}
+
+	// Open the file using the root context and relative path.
+	// s.RootCtx is an *os.Root context for s.Path.
+	f, err := s.RootCtx.Open(relativePath)
 	if err != nil {
 		if os.IsNotExist(err) {
+			s.printWarningf("file not found via RootCtx.Open %q (relative: %q): %s", location, relativePath, err)
 			httpError(http.StatusNotFound, w, "404 not found")
 			return
 		}
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.printWarningf("error opening file via RootCtx.Open %q (relative: %q): %s", location, relativePath, err)
+		http.Error(w, "error opening file", http.StatusInternalServerError)
 		return
 	}
 	defer f.Close()
 
+	// Stat the file. os.File implements Stat().
 	fi, err := f.Stat()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.printWarningf("error stating file %q (relative: %q): %s", location, relativePath, err)
+		http.Error(w, "error stating file", http.StatusInternalServerError)
 		return
 	}
 
 	var contentType string
+	// filepath.Base(location) is fine here as `location` is the original full path.
 	if local := ctype.GetContentTypeForFilename(filepath.Base(location)); local != "" {
 		contentType = local
 	}
 
 	var data [512]byte
+	// f.Read() is fine as fs.File implements io.Reader.
 	n, err := f.Read(data[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.printWarningf("error reading file %q (relative: %q) for content type detection: %s", location, relativePath, err)
+		http.Error(w, "error reading file", http.StatusInternalServerError)
+		s.printWarningf("error reading file %q (relative: %q) for content type detection: %s", location, relativePath, err)
+		http.Error(w, "error reading file", http.StatusInternalServerError)
 		return
 	}
 
@@ -357,14 +392,17 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	}
 
 	// Check if we should force download this file based on its extension
+	// `location` is still the original absolute path, which is fine for ShouldForceDownload.
 	if fileutil.ShouldForceDownload(location, s.ForceDownloadExtensions, s.SkipForceDownloadFiles) {
 		filename := filepath.Base(location)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	}
 
 	// Reset file position to beginning after reading first bytes for content detection
+	// f.Seek() is fine as fs.File implements io.Seeker.
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.printWarningf("error seeking file %q (relative: %q): %s", location, relativePath, err)
+		http.Error(w, "error seeking file", http.StatusInternalServerError)
 		return
 	}
 
