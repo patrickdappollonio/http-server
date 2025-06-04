@@ -215,7 +215,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		if err != nil {
 			// When using fs.DirEntry, f.Name() is the base name. For full path for logging, we might need to reconstruct or log relative path.
 			s.printWarningf("unable to stat file %q in %q: %s", f.Name(), relativePath, err)
-			httpError(http.StatusInternalServerError, w, "unable to stat file -- see application logs for more information")
+			httpError(http.StatusInternalServerError, w, "unable to stat file %q -- see application logs for more information", f.Name())
 			return
 		}
 

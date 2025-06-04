@@ -271,7 +271,7 @@ func parseTemplates(fsInstance assets.FsProvider) (*template.Template, error) {
 	if len(templateFilePaths) == 0 {
 		return nil, fmt.Errorf("no template files found")
 	}
-	
+
 	// Using a simple name for the template collection for testing purposes
 	return template.New("test_templates").ParseFS(fsInstance, templateFilePaths...)
 }
