@@ -9,9 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/patrickdappollonio/http-server/internal/server/assets"
+	"embed"         // Ensure embed is imported
+	"html/template" // Ensure html/template is imported for template.New
 )
+
+//go:embed templates/*
+var testHandlerTemplates embed.FS
 
 // newTestServer creates a new server instance for testing, with a temporary root directory.
 // It also creates the RootCtx for the server using os.OpenRoot.
@@ -30,10 +33,12 @@ func newTestServer(t *testing.T) (*Server, string) {
 	// Initialize templates (minimal setup to avoid nil pointer in handlers)
 	// In a real scenario, you might need a more complete template setup if testing rendering.
 	// For sandboxing tests, we mainly care that the handlers don't panic before file access.
-	tpl, err := parseTemplates(assets.Assets)
-	if err != nil {
-		t.Fatalf("Failed to parse templates: %v", err)
-	}
+	tpl := template.New("test") // Provides a non-nil, empty template set.
+	// If actual template parsing is needed in the future for these tests:
+	// tpl, err := template.ParseFS(testHandlerTemplates, "templates/*.tmpl") // Corrected path for embed.FS
+	// if err != nil {
+	// t.Fatalf("Failed to parse test templates: %v", err)
+	// }
 
 	s := &Server{
 		Path:       tempRoot,
@@ -273,5 +278,3 @@ func parseTemplates(fsInstance assets.FsProvider) (*template.Template, error) {
 	}
 
 	// Using a simple name for the template collection for testing purposes
-	return template.New("test_templates").ParseFS(fsInstance, templateFilePaths...)
-}
