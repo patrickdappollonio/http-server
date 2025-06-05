@@ -28,12 +28,11 @@ func newTestServer(t *testing.T) (*Server, string) {
 		t.Fatalf("Failed to create root context for temp root directory %q: %v", tempRoot, err)
 	}
 
-	tpl := template.New("test")
-	// If actual template parsing is needed in the future for these tests:
-	// tpl, err := template.ParseFS(testHandlerTemplates, "templates/*.tmpl")
-	// if err != nil {
-	// 	t.Fatalf("Failed to parse test templates: %v", err)
-	// }
+	// Initialize templates by parsing the actual template files.
+	tpl, err := template.ParseFS(testHandlerTemplates, "*.tmpl")
+	if err != nil {
+		t.Fatalf("Failed to parse test templates: %v", err)
+	}
 
 	s := &Server{
 		Path:                 tempRoot,

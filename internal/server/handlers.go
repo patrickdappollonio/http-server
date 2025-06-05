@@ -2,9 +2,11 @@ package server
 
 import (
 	"bytes"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs" // Added for fs.ErrNotExist, fs.ErrInvalid, fs.ErrPermission
 	"net/http"
 	"os"
 	"path"
@@ -182,17 +184,13 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// s.RootCtx is an *os.Root context for s.Path.
 	dir, err := s.RootCtx.Open(relativePath)
 	if err != nil {
-		// If the directory doesn't exist, render an appropriate message
-		if os.IsNotExist(err) {
-			s.printWarningf("attempted to access non-existent path %q (relative: %q) using sandboxed context: %s", requestedPath, relativePath, err)
-			// For user-facing "not found", the specific relative path is good.
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrInvalid) || errors.Is(err, fs.ErrPermission) {
+			s.printWarningf("access denied or directory not found for %q (relative: %q): %s", requestedPath, relativePath, err)
 			httpError(http.StatusNotFound, w, "directory %q not found", relativePath)
-			return
+		} else {
+			s.printWarningf("error opening directory %q (relative: %q) using sandboxed context: %s", requestedPath, relativePath, err)
+			httpError(http.StatusInternalServerError, w, "error opening directory %q -- see application logs for more information", relativePath)
 		}
-
-		// Otherwise handle it generically speaking
-		s.printWarningf("unable to open directory %q (relative: %q) using sandboxed context: %s", requestedPath, relativePath, err)
-		httpError(http.StatusInternalServerError, w, "unable to open directory %q -- see application logs for more information", relativePath)
 		return
 	}
 	defer dir.Close() // Ensure directory is closed
@@ -329,13 +327,13 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	// s.RootCtx is an *os.Root context for s.Path.
 	f, err := s.RootCtx.Open(relativePath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			s.printWarningf("file not found %q (relative: %q) using sandboxed context: %s", location, relativePath, err)
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrInvalid) || errors.Is(err, fs.ErrPermission) {
+			s.printWarningf("access denied or file not found for %q (relative: %q): %s", location, relativePath, err)
 			httpError(http.StatusNotFound, w, "file %q not found", relativePath)
-			return
+		} else {
+			s.printWarningf("error opening file %q (relative: %q) using sandboxed context: %s", location, relativePath, err)
+			httpError(http.StatusInternalServerError, w, "error opening file %q", relativePath)
 		}
-		s.printWarningf("error opening file %q (relative: %q) using sandboxed context: %s", location, relativePath, err)
-		httpError(http.StatusInternalServerError, w, "error opening file %q", relativePath)
 		return
 	}
 	defer f.Close()
