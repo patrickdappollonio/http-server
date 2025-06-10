@@ -52,7 +52,7 @@ func (m *MultiError) Error() string {
 type ValidationError struct {
 	Field string
 	Tag   string
-	Value interface{}
+	Value any
 	Param string
 }
 
@@ -78,9 +78,9 @@ func (v *ValidationError) Error() string {
 	)
 }
 
-// FieldToValidationError converts a validator.FieldError from
+// fieldToValidationError converts a validator.FieldError from
 // the validator v10 package to a local ValidationError
-func FieldToValidationError(field validator.FieldError) *ValidationError {
+func fieldToValidationError(field validator.FieldError) *ValidationError {
 	return &ValidationError{
 		Field: field.Field(),
 		Tag:   field.Tag(),

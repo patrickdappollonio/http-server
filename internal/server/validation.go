@@ -91,7 +91,7 @@ func (s *Server) Validate() error {
 
 			for _, e := range valerrs {
 				// Convert the error to a human-readable error
-				merrs.Append(FieldToValidationError(e))
+				merrs.Append(fieldToValidationError(e))
 			}
 
 			return &merrs
