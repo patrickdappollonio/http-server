@@ -83,6 +83,13 @@ func run() error {
 			// Print some sane defaults and some information about the request
 			srv.PrintStartup()
 
+			// Create the root context for sandboxed file operations
+			rootCtx, err := os.OpenRoot(srv.Path)
+			if err != nil {
+				return fmt.Errorf("unable to create root context for path %q: %w", srv.Path, err)
+			}
+			srv.RootCtx = rootCtx
+
 			// Run the server
 			return srv.ListenAndServe()
 		},
