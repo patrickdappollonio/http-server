@@ -84,7 +84,7 @@ Flags:
       --banner string                       markdown text to be rendered at the top of the directory listing page
       --cors                                enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
       --custom-404 string                   custom "page not found" to serve
-      --custom-404-code int                 custtom status code for pages not found
+      --custom-404-code int                 custom status code for pages not found
       --custom-css-file string              path within the served files to a custom CSS file
       --disable-cache-buster                disable the cache buster for assets from the directory listing feature
       --disable-directory-listing           disable the directory listing feature and return 404s for directories without index
