@@ -191,7 +191,8 @@ func bindCobraAndViper(rootCommand *cobra.Command) error {
 	if err := v.ReadInConfig(); err != nil {
 		// If the configuration file was not found, it's all good, we ignore
 		// the failure and proceed with the default settings
-		if f := (&viper.ConfigFileNotFoundError{}); errors.As(err, &f) {
+		var cfErr viper.ConfigFileNotFoundError
+		if !errors.As(err, &cfErr) {
 			return fmt.Errorf("unable to read configuration file: %w", err)
 		}
 	}
