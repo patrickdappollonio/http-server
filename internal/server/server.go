@@ -89,10 +89,10 @@ func (s *Server) getCustomCSSURL() string {
 		return ""
 	}
 
-	css := s.CustomCSS
+	css := strings.TrimPrefix(s.CustomCSS, "/")
 
 	if s.PathPrefix != "" {
-		css = path.Join(s.PathPrefix, s.CustomCSS)
+		css = path.Join(s.PathPrefix, css)
 	}
 
 	if !strings.HasPrefix(css, "/") {
