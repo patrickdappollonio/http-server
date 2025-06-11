@@ -18,7 +18,7 @@ For an example site built with `http-server`, check the demo page: [`https://pat
 
 ### Docker image
 
-[Find the latest version available here](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server). `latest` will always map to the latest version, which could led you to download a newer major version that might contain a breaking change. I recommend using `v2` for the tag, since it will always map to a stable version with all potential patches applied. This is the safest way to use to avoid any breaking changes.
+[Find the latest version available here](https://github.com/users/patrickdappollonio/packages/container/package/docker-http-server). `latest` will always map to the latest version, which could lead you to download a newer major version that might contain a breaking change. I recommend using `v2` for the tag, since it will always map to a stable version with all potential patches applied. This is the safest way to use to avoid any breaking changes.
 
 ```bash
 # stable version 2
