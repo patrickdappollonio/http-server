@@ -101,7 +101,9 @@ linters:
       rules:
         - name: var-naming
           arguments:
-            - [skipPackageNameChecks=true]
+            - []
+            - []
+            - [{ skipPackageNameChecks: true }]
     staticcheck:
       checks:
         - -SA1019
