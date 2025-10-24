@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/patrickdappollonio/http-server/internal/utils"
+	"github.com/patrickdappollonio/http-server/internal/common"
 )
 
 const warnPrefix = "[WARNING] >>> "
@@ -74,7 +74,7 @@ func (s *Server) Validate() error {
 		}
 	}
 
-	size, err := utils.ParseSize(s.ETagMaxSize)
+	size, err := common.ParseSize(s.ETagMaxSize)
 	if err != nil {
 		return fmt.Errorf("unable to parse ETag max size: %w", err)
 	}

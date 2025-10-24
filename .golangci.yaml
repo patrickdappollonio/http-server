@@ -97,6 +97,13 @@ linters:
       errorf: true
       sprintf1: true
       strconcat: false
+    revive:
+      rules:
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - [{ skipPackageNameChecks: true }]
     staticcheck:
       checks:
         - -SA1019

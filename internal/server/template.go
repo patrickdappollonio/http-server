@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"path"
 
-	"github.com/patrickdappollonio/http-server/internal/utils"
+	"github.com/patrickdappollonio/http-server/internal/common"
 )
 
 // walkTemplatesFS embeds the templates used to render the directory listing
@@ -18,13 +18,13 @@ var walkTemplatesFS embed.FS
 func (s *Server) generateTemplates() (*template.Template, error) {
 	tplfuncs := template.FuncMap{
 		"assetpath":      s.assetpath,
-		"rfc1123":        utils.RFC1123,
-		"prettytime":     utils.PrettyTime,
-		"humansize":      utils.Humansize,
-		"canonicalURL":   utils.CanonicalURL,
+		"rfc1123":        common.RFC1123,
+		"prettytime":     common.PrettyTime,
+		"humansize":      common.Humansize,
+		"canonicalURL":   common.CanonicalURL,
 		"getIconForFile": getIconForFile,
 		"unsafeHTML":     func(s string) template.HTML { return template.HTML(s) },
-		"default":        utils.DefaultValue[any],
+		"default":        common.DefaultValue[any],
 		"serverVersion":  func() string { return s.version },
 		"bannerMessage":  s.generateBannerMarkdown,
 	}
