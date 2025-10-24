@@ -35,7 +35,7 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	currentPath, err := filepath.Abs(relpath)
 	if err != nil {
 		fmt.Fprintln(s.LogOutput, "error generating absolute path:", err)
-		httpError(http.StatusInternalServerError, w, "internal error generating full paths -- see application logs for details")
+		httpErrorf(http.StatusInternalServerError, w, "internal error generating full paths -- see application logs for details")
 		return
 	}
 
@@ -58,14 +58,14 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 				s.serveFile(statusCode, s.CustomNotFoundPage, w, r)
 				return
 			}
-			httpError(http.StatusNotFound, w, "404 not found")
+			httpErrorf(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
 		// If it's any other kind of error, return the 500 error and log the actual error
 		// to the app log
 		s.printWarningf("unable to stat directory %q: %s", currentPath, err)
-		httpError(http.StatusInternalServerError, w, "unable to stat directory -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to stat directory -- see application logs for more information")
 		return
 	}
 
@@ -110,7 +110,7 @@ func (s *Server) serveMarkdown(requestedPath string, w http.ResponseWriter, r *h
 	var markdownContent bytes.Buffer
 	if err := s.renderMarkdownFile(requestedPath, &markdownContent); err != nil {
 		s.printWarningf("unable to generate markdown: %s", err)
-		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
 		return
 	}
 
@@ -137,7 +137,7 @@ func (s *Server) serveMarkdown(requestedPath string, w http.ResponseWriter, r *h
 
 	if err := s.templates.ExecuteTemplate(w, "app.tmpl", content); err != nil {
 		s.printWarningf("unable to render directory listing: %s", err)
-		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
 		return
 	}
 }
@@ -165,7 +165,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// Check if directory listing is disabled, if so,
 	// return here with a 404 error
 	if s.DisableDirectoryList {
-		httpError(http.StatusNotFound, w, "404 not found")
+		httpErrorf(http.StatusNotFound, w, "404 not found")
 		return
 	}
 
@@ -175,13 +175,13 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		// If the directory doesn't exist, render an appropriate message
 		if os.IsNotExist(err) {
 			s.printWarningf("attempted to access non-existent path: %s", requestedPath)
-			httpError(http.StatusNotFound, w, "404 not found")
+			httpErrorf(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
 		// Otherwise handle it generically speaking
 		s.printWarningf("unable to open directory %q: %s", requestedPath, err)
-		httpError(http.StatusInternalServerError, w, "unable to open directory -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to open directory -- see application logs for more information")
 		return
 	}
 
@@ -192,7 +192,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// Handle error on readdir call
 	if err != nil {
 		s.printWarningf("unable to read directory %q: %s", requestedPath, err)
-		httpError(http.StatusInternalServerError, w, "unable to read directory -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to read directory -- see application logs for more information")
 		return
 	}
 
@@ -205,7 +205,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		fi, err := f.Info()
 		if err != nil {
 			s.printWarningf("unable to stat file %q: %s", f.Name(), err)
-			httpError(http.StatusInternalServerError, w, "unable to stat file %q -- see application logs for more information", f.Name())
+			httpErrorf(http.StatusInternalServerError, w, "unable to stat file %q -- see application logs for more information", f.Name())
 			return
 		}
 
@@ -233,13 +233,13 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 		if err := renderer.Render(outputFormat, config, w, files); err != nil {
 			if errors.Is(err, renderer.UnsupportedFormatError{}) {
 				s.printWarningf("unsupported output format: %s", err)
-				httpError(http.StatusBadRequest, w, "unsupported output format: %q (supported formats: %s)",
+				httpErrorf(http.StatusBadRequest, w, "unsupported output format: %q (supported formats: %s)",
 					outputFormat, renderer.GetSupportedFormatsString())
 				return
 			}
 
 			s.printWarningf("error rendering directory listing: %s", err)
-			httpError(http.StatusInternalServerError, w, "error rendering directory listing -- see application logs for more information")
+			httpErrorf(http.StatusInternalServerError, w, "error rendering directory listing -- see application logs for more information")
 			return
 		}
 		return
@@ -249,7 +249,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	var markdownContent bytes.Buffer
 	if err := s.findAndGenerateMarkdown(requestedPath, files, &markdownContent); err != nil {
 		s.printWarningf("unable to generate markdown: %s", err)
-		httpError(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to generate markdown for current directory -- see application logs for more information")
 		return
 	}
 
@@ -275,7 +275,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 
 	if err := s.templates.ExecuteTemplate(w, "app.tmpl", content); err != nil {
 		s.printWarningf("unable to render directory listing: %s", err)
-		httpError(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
+		httpErrorf(http.StatusInternalServerError, w, "unable to render directory listing -- see application logs for more information")
 		return
 	}
 }
@@ -300,7 +300,7 @@ func (s *Server) serveFile(statusCode int, location string, w http.ResponseWrite
 	f, err := os.Open(location)
 	if err != nil {
 		if os.IsNotExist(err) {
-			httpError(http.StatusNotFound, w, "404 not found")
+			httpErrorf(http.StatusNotFound, w, "404 not found")
 			return
 		}
 
@@ -389,8 +389,8 @@ func (s *Server) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("OK"))
 }
 
-// httpError writes an error message to the response writer.
-func httpError(statusCode int, w http.ResponseWriter, format string, args ...any) {
+// httpErrorf writes an error message to the response writer.
+func httpErrorf(statusCode int, w http.ResponseWriter, format string, args ...any) {
 	w.WriteHeader(statusCode)
 	fmt.Fprintf(w, format, args...)
 }
