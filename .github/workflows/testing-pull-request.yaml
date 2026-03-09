@@ -22,7 +22,7 @@ jobs:
       - name: Test application
         run: go test ./...
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Dry-run goreleaser application
         uses: goreleaser/goreleaser-action@v6
         with:
