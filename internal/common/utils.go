@@ -1,8 +1,10 @@
 package common
 
 import (
+	"net/url"
 	"path"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -18,7 +20,14 @@ func PrettyTime(t time.Time) string {
 
 // CanonicalURL returns a canonical URL for the given path.
 func CanonicalURL(isDir bool, p ...string) string {
-	s := path.Join(p...)
+	// URL-encode each path segment so that special characters like '#'
+	// are properly escaped (e.g. '#' becomes '%23').
+	joined := path.Join(p...)
+	segments := strings.Split(joined, "/")
+	for i, seg := range segments {
+		segments[i] = url.PathEscape(seg)
+	}
+	s := strings.Join(segments, "/")
 
 	if isDir {
 		s += "/"

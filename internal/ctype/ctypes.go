@@ -155,6 +155,12 @@ var ctypes = []struct {
 	{[]string{".z"}, nil, "application/x-compress"},
 	{[]string{".zlib"}, nil, "application/x-zlib"},
 
+	// Mobile/App Package Formats
+	{[]string{".apk"}, nil, "application/vnd.android.package-archive"},  // Android Package
+	{[]string{".xapk"}, nil, "application/vnd.android.package-archive"}, // Compressed APK
+	{[]string{".aab"}, nil, "application/x-authorware-bin"},             // Android App Bundle
+	{[]string{".ipa"}, nil, "application/octet-stream"},                 // iOS App Package
+
 	// Configuration and Dependency Files
 	{nil, []string{"Dockerfile"}, "text/x-dockerfile"},
 	{nil, []string{"Gemfile"}, "text/plain"},
