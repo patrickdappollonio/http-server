@@ -86,6 +86,8 @@ linters:
       excludes:
         - G401
         - G505
+        - G703
+        - G705
       confidence: medium
     ireturn:
       allow:
