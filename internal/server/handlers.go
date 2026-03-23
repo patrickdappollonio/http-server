@@ -297,7 +297,7 @@ func (s *statusCodeHijacker) WriteHeader(code int) {
 // If the status code is not 0, the status code provided will be used
 // when serving the file in the given path.
 func (s *Server) serveFile(statusCode int, location string, w http.ResponseWriter, r *http.Request) {
-	f, err := os.Open(location)
+	f, err := os.Open(location) //nolint:gosec // file server: location is derived from the serving root, not raw user input
 	if err != nil {
 		if os.IsNotExist(err) {
 			httpErrorf(http.StatusNotFound, w, "404 not found")
