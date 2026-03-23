@@ -40,7 +40,7 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Stat the current path
-	info, err := os.Stat(currentPath)
+	info, err := os.Stat(currentPath) //nolint:gosec // path is sanitized via filepath.Abs and constrained to the serving root
 	if err != nil {
 		// If the path doesn't exist, return the 404 error but also print in the log
 		// of the app the full path to the given location
@@ -156,7 +156,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	// file exists, if so, return it instead
 	for _, index := range []string{"index.html", "index.htm"} {
 		indexPath := filepath.Join(requestedPath, index)
-		if _, err := os.Stat(indexPath); err == nil {
+		if _, err := os.Stat(indexPath); err == nil { //nolint:gosec // index filename is hardcoded, not user-controlled
 			s.serveFile(0, indexPath, w, r)
 			return
 		}
@@ -170,7 +170,7 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Open the directory path and read all files
-	dir, err := os.Open(requestedPath)
+	dir, err := os.Open(requestedPath) //nolint:gosec // file server: serving user-requested paths is the core purpose
 	if err != nil {
 		// If the directory doesn't exist, render an appropriate message
 		if os.IsNotExist(err) {
@@ -392,7 +392,7 @@ func (s *Server) healthCheck(w http.ResponseWriter, _ *http.Request) {
 // httpErrorf writes an error message to the response writer.
 func httpErrorf(statusCode int, w http.ResponseWriter, format string, args ...any) {
 	w.WriteHeader(statusCode)
-	fmt.Fprintf(w, format, args...)
+	fmt.Fprintf(w, format, args...) //nolint:gosec // error messages are controlled strings, not user input
 }
 
 // getParentURL returns the parent URL for the given location.
