@@ -25,7 +25,7 @@ var allowedIndexFiles = []string{"README.md", "README.markdown", "readme.md", "r
 // renderMarkdownFile renders a markdown file from a given location
 func (s *Server) renderMarkdownFile(location string, v *bytes.Buffer) error {
 	// Generate a full path then open the file
-	f, err := os.Open(location)
+	f, err := os.Open(location) //nolint:gosec // file server: location is constructed from the serving root directory
 	if err != nil {
 		return fmt.Errorf("unable to open markdown file %q: %w", location, err)
 	}
