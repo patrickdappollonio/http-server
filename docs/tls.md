@@ -55,6 +55,7 @@ Both `--tls-cert` and `--tls-key` must be provided together. `--hostname` is req
 | `--tls-cert` | *(none)* | Path to TLS certificate file (PEM format, BYO mode) |
 | `--tls-key` | *(none)* | Path to TLS private key file (PEM format, BYO mode) |
 | `--tls-email` | *(none)* | Email for Let's Encrypt notifications (auto mode) |
+| `--tls-cache-dir` | `.certmagic/` in served dir | Directory for storing automatic TLS certificates |
 | `--https-port` | `443` | Port for the HTTPS listener |
 | `--http-port` | `80` | Port for the HTTP listener (use `0` to disable) |
 
@@ -77,6 +78,18 @@ If you only want HTTPS with no HTTP listener at all:
 http-server --tls-cert cert.pem --tls-key key.pem --hostname example.com \
   --http-port 0 -d ./site
 ```
+
+## Certificate storage
+
+In auto mode, certificates and private keys are stored on the local filesystem at `.certmagic/` inside the served directory by default. This means certificates persist across restarts and multiple instances sharing the same volume will reuse the same certificates (certmagic uses file locking to prevent ACME races).
+
+To use a different storage location:
+
+```bash
+http-server --hostname example.com --tls-cache-dir /etc/http-server/certs -d ./site
+```
+
+The `.certmagic/` directory (or custom cache dir) is automatically hidden from directory listings and blocked from direct URL access. Private keys stored inside it are never served to clients.
 
 ## Certificate file hiding
 

@@ -92,12 +92,13 @@ Server:
       --title string        title of the directory listing page
 
 TLS:
-      --hostname string    hostname for HTTP-to-HTTPS redirects and automatic certificate provisioning
-      --http-port int      HTTP listener port when TLS is active, use 0 to disable HTTP redirect (default 80)
-      --https-port int     HTTPS listener port when TLS is active (default 443)
-      --tls-cert string    path to TLS certificate file in PEM format
-      --tls-email string   email address for Let's Encrypt account notifications
-      --tls-key string     path to TLS private key file in PEM format
+      --hostname string        hostname for HTTP-to-HTTPS redirects and automatic certificate provisioning
+      --http-port int          HTTP listener port when TLS is active, use 0 to disable HTTP redirect (default 80)
+      --https-port int         HTTPS listener port when TLS is active (default 443)
+      --tls-cache-dir string   directory for storing automatic TLS certificates (default: .certmagic/ in served directory)
+      --tls-cert string        path to TLS certificate file in PEM format
+      --tls-email string       email address for Let's Encrypt account notifications
+      --tls-key string         path to TLS private key file in PEM format
 
 Authentication:
       --ensure-unexpired-jwt    enable time validation for JWT claims "exp" and "nbf"

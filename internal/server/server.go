@@ -74,21 +74,23 @@ type Server struct {
 	SkipForceDownloadFiles  []string
 
 	// TLS settings
-	TLSCert   string `flagName:"tls-cert"`
-	TLSKey    string `flagName:"tls-key"`
-	HTTPPort  int    `flagName:"http-port"`
-	HTTPSPort int    `flagName:"https-port"`
-	Hostname  string `flagName:"hostname"`
-	TLSEmail  string `flagName:"tls-email"`
+	TLSCert     string `flagName:"tls-cert"`
+	TLSKey      string `flagName:"tls-key"`
+	HTTPPort    int    `flagName:"http-port"`
+	HTTPSPort   int    `flagName:"https-port"`
+	Hostname    string `flagName:"hostname"`
+	TLSEmail    string `flagName:"tls-email"`
+	TLSCacheDir string `flagName:"tls-cache-dir"`
 
 	// Internal TLS fields
-	activeTLSMode          TLSMode
-	certPointer            atomic.Pointer[tls.Certificate]
-	PortExplicitlySet      bool
-	HTTPPortExplicitlySet  bool
-	HTTPSPortExplicitlySet bool
-	forbiddenAbsPaths      []string
-	certmagicConfig        *certmagic.Config
+	activeTLSMode            TLSMode
+	certPointer              atomic.Pointer[tls.Certificate]
+	PortExplicitlySet        bool
+	HTTPPortExplicitlySet    bool
+	HTTPSPortExplicitlySet   bool
+	forbiddenAbsPaths        []string
+	forbiddenAbsPathPrefixes []string
+	certmagicConfig          *certmagic.Config
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with

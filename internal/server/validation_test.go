@@ -416,6 +416,25 @@ func TestValidateTLS_TLSEmailWithoutTLS(t *testing.T) {
 	}
 }
 
+func TestValidateTLS_AutoModeHTTPPortZeroRejected(t *testing.T) {
+	dir := t.TempDir()
+
+	s := &Server{
+		Port:        5000,
+		Path:        dir,
+		ETagMaxSize: "5M",
+		Hostname:    "example.com",
+		HTTPPort:    0,
+		HTTPSPort:   443,
+		LogOutput:   &bytes.Buffer{},
+	}
+
+	err := s.Validate()
+	if err == nil {
+		t.Fatal("expected error when --http-port 0 in auto TLS mode")
+	}
+}
+
 func TestValidateTLS_AutoModeNonStandardHTTPPort(t *testing.T) {
 	dir := t.TempDir()
 	buf := &bytes.Buffer{}

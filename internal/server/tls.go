@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/caddyserver/certmagic"
@@ -97,6 +98,15 @@ func (s *Server) getCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, e
 func (s *Server) setupAutoTLS(ctx context.Context) error {
 	certmagic.DefaultACME.Email = s.TLSEmail
 	certmagic.DefaultACME.Agreed = true
+
+	// Default storage to .certmagic/ inside the served directory,
+	// so certs persist alongside the content and work in containers
+	// with mounted volumes. Override with --tls-cache-dir.
+	cacheDir := s.TLSCacheDir
+	if cacheDir == "" {
+		cacheDir = filepath.Join(s.Path, ".certmagic")
+	}
+	certmagic.Default.Storage = &certmagic.FileStorage{Path: cacheDir}
 
 	magic := certmagic.NewDefault()
 

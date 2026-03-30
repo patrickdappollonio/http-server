@@ -191,11 +191,24 @@ func (s *Server) validateTLS() error {
 		s.setupTLSFileHiding()
 	}
 
-	// Auto-specific validation
+	// Auto-specific validation and setup
 	if s.activeTLSMode == TLSModeAuto {
+		// Hide the certmagic cache directory from listings and direct access.
+		// This directory contains private keys and must never be served.
+		cacheDir := s.TLSCacheDir
+		if cacheDir == "" {
+			cacheDir = filepath.Join(s.Path, ".certmagic")
+		}
+		if absCacheDir, err := filepath.Abs(cacheDir); err == nil {
+			// Block any path under the cache directory from direct access
+			s.forbiddenAbsPathPrefixes = append(s.forbiddenAbsPathPrefixes, absCacheDir+string(filepath.Separator))
+			// Also block the directory itself
+			s.forbiddenAbsPaths = append(s.forbiddenAbsPaths, absCacheDir)
+		}
 		if s.HTTPPort == 0 {
-			s.printWarningf("HTTP listener is disabled (--http-port 0). ACME HTTP-01 challenges require port 80 to be reachable. Certificate renewal may fail.")
-		} else if s.HTTPPort != 80 {
+			return errors.New("--http-port 0 is not allowed in auto-TLS mode: the HTTP listener is required for ACME HTTP-01 challenges")
+		}
+		if s.HTTPPort != 80 {
 			s.printWarningf("ACME HTTP-01 challenges require port 80 to be externally reachable. If --http-port %d is not mapped to port 80, certificate provisioning may fail.", s.HTTPPort)
 		}
 	}
