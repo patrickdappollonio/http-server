@@ -1,11 +1,14 @@
 package server
 
 import (
+	"crypto/tls"
 	"html/template"
 	"io"
 	"path"
 	"strings"
+	"sync/atomic"
 
+	"github.com/caddyserver/certmagic"
 	"github.com/patrickdappollonio/http-server/internal/redirects"
 )
 
@@ -69,6 +72,22 @@ type Server struct {
 	// Force download settings
 	ForceDownloadExtensions []string
 	SkipForceDownloadFiles  []string
+
+	// TLS settings
+	TLSCert     string `flagName:"tls-cert"`
+	TLSKey      string `flagName:"tls-key"`
+	HTTPPort    int    `flagName:"http-port"`
+	HTTPSPort   int    `flagName:"https-port"`
+	Hostname    string `flagName:"hostname"`
+	TLSEmail    string `flagName:"tls-email"`
+	TLSCacheDir string `flagName:"tls-cache-dir"`
+
+	// Internal TLS fields
+	activeTLSMode            TLSMode
+	certPointer              atomic.Pointer[tls.Certificate]
+	forbiddenAbsPaths        []string
+	forbiddenAbsPathPrefixes []string
+	certmagicConfig          *certmagic.Config
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with

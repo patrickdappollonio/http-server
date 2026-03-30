@@ -6,7 +6,7 @@
 
 You can enable basic authentication by using the `--username` and `--password` flags. If both flags are provided, the server will require the provided username and password to access its contents.
 
-This is the simplest form of authentication. The username and password are sent in plain text over the network if you are not serving `http-server` via HTTPS. As such, it's not recommended for production use. If you still decide to use it, use a strong password.
+This is the simplest form of authentication. The username and password are sent in plain text over the network if you are not using HTTPS. For production use, enable [TLS support](tls.md) with `--tls-cert` and `--tls-key` to encrypt the connection. If you still decide to use it without HTTPS, use a strong password.
 
 ### JWT authentication
 

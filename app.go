@@ -133,8 +133,103 @@ func run() error {
 	flags.BoolVar(&srv.FullMarkdownRender, "render-all-markdown", false, "if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs")
 	flags.StringSliceVar(&srv.ForceDownloadExtensions, "force-download-extensions", nil, "file extensions that should be downloaded instead of displayed in browser")
 
+	// TLS flags
+	flags.StringVar(&srv.TLSCert, "tls-cert", "", "path to TLS certificate file in PEM format")
+	flags.StringVar(&srv.TLSKey, "tls-key", "", "path to TLS private key file in PEM format")
+	flags.IntVar(&srv.HTTPPort, "http-port", 80, "HTTP listener port when TLS is active, use 0 to disable HTTP redirect")
+	flags.IntVar(&srv.HTTPSPort, "https-port", 443, "HTTPS listener port when TLS is active")
+	flags.StringVar(&srv.Hostname, "hostname", "", "hostname for HTTP-to-HTTPS redirects and automatic certificate provisioning")
+	flags.StringVar(&srv.TLSEmail, "tls-email", "", "email address for Let's Encrypt account notifications")
+	flags.StringVar(&srv.TLSCacheDir, "tls-cache-dir", "", "directory for storing automatic TLS certificates (default: .certmagic/ in served directory)")
+
+	// Annotate flags with groups for the custom help template
+	flagGroups := map[string][]string{
+		"Server":         {"port", "path", "pathprefix", "title", "banner", "gzip", "cors", "hide-links"},
+		"TLS":            {"tls-cert", "tls-key", "http-port", "https-port", "hostname", "tls-email", "tls-cache-dir"},
+		"Authentication": {"username", "password", "jwt-key", "ensure-unexpired-jwt"},
+		"Directory Listing": {
+			"disable-directory-listing", "disable-markdown", "markdown-before-dir", "render-all-markdown",
+			"hide-files-in-markdown", "custom-css-file", "disable-cache-buster",
+		},
+		"Error Pages": {"custom-404", "custom-404-code"},
+		"Performance": {"disable-etag", "etag-max-size", "force-download-extensions"},
+		"Other":       {"disable-redirects"},
+	}
+
+	for group, names := range flagGroups {
+		for _, name := range names {
+			rootCmd.Flags().SetAnnotation(name, "group", []string{group}) //nolint:errcheck // best-effort grouping
+		}
+	}
+
+	rootCmd.SetUsageFunc(groupedUsageFunc(flagGroups))
+
 	//nolint:wrapcheck // no need to wrap this error
 	return rootCmd.Execute()
+}
+
+// groupedUsageFunc returns a cobra UsageFunc that renders flags organized
+// by group annotations instead of a flat alphabetical list.
+func groupedUsageFunc(groups map[string][]string) func(*cobra.Command) error {
+	// Build a reverse map: flag name -> group name
+	flagToGroup := make(map[string]string)
+	for group, names := range groups {
+		for _, name := range names {
+			flagToGroup[name] = group
+		}
+	}
+
+	// Ordered group names for consistent output
+	groupOrder := []string{"Server", "TLS", "Authentication", "Directory Listing", "Error Pages", "Performance", "Other"}
+
+	return func(cmd *cobra.Command) error {
+		out := cmd.OutOrStdout()
+		fmt.Fprintf(out, "Usage:\n  %s\n\n", cmd.UseLine())
+
+		// Collect flags by group
+		grouped := make(map[string][]*pflag.Flag)
+		var ungrouped []*pflag.Flag
+
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+			if f.Hidden {
+				return
+			}
+			if group, ok := flagToGroup[f.Name]; ok {
+				grouped[group] = append(grouped[group], f)
+			} else {
+				ungrouped = append(ungrouped, f)
+			}
+		})
+
+		// Print each group
+		for _, group := range groupOrder {
+			flags, ok := grouped[group]
+			if !ok || len(flags) == 0 {
+				continue
+			}
+
+			fmt.Fprintf(out, "%s:\n", group)
+			fs := pflag.NewFlagSet(group, pflag.ContinueOnError)
+			for _, f := range flags {
+				fs.AddFlag(f)
+			}
+			fmt.Fprint(out, fs.FlagUsages())
+			fmt.Fprintln(out)
+		}
+
+		// Print ungrouped flags (help, version)
+		if len(ungrouped) > 0 {
+			fmt.Fprintf(out, "Global:\n")
+			fs := pflag.NewFlagSet("global", pflag.ContinueOnError)
+			for _, f := range ungrouped {
+				fs.AddFlag(f)
+			}
+			fmt.Fprint(out, fs.FlagUsages())
+			fmt.Fprintln(out)
+		}
+
+		return nil
+	}
 }
 
 // sendPipeToLogger reads from the pipe and sends the output to the logger

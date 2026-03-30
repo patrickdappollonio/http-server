@@ -39,6 +39,12 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Block access to forbidden absolute paths (e.g., TLS cert/key files)
+	if s.isAbsolutePathForbidden(currentPath) {
+		httpErrorf(http.StatusNotFound, w, "404 not found")
+		return
+	}
+
 	// Stat the current path
 	info, err := os.Stat(currentPath) //nolint:gosec // path is sanitized via filepath.Abs and constrained to the serving root
 	if err != nil {
@@ -209,8 +215,11 @@ func (s *Server) walk(requestedPath string, w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		// Check if file starts with config prefix
+		// Check if file is filtered by name or absolute path
 		if s.isFiltered(fi.Name()) {
+			continue
+		}
+		if fullPath := filepath.Join(requestedPath, fi.Name()); s.isAbsolutePathForbidden(fullPath) {
 			continue
 		}
 

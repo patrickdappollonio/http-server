@@ -23,7 +23,8 @@ func (s *Server) router() http.Handler {
 	r.Use(middleware.Recoverer)
 
 	// Only allow specific methods in all our requests
-	r.Use(middlewares.VerbsAllowed("GET", "HEAD"))
+	// POST is included for the /_/tls/reload endpoint
+	r.Use(middlewares.VerbsAllowed("GET", "HEAD", "POST"))
 
 	// Disable access to specific files
 	r.Use(middlewares.DisableAccessToFile(s.isFiltered, http.StatusNotFound))
@@ -94,6 +95,14 @@ func (s *Server) router() http.Handler {
 
 	// Create a health check endpoint
 	r.HandleFunc(path.Join(s.PathPrefix, specialPath, "health"), s.healthCheck)
+
+	// TLS info and reload endpoints (only when TLS is active)
+	// Protected by the same auth as file serving
+	if s.IsTLSEnabled() {
+		tlsPath := path.Join(s.PathPrefix, specialPath, "tls")
+		r.With(basicAuth, jwtAuth).Get(tlsPath, s.tlsInfoHandler)
+		r.With(basicAuth, jwtAuth).Post(path.Join(tlsPath, "reload"), s.tlsReloadHandler)
+	}
 
 	// Handle special path prefix cases
 	if s.PathPrefix != "/" {

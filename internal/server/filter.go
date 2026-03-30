@@ -61,3 +61,22 @@ func (s *Server) isFiltered(filename string) bool {
 
 	return false
 }
+
+// isAbsolutePathForbidden returns true if the given absolute path matches
+// a forbidden absolute path (exact match for cert/key files) or falls
+// under a forbidden path prefix (for directories like .certmagic/).
+func (s *Server) isAbsolutePathForbidden(absPath string) bool {
+	for _, forbidden := range s.forbiddenAbsPaths {
+		if absPath == forbidden {
+			return true
+		}
+	}
+
+	for _, prefix := range s.forbiddenAbsPathPrefixes {
+		if strings.HasPrefix(absPath, prefix) {
+			return true
+		}
+	}
+
+	return false
+}

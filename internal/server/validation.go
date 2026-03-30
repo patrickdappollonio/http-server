@@ -81,6 +81,11 @@ func (s *Server) Validate() error {
 
 	s.etagMaxSizeBytes = size
 
+	// Validate TLS configuration
+	if err := s.validateTLS(); err != nil {
+		return err
+	}
+
 	// Attempt to validate the structure, and grab the errors
 	if err := getValidator().Struct(s); err != nil {
 		// If the error isn't empty, and its type is of ValidationError
@@ -130,6 +135,124 @@ func validateIsFileInPath(basepath, file string) bool {
 	}
 
 	return strings.HasPrefix(absfile, absbasepath)
+}
+
+func (s *Server) validateTLS() error {
+	hasCert := s.TLSCert != ""
+	hasKey := s.TLSKey != ""
+	hasHostname := s.Hostname != ""
+
+	// Both cert+key must be set together
+	if hasCert != hasKey {
+		return errors.New("both --tls-cert and --tls-key must be provided together")
+	}
+
+	// Determine TLS mode:
+	//   cert+key+hostname → BYO
+	//   hostname alone    → Auto (certmagic)
+	//   neither           → Off
+	switch {
+	case hasCert && hasKey:
+		s.activeTLSMode = TLSModeBYO
+		if !hasHostname {
+			return errors.New("--hostname is required when TLS is active")
+		}
+	case hasHostname && !hasCert:
+		s.activeTLSMode = TLSModeAuto
+	default:
+		s.activeTLSMode = TLSModeOff
+	}
+
+	const defaultPort = 5000
+	const defaultHTTPPort = 80
+	const defaultHTTPSPort = 443
+
+	if s.IsTLSEnabled() {
+		// If port was changed from its default, the user configured it
+		// expecting it to be used, but TLS uses http-port/https-port instead
+		if s.Port != defaultPort {
+			return fmt.Errorf("--port cannot be used with TLS; use --http-port and --https-port instead (port is set to %d)", s.Port)
+		}
+
+		// Ports must differ (unless HTTP is disabled)
+		if s.HTTPPort != 0 && s.HTTPPort == s.HTTPSPort {
+			return fmt.Errorf("--http-port (%d) and --https-port (%d) must differ", s.HTTPPort, s.HTTPSPort)
+		}
+	}
+
+	// BYO-specific validation
+	if s.activeTLSMode == TLSModeBYO {
+		if _, err := os.Stat(s.TLSCert); err != nil {
+			return fmt.Errorf("TLS certificate file %q: %w", s.TLSCert, err)
+		}
+		if _, err := os.Stat(s.TLSKey); err != nil {
+			return fmt.Errorf("TLS key file %q: %w", s.TLSKey, err)
+		}
+
+		if err := s.loadAndStoreCert(); err != nil {
+			return err
+		}
+
+		s.setupTLSFileHiding()
+	}
+
+	// Auto-specific validation and setup
+	if s.activeTLSMode == TLSModeAuto {
+		// Hide the certmagic cache directory from listings and direct access.
+		// This directory contains private keys and must never be served.
+		cacheDir := s.TLSCacheDir
+		if cacheDir == "" {
+			cacheDir = filepath.Join(s.Path, ".certmagic")
+		}
+		if absCacheDir, err := filepath.Abs(cacheDir); err == nil {
+			// Block any path under the cache directory from direct access
+			s.forbiddenAbsPathPrefixes = append(s.forbiddenAbsPathPrefixes, absCacheDir+string(filepath.Separator))
+			// Also block the directory itself
+			s.forbiddenAbsPaths = append(s.forbiddenAbsPaths, absCacheDir)
+		}
+		if s.HTTPPort == 0 {
+			return errors.New("--http-port 0 is not allowed in auto-TLS mode: the HTTP listener is required for ACME HTTP-01 challenges")
+		}
+		if s.HTTPPort != 80 {
+			s.printWarningf("ACME HTTP-01 challenges require port 80 to be externally reachable. If --http-port %d is not mapped to port 80, certificate provisioning may fail.", s.HTTPPort)
+		}
+	}
+
+	// If TLS is not active, TLS-specific flags should not be set
+	if !s.IsTLSEnabled() {
+		if s.HTTPPort != defaultHTTPPort {
+			return errors.New("--http-port requires TLS to be active (set --hostname for auto-TLS or --tls-cert/--tls-key for BYO)")
+		}
+		if s.HTTPSPort != defaultHTTPSPort {
+			return errors.New("--https-port requires TLS to be active (set --hostname for auto-TLS or --tls-cert/--tls-key for BYO)")
+		}
+		if s.TLSEmail != "" {
+			return errors.New("--tls-email requires TLS to be active (set --hostname for auto-TLS)")
+		}
+		if s.TLSCacheDir != "" {
+			return errors.New("--tls-cache-dir requires TLS to be active (set --hostname for auto-TLS)")
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) setupTLSFileHiding() {
+	absPath, err := filepath.Abs(s.Path)
+	if err != nil {
+		return
+	}
+
+	for _, f := range []string{s.TLSCert, s.TLSKey} {
+		absFile, err := filepath.Abs(f)
+		if err != nil {
+			continue
+		}
+		if strings.HasPrefix(absFile, absPath+string(filepath.Separator)) {
+			s.forbiddenAbsPaths = append(s.forbiddenAbsPaths, absFile)
+			s.printWarningf("TLS file %q is inside the served directory and will be hidden from listings. Consider moving it outside.", f)
+		}
+	}
 }
 
 func (s *Server) printWarningf(format string, args ...interface{}) {

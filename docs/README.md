@@ -8,3 +8,4 @@ This is the documentation for `http-server`, a simple, no-dependencies command-l
 * [Authentication](authentication.md)
 * [Redirections](redirections.md)
 * [Force Download Extensions](force-download.md)
+* [TLS / HTTPS support](tls.md)

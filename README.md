@@ -11,6 +11,7 @@
 * **Markdown support:** if a `README.md` or `readme.md` file is present in the directory during directory listing, it will be rendered as HTML. Additional support for GitHub-flavored markdown is also available.
 * **Fully air-gapped:** the directory listing feature is fully air-gapped, meaning that it does not require any external resources to be loaded. This is useful for environments where internet access is not available.
 * **Redirections support:** if a `_redirections` file exists in the target directory, it will be used to redirect requests to other locations. Learn about the syntax [in the docs](docs/redirections.md).
+* **TLS / HTTPS support:** serve content over HTTPS with automatic Let's Encrypt certificates or your own cert+key. Includes HTTP-to-HTTPS redirects, certificate reload via SIGHUP or API, and a `/_/tls` metadata endpoint. Learn more [in the docs](docs/tls.md).
 
 The app is available both as a standalone binary and as a Docker container image.
 
@@ -80,34 +81,55 @@ A simple HTTP server and a directory listing tool.
 Usage:
   http-server [flags]
 
-Flags:
-      --banner string                       markdown text to be rendered at the top of the directory listing page
-      --cors                                enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
-      --custom-404 string                   custom "page not found" to serve
-      --custom-404-code int                 custom status code for pages not found
-      --custom-css-file string              path within the served files to a custom CSS file
-      --disable-cache-buster                disable the cache buster for assets from the directory listing feature
-      --disable-directory-listing           disable the directory listing feature and return 404s for directories without index
-      --disable-etag                        disable etag header generation
-      --disable-markdown                    disable the markdown rendering feature
-      --disable-redirects                   disable redirection file handling
-      --ensure-unexpired-jwt                enable time validation for JWT claims "exp" and "nbf"
-      --etag-max-size string                maximum size for etag header generation, where bigger size = more memory usage (default "5M")
-      --force-download-extensions strings   file extensions that should be downloaded instead of displayed in browser
-      --gzip                                enable gzip compression for supported content-types
-  -h, --help                                help for http-server
-      --hide-files-in-markdown              hide file and directory listing in markdown rendering
-      --hide-links                          hide the links to this project's source code visible in the header and footer
-      --jwt-key string                      signing key for JWT authentication
-      --markdown-before-dir                 render markdown content before the directory listing
-      --password string                     password for basic authentication
-  -d, --path string                         path to the directory you want to serve (default "./")
-      --pathprefix string                   path prefix for the URL where the server will listen on (default "/")
-  -p, --port int                            port to configure the server to listen on (default 5000)
-      --render-all-markdown                 if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs
-      --title string                        title of the directory listing page
-      --username string                     username for basic authentication
-  -v, --version                             version for http-server
+Server:
+      --banner string       markdown text to be rendered at the top of the directory listing page
+      --cors                enable CORS support by setting the "Access-Control-Allow-Origin" header to "*"
+      --gzip                enable gzip compression for supported content-types
+      --hide-links          hide the links to this project's source code visible in the header and footer
+  -d, --path string         path to the directory you want to serve (default "./")
+      --pathprefix string   path prefix for the URL where the server will listen on (default "/")
+  -p, --port int            port to configure the server to listen on (default 5000)
+      --title string        title of the directory listing page
+
+TLS:
+      --hostname string        hostname for HTTP-to-HTTPS redirects and automatic certificate provisioning
+      --http-port int          HTTP listener port when TLS is active, use 0 to disable HTTP redirect (default 80)
+      --https-port int         HTTPS listener port when TLS is active (default 443)
+      --tls-cache-dir string   directory for storing automatic TLS certificates (default: .certmagic/ in served directory)
+      --tls-cert string        path to TLS certificate file in PEM format
+      --tls-email string       email address for Let's Encrypt account notifications
+      --tls-key string         path to TLS private key file in PEM format
+
+Authentication:
+      --ensure-unexpired-jwt    enable time validation for JWT claims "exp" and "nbf"
+      --jwt-key string          signing key for JWT authentication
+      --password string         password for basic authentication
+      --username string         username for basic authentication
+
+Directory Listing:
+      --custom-css-file string        path within the served files to a custom CSS file
+      --disable-cache-buster          disable the cache buster for assets from the directory listing feature
+      --disable-directory-listing     disable the directory listing feature and return 404s for directories without index
+      --disable-markdown              disable the markdown rendering feature
+      --hide-files-in-markdown        hide file and directory listing in markdown rendering
+      --markdown-before-dir           render markdown content before the directory listing
+      --render-all-markdown           if enabled, all Markdown files will be rendered using the same rendering as the directory listing READMEs
+
+Error Pages:
+      --custom-404 string       custom "page not found" to serve
+      --custom-404-code int     custom status code for pages not found
+
+Performance:
+      --disable-etag                          disable etag header generation
+      --etag-max-size string                  maximum size for etag header generation, where bigger size = more memory usage (default "5M")
+      --force-download-extensions strings     file extensions that should be downloaded instead of displayed in browser
+
+Other:
+      --disable-redirects     disable redirection file handling
+
+Global:
+  -h, --help      help for http-server
+  -v, --version   version for http-server
 ```
 
 ### Detailed configuration
