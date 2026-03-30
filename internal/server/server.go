@@ -85,9 +85,6 @@ type Server struct {
 	// Internal TLS fields
 	activeTLSMode            TLSMode
 	certPointer              atomic.Pointer[tls.Certificate]
-	PortExplicitlySet        bool
-	HTTPPortExplicitlySet    bool
-	HTTPSPortExplicitlySet   bool
 	forbiddenAbsPaths        []string
 	forbiddenAbsPathPrefixes []string
 	certmagicConfig          *certmagic.Config

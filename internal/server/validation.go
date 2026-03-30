@@ -163,10 +163,15 @@ func (s *Server) validateTLS() error {
 		s.activeTLSMode = TLSModeOff
 	}
 
+	const defaultPort = 5000
+	const defaultHTTPPort = 80
+	const defaultHTTPSPort = 443
+
 	if s.IsTLSEnabled() {
-		// Cannot use --port alongside TLS flags
-		if s.PortExplicitlySet {
-			return errors.New("cannot use --port with TLS flags; use --http-port and --https-port instead")
+		// If port was changed from its default, the user configured it
+		// expecting it to be used, but TLS uses http-port/https-port instead
+		if s.Port != defaultPort {
+			return fmt.Errorf("--port cannot be used with TLS; use --http-port and --https-port instead (port is set to %d)", s.Port)
 		}
 
 		// Ports must differ (unless HTTP is disabled)
@@ -215,14 +220,17 @@ func (s *Server) validateTLS() error {
 
 	// If TLS is not active, TLS-specific flags should not be set
 	if !s.IsTLSEnabled() {
-		if s.HTTPPortExplicitlySet {
+		if s.HTTPPort != defaultHTTPPort {
 			return errors.New("--http-port requires TLS to be active (set --hostname for auto-TLS or --tls-cert/--tls-key for BYO)")
 		}
-		if s.HTTPSPortExplicitlySet {
+		if s.HTTPSPort != defaultHTTPSPort {
 			return errors.New("--https-port requires TLS to be active (set --hostname for auto-TLS or --tls-cert/--tls-key for BYO)")
 		}
 		if s.TLSEmail != "" {
 			return errors.New("--tls-email requires TLS to be active (set --hostname for auto-TLS)")
+		}
+		if s.TLSCacheDir != "" {
+			return errors.New("--tls-cache-dir requires TLS to be active (set --hostname for auto-TLS)")
 		}
 	}
 

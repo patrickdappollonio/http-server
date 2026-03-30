@@ -65,11 +65,6 @@ func run() error {
 			srv.LogOutput = cmd.OutOrStdout()
 			srv.SetVersion(version)
 
-			// Track whether port flags were explicitly set for TLS validation
-			srv.PortExplicitlySet = cmd.Flags().Changed("port")
-			srv.HTTPPortExplicitlySet = cmd.Flags().Changed("http-port")
-			srv.HTTPSPortExplicitlySet = cmd.Flags().Changed("https-port")
-
 			// Validate fields to make sure they're correct
 			if err := srv.Validate(); err != nil {
 				return fmt.Errorf("unable to validate configuration: %w", err)

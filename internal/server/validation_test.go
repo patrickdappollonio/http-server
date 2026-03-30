@@ -82,14 +82,15 @@ func TestValidateTLS_PortConflict(t *testing.T) {
 	generateTestCert(t, certPath, keyPath, 365*24*time.Hour)
 
 	s := &Server{
-		Port:              5000,
-		PortExplicitlySet: true,
-		Path:              dir,
-		ETagMaxSize:       "5M",
-		TLSCert:           certPath,
-		TLSKey:            keyPath,
-		Hostname:          "localhost",
-		LogOutput:         &bytes.Buffer{},
+		Port:        8080, // non-default port conflicts with TLS
+		Path:        dir,
+		ETagMaxSize: "5M",
+		TLSCert:     certPath,
+		TLSKey:      keyPath,
+		Hostname:    "localhost",
+		HTTPPort:    80,
+		HTTPSPort:   443,
+		LogOutput:   &bytes.Buffer{},
 	}
 
 	err := s.Validate()
@@ -294,10 +295,12 @@ func TestValidateTLS_NoTLSFlags(t *testing.T) {
 	dir := t.TempDir()
 
 	s := &Server{
-		Port:       5000,
-		Path:       dir,
+		Port:        5000,
+		Path:        dir,
 		ETagMaxSize: "5M",
-		LogOutput:  &bytes.Buffer{},
+		HTTPPort:    80,
+		HTTPSPort:   443,
+		LogOutput:   &bytes.Buffer{},
 	}
 
 	if err := s.Validate(); err != nil {
@@ -385,12 +388,13 @@ func TestValidateTLS_AutoModePortConflict(t *testing.T) {
 	dir := t.TempDir()
 
 	s := &Server{
-		Port:              5000,
-		PortExplicitlySet: true,
-		Path:              dir,
-		ETagMaxSize:       "5M",
-		Hostname:          "example.com",
-		LogOutput:         &bytes.Buffer{},
+		Port:        8080, // non-default port conflicts with auto TLS
+		Path:        dir,
+		ETagMaxSize: "5M",
+		Hostname:    "example.com",
+		HTTPPort:    80,
+		HTTPSPort:   443,
+		LogOutput:   &bytes.Buffer{},
 	}
 
 	err := s.Validate()
@@ -406,6 +410,8 @@ func TestValidateTLS_TLSEmailWithoutTLS(t *testing.T) {
 		Port:        5000,
 		Path:        dir,
 		ETagMaxSize: "5M",
+		HTTPPort:    80,
+		HTTPSPort:   443,
 		TLSEmail:    "test@example.com",
 		LogOutput:   &bytes.Buffer{},
 	}
