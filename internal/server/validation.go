@@ -81,6 +81,11 @@ func (s *Server) Validate() error {
 
 	s.etagMaxSizeBytes = size
 
+	// Validate TLS configuration
+	if err := s.validateTLS(); err != nil {
+		return err
+	}
+
 	// Attempt to validate the structure, and grab the errors
 	if err := getValidator().Struct(s); err != nil {
 		// If the error isn't empty, and its type is of ValidationError
@@ -130,6 +135,86 @@ func validateIsFileInPath(basepath, file string) bool {
 	}
 
 	return strings.HasPrefix(absfile, absbasepath)
+}
+
+func (s *Server) validateTLS() error {
+	hasCert := s.TLSCert != ""
+	hasKey := s.TLSKey != ""
+
+	// Both must be set or both unset
+	if hasCert != hasKey {
+		return errors.New("both --tls-cert and --tls-key must be provided together")
+	}
+
+	// Determine TLS mode
+	if hasCert && hasKey {
+		s.activeTLSMode = TLSModeBYO
+	} else {
+		s.activeTLSMode = TLSModeOff
+	}
+
+	if s.IsTLSEnabled() {
+		// Cannot use --port alongside TLS flags
+		if s.PortExplicitlySet {
+			return errors.New("cannot use --port with TLS flags; use --http-port and --https-port instead")
+		}
+
+		// Hostname is required for redirect URL construction
+		if s.Hostname == "" {
+			return errors.New("--hostname is required when TLS is active")
+		}
+
+		// Ports must differ (unless HTTP is disabled)
+		if s.HTTPPort != 0 && s.HTTPPort == s.HTTPSPort {
+			return fmt.Errorf("--http-port (%d) and --https-port (%d) must differ", s.HTTPPort, s.HTTPSPort)
+		}
+
+		// Validate cert and key files exist
+		if _, err := os.Stat(s.TLSCert); err != nil {
+			return fmt.Errorf("TLS certificate file %q: %w", s.TLSCert, err)
+		}
+		if _, err := os.Stat(s.TLSKey); err != nil {
+			return fmt.Errorf("TLS key file %q: %w", s.TLSKey, err)
+		}
+
+		// Load cert, check expiry, populate atomic pointer
+		if err := s.loadAndStoreCert(); err != nil {
+			return err
+		}
+
+		// Check if cert/key files are inside the served directory and hide them
+		s.setupTLSFileHiding()
+	}
+
+	// If TLS is not active, port flags should not be set
+	if !s.IsTLSEnabled() {
+		if s.HTTPPortExplicitlySet {
+			return errors.New("--http-port requires TLS to be active (set --tls-cert and --tls-key)")
+		}
+		if s.HTTPSPortExplicitlySet {
+			return errors.New("--https-port requires TLS to be active (set --tls-cert and --tls-key)")
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) setupTLSFileHiding() {
+	absPath, err := filepath.Abs(s.Path)
+	if err != nil {
+		return
+	}
+
+	for _, f := range []string{s.TLSCert, s.TLSKey} {
+		absFile, err := filepath.Abs(f)
+		if err != nil {
+			continue
+		}
+		if strings.HasPrefix(absFile, absPath+string(filepath.Separator)) {
+			s.forbiddenAbsPaths = append(s.forbiddenAbsPaths, absFile)
+			s.printWarningf("TLS file %q is inside the served directory and will be hidden from listings. Consider moving it outside.", f)
+		}
+	}
 }
 
 func (s *Server) printWarningf(format string, args ...interface{}) {

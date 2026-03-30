@@ -13,7 +13,26 @@ const startupPrefix = " >"
 func (s *Server) PrintStartup() {
 	fmt.Fprintln(s.LogOutput, "SETUP:")
 
-	fmt.Fprintln(s.LogOutput, startupPrefix, "Configured to use port:", s.Port)
+	if s.IsTLSEnabled() {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "TLS mode:", s.ActiveTLSMode())
+		fmt.Fprintln(s.LogOutput, startupPrefix, "TLS certificate:", s.TLSCert)
+		fmt.Fprintln(s.LogOutput, startupPrefix, "TLS key:", s.TLSKey)
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Hostname:", s.Hostname)
+		fmt.Fprintln(s.LogOutput, startupPrefix, "HTTPS port:", s.HTTPSPort)
+		if s.HTTPPort != 0 {
+			fmt.Fprintf(s.LogOutput, "%s HTTP port: %d (redirecting to HTTPS)\n", startupPrefix, s.HTTPPort)
+		} else {
+			fmt.Fprintln(s.LogOutput, startupPrefix, "HTTP redirect disabled (--http-port 0)")
+		}
+
+		// Print cert expiry info
+		if meta := s.certMetadata(); meta != nil {
+			fmt.Fprintf(s.LogOutput, "%s Certificate subject: %s\n", startupPrefix, meta["tls_cert_subject"])
+			fmt.Fprintf(s.LogOutput, "%s Certificate expires: %s\n", startupPrefix, meta["tls_cert_not_after"])
+		}
+	} else {
+		fmt.Fprintln(s.LogOutput, startupPrefix, "Configured to use port:", s.Port)
+	}
 	fmt.Fprintln(s.LogOutput, startupPrefix, "Serving path:", s.Path)
 
 	if s.PathPrefix != "" && s.PathPrefix != "/" {

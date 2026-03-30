@@ -1,10 +1,12 @@
 package server
 
 import (
+	"crypto/tls"
 	"html/template"
 	"io"
 	"path"
 	"strings"
+	"sync/atomic"
 
 	"github.com/patrickdappollonio/http-server/internal/redirects"
 )
@@ -69,6 +71,21 @@ type Server struct {
 	// Force download settings
 	ForceDownloadExtensions []string
 	SkipForceDownloadFiles  []string
+
+	// TLS settings
+	TLSCert   string `flagName:"tls-cert"`
+	TLSKey    string `flagName:"tls-key"`
+	HTTPPort  int    `flagName:"http-port"`
+	HTTPSPort int    `flagName:"https-port"`
+	Hostname  string `flagName:"hostname"`
+
+	// Internal TLS fields
+	activeTLSMode          TLSMode
+	certPointer            atomic.Pointer[tls.Certificate]
+	PortExplicitlySet      bool
+	HTTPPortExplicitlySet  bool
+	HTTPSPortExplicitlySet bool
+	forbiddenAbsPaths      []string
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with

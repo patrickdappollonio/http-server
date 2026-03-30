@@ -61,3 +61,14 @@ func (s *Server) isFiltered(filename string) bool {
 
 	return false
 }
+
+// isAbsolutePathForbidden returns true if the given absolute path matches
+// a forbidden absolute path (used for TLS cert/key file hiding).
+func (s *Server) isAbsolutePathForbidden(absPath string) bool {
+	for _, forbidden := range s.forbiddenAbsPaths {
+		if absPath == forbidden {
+			return true
+		}
+	}
+	return false
+}
