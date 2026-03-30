@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,6 +9,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/caddyserver/certmagic"
 )
 
 // TLSMode represents the server's TLS operating mode.
@@ -16,7 +19,7 @@ type TLSMode string
 const (
 	TLSModeOff  TLSMode = "off"
 	TLSModeBYO  TLSMode = "byo"
-	TLSModeAuto TLSMode = "auto" // Phase 2: certmagic
+	TLSModeAuto TLSMode = "auto"
 )
 
 // IsTLSEnabled returns true if TLS is active in any mode.
@@ -64,14 +67,24 @@ func (s *Server) loadAndStoreCert() error {
 	return nil
 }
 
-// reloadCert reloads the certificate and key from disk.
-func (s *Server) reloadCert() error {
+// reloadCert reloads the certificate. In BYO mode, it reloads from disk.
+// In auto mode, it triggers a certmagic renewal check.
+func (s *Server) reloadCert() error { //nolint:contextcheck // reload is triggered by signals and HTTP handlers which don't have a meaningful context
+	if s.activeTLSMode == TLSModeAuto && s.certmagicConfig != nil {
+		//nolint:wrapcheck // certmagic errors are already descriptive
+		return s.certmagicConfig.ManageSync(context.Background(), []string{s.Hostname})
+	}
 	return s.loadAndStoreCert()
 }
 
 // getCertificate is the tls.Config.GetCertificate callback that returns
-// the current certificate from the atomic pointer.
-func (s *Server) getCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
+// the current certificate. In BYO mode, reads from the atomic pointer.
+// In auto mode, delegates to certmagic.
+func (s *Server) getCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if s.activeTLSMode == TLSModeAuto && s.certmagicConfig != nil {
+		//nolint:wrapcheck // certmagic errors are already descriptive
+		return s.certmagicConfig.GetCertificate(hello)
+	}
 	cert := s.certPointer.Load()
 	if cert == nil {
 		return nil, errors.New("no TLS certificate loaded")
@@ -79,14 +92,45 @@ func (s *Server) getCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate, error
 	return cert, nil
 }
 
-// certMetadata returns metadata about the currently loaded certificate.
-func (s *Server) certMetadata() map[string]any {
-	cert := s.certPointer.Load()
-	if cert == nil || cert.Leaf == nil {
-		return nil
+// setupAutoTLS configures certmagic for automatic certificate provisioning
+// via Let's Encrypt. It synchronously obtains the certificate at startup.
+func (s *Server) setupAutoTLS(ctx context.Context) error {
+	certmagic.DefaultACME.Email = s.TLSEmail
+	certmagic.DefaultACME.Agreed = true
+
+	magic := certmagic.NewDefault()
+
+	fmt.Fprintf(s.LogOutput, "Provisioning TLS certificate for %q via Let's Encrypt...\n", s.Hostname)
+
+	if err := magic.ManageSync(ctx, []string{s.Hostname}); err != nil {
+		return fmt.Errorf("unable to provision TLS certificate for %q: %w", s.Hostname, err)
 	}
 
-	leaf := cert.Leaf
+	s.certmagicConfig = magic
+	return nil
+}
+
+// certMetadata returns metadata about the currently loaded certificate.
+func (s *Server) certMetadata() map[string]any {
+	var leaf *x509.Certificate
+
+	if s.activeTLSMode == TLSModeAuto && s.certmagicConfig != nil {
+		// In auto mode, get cert from certmagic
+		cert, err := s.certmagicConfig.GetCertificate(&tls.ClientHelloInfo{ServerName: s.Hostname})
+		if err == nil && cert != nil && cert.Leaf != nil {
+			leaf = cert.Leaf
+		}
+	} else {
+		// In BYO mode, get cert from atomic pointer
+		cert := s.certPointer.Load()
+		if cert != nil && cert.Leaf != nil {
+			leaf = cert.Leaf
+		}
+	}
+
+	if leaf == nil {
+		return nil
+	}
 
 	sans := make([]string, 0, len(leaf.DNSNames)+len(leaf.IPAddresses))
 	sans = append(sans, leaf.DNSNames...)
@@ -126,7 +170,7 @@ func (s *Server) tlsReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.reloadCert(); err != nil {
+	if err := s.reloadCert(); err != nil { //nolint:contextcheck // HTTP handler reload has no propagatable context
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		//nolint:errchkjson // best-effort JSON error response

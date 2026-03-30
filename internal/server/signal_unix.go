@@ -35,7 +35,7 @@ func (s *Server) startSIGHUPHandler(ctx context.Context) {
 					continue
 				}
 				lastReload = time.Now()
-				if err := s.reloadCert(); err != nil {
+				if err := s.reloadCert(); err != nil { //nolint:contextcheck // signal handler has no meaningful request context
 					fmt.Fprintf(s.LogOutput, "TLS certificate reload failed: %v\n", err)
 				} else {
 					fmt.Fprintln(s.LogOutput, "TLS certificate reloaded successfully")

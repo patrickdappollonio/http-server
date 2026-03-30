@@ -140,16 +140,26 @@ func validateIsFileInPath(basepath, file string) bool {
 func (s *Server) validateTLS() error {
 	hasCert := s.TLSCert != ""
 	hasKey := s.TLSKey != ""
+	hasHostname := s.Hostname != ""
 
-	// Both must be set or both unset
+	// Both cert+key must be set together
 	if hasCert != hasKey {
 		return errors.New("both --tls-cert and --tls-key must be provided together")
 	}
 
-	// Determine TLS mode
-	if hasCert && hasKey {
+	// Determine TLS mode:
+	//   cert+key+hostname → BYO
+	//   hostname alone    → Auto (certmagic)
+	//   neither           → Off
+	switch {
+	case hasCert && hasKey:
 		s.activeTLSMode = TLSModeBYO
-	} else {
+		if !hasHostname {
+			return errors.New("--hostname is required when TLS is active")
+		}
+	case hasHostname && !hasCert:
+		s.activeTLSMode = TLSModeAuto
+	default:
 		s.activeTLSMode = TLSModeOff
 	}
 
@@ -159,17 +169,14 @@ func (s *Server) validateTLS() error {
 			return errors.New("cannot use --port with TLS flags; use --http-port and --https-port instead")
 		}
 
-		// Hostname is required for redirect URL construction
-		if s.Hostname == "" {
-			return errors.New("--hostname is required when TLS is active")
-		}
-
 		// Ports must differ (unless HTTP is disabled)
 		if s.HTTPPort != 0 && s.HTTPPort == s.HTTPSPort {
 			return fmt.Errorf("--http-port (%d) and --https-port (%d) must differ", s.HTTPPort, s.HTTPSPort)
 		}
+	}
 
-		// Validate cert and key files exist
+	// BYO-specific validation
+	if s.activeTLSMode == TLSModeBYO {
 		if _, err := os.Stat(s.TLSCert); err != nil {
 			return fmt.Errorf("TLS certificate file %q: %w", s.TLSCert, err)
 		}
@@ -177,22 +184,32 @@ func (s *Server) validateTLS() error {
 			return fmt.Errorf("TLS key file %q: %w", s.TLSKey, err)
 		}
 
-		// Load cert, check expiry, populate atomic pointer
 		if err := s.loadAndStoreCert(); err != nil {
 			return err
 		}
 
-		// Check if cert/key files are inside the served directory and hide them
 		s.setupTLSFileHiding()
 	}
 
-	// If TLS is not active, port flags should not be set
+	// Auto-specific validation
+	if s.activeTLSMode == TLSModeAuto {
+		if s.HTTPPort == 0 {
+			s.printWarningf("HTTP listener is disabled (--http-port 0). ACME HTTP-01 challenges require port 80 to be reachable. Certificate renewal may fail.")
+		} else if s.HTTPPort != 80 {
+			s.printWarningf("ACME HTTP-01 challenges require port 80 to be externally reachable. If --http-port %d is not mapped to port 80, certificate provisioning may fail.", s.HTTPPort)
+		}
+	}
+
+	// If TLS is not active, TLS-specific flags should not be set
 	if !s.IsTLSEnabled() {
 		if s.HTTPPortExplicitlySet {
-			return errors.New("--http-port requires TLS to be active (set --tls-cert and --tls-key)")
+			return errors.New("--http-port requires TLS to be active (set --hostname for auto-TLS or --tls-cert/--tls-key for BYO)")
 		}
 		if s.HTTPSPortExplicitlySet {
-			return errors.New("--https-port requires TLS to be active (set --tls-cert and --tls-key)")
+			return errors.New("--https-port requires TLS to be active (set --hostname for auto-TLS or --tls-cert/--tls-key for BYO)")
+		}
+		if s.TLSEmail != "" {
+			return errors.New("--tls-email requires TLS to be active (set --hostname for auto-TLS)")
 		}
 	}
 

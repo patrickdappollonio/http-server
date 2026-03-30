@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/caddyserver/certmagic"
 	"github.com/patrickdappollonio/http-server/internal/redirects"
 )
 
@@ -78,6 +79,7 @@ type Server struct {
 	HTTPPort  int    `flagName:"http-port"`
 	HTTPSPort int    `flagName:"https-port"`
 	Hostname  string `flagName:"hostname"`
+	TLSEmail  string `flagName:"tls-email"`
 
 	// Internal TLS fields
 	activeTLSMode          TLSMode
@@ -86,6 +88,7 @@ type Server struct {
 	HTTPPortExplicitlySet  bool
 	HTTPSPortExplicitlySet bool
 	forbiddenAbsPaths      []string
+	certmagicConfig        *certmagic.Config
 }
 
 // IsBasicAuthEnabled returns true if the server has been configured with

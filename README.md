@@ -11,7 +11,7 @@
 * **Markdown support:** if a `README.md` or `readme.md` file is present in the directory during directory listing, it will be rendered as HTML. Additional support for GitHub-flavored markdown is also available.
 * **Fully air-gapped:** the directory listing feature is fully air-gapped, meaning that it does not require any external resources to be loaded. This is useful for environments where internet access is not available.
 * **Redirections support:** if a `_redirections` file exists in the target directory, it will be used to redirect requests to other locations. Learn about the syntax [in the docs](docs/redirections.md).
-* **TLS / HTTPS support:** serve content over HTTPS using your own certificate and key. Includes automatic HTTP-to-HTTPS redirects, certificate reload via SIGHUP or API, and a `/_/tls` metadata endpoint. Learn more [in the docs](docs/tls.md).
+* **TLS / HTTPS support:** serve content over HTTPS with automatic Let's Encrypt certificates or your own cert+key. Includes HTTP-to-HTTPS redirects, certificate reload via SIGHUP or API, and a `/_/tls` metadata endpoint. Learn more [in the docs](docs/tls.md).
 
 The app is available both as a standalone binary and as a Docker container image.
 
@@ -92,11 +92,12 @@ Server:
       --title string        title of the directory listing page
 
 TLS:
-      --hostname string     hostname for HTTP-to-HTTPS redirects, required when TLS is active
-      --http-port int       HTTP listener port when TLS is active, use 0 to disable HTTP redirect (default 80)
-      --https-port int      HTTPS listener port when TLS is active (default 443)
-      --tls-cert string     path to TLS certificate file in PEM format
-      --tls-key string      path to TLS private key file in PEM format
+      --hostname string    hostname for HTTP-to-HTTPS redirects and automatic certificate provisioning
+      --http-port int      HTTP listener port when TLS is active, use 0 to disable HTTP redirect (default 80)
+      --https-port int     HTTPS listener port when TLS is active (default 443)
+      --tls-cert string    path to TLS certificate file in PEM format
+      --tls-email string   email address for Let's Encrypt account notifications
+      --tls-key string     path to TLS private key file in PEM format
 
 Authentication:
       --ensure-unexpired-jwt    enable time validation for JWT claims "exp" and "nbf"

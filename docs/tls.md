@@ -1,29 +1,64 @@
 # TLS / HTTPS support
 
-`http-server` supports serving content over HTTPS using your own TLS certificate and key.
+`http-server` supports serving content over HTTPS in two modes:
 
-## Quick start
+- **Automatic certificates:** pass `--hostname` and `http-server` provisions a free TLS certificate from Let's Encrypt automatically. No cert files needed.
+- **Bring your own certificate:** pass `--tls-cert` and `--tls-key` with your own certificate and key files.
+
+## Automatic certificates (Let's Encrypt)
+
+The simplest way to serve over HTTPS. Just pass `--hostname` with your domain:
+
+```bash
+http-server --hostname example.com -d ./site
+```
+
+This starts two listeners:
+
+- **HTTPS** on port 443 serving your content with a certificate from Let's Encrypt
+- **HTTP** on port 80 handling ACME HTTP-01 challenges and redirecting all other requests to HTTPS
+
+Certificate provisioning, renewal, and storage are fully automatic. Certificates are stored locally in `~/.local/share/certmagic/`.
+
+### How it works
+
+When `http-server` starts with `--hostname`, it contacts Let's Encrypt's ACME servers to prove you control the domain. It does this by responding to an HTTP-01 challenge: Let's Encrypt makes an HTTP request to `http://yourdomain.com/.well-known/acme-challenge/<token>` on port 80, and `http-server` responds with the expected token. Once verified, a certificate is issued.
+
+This means:
+- **Port 80 must be reachable** from the public internet
+- **DNS must point to your server** (A or AAAA record for the hostname)
+- The certificate is provisioned on first startup and renewed automatically before expiry
+
+### ACME email (optional)
+
+Let's Encrypt can send expiry notifications to an email address:
+
+```bash
+http-server --hostname example.com --tls-email you@example.com -d ./site
+```
+
+## Bring your own certificate
+
+If you already have a certificate (from any CA, self-signed, or internal PKI), pass the cert and key files:
 
 ```bash
 http-server --tls-cert cert.pem --tls-key key.pem --hostname example.com -d ./site
 ```
 
-This starts two listeners:
-
-- **HTTPS** on port 443 serving your content
-- **HTTP** on port 80 redirecting all requests to HTTPS
+Both `--tls-cert` and `--tls-key` must be provided together. `--hostname` is required for HTTP-to-HTTPS redirect URL construction.
 
 ## Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--tls-cert` | *(none)* | Path to the TLS certificate file (PEM format) |
-| `--tls-key` | *(none)* | Path to the TLS private key file (PEM format) |
-| `--hostname` | *(none, required with TLS)* | Hostname used in HTTP-to-HTTPS redirect URLs |
+| `--hostname` | *(none)* | Domain name for TLS. Alone = auto-cert. With `--tls-cert`/`--tls-key` = BYO cert. |
+| `--tls-cert` | *(none)* | Path to TLS certificate file (PEM format, BYO mode) |
+| `--tls-key` | *(none)* | Path to TLS private key file (PEM format, BYO mode) |
+| `--tls-email` | *(none)* | Email for Let's Encrypt notifications (auto mode) |
 | `--https-port` | `443` | Port for the HTTPS listener |
-| `--http-port` | `80` | Port for the HTTP redirect listener (use `0` to disable) |
+| `--http-port` | `80` | Port for the HTTP listener (use `0` to disable) |
 
-Both `--tls-cert` and `--tls-key` must be provided together. When TLS is active, the `--port` flag cannot be used. Use `--http-port` and `--https-port` instead.
+When TLS is active, the `--port` flag cannot be used. Use `--http-port` and `--https-port` instead.
 
 ## Custom ports
 

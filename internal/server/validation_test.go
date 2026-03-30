@@ -331,3 +331,110 @@ func TestValidateTLS_HTTPPortZero(t *testing.T) {
 		t.Fatalf("expected no error with --http-port 0, got: %v", err)
 	}
 }
+
+func TestValidateTLS_HostnameAloneTriggersAutoMode(t *testing.T) {
+	dir := t.TempDir()
+
+	s := &Server{
+		Port:        5000,
+		Path:        dir,
+		ETagMaxSize: "5M",
+		Hostname:    "example.com",
+		HTTPPort:    80,
+		HTTPSPort:   443,
+		LogOutput:   &bytes.Buffer{},
+	}
+
+	if err := s.Validate(); err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if s.ActiveTLSMode() != TLSModeAuto {
+		t.Errorf("expected TLSModeAuto, got %s", s.ActiveTLSMode())
+	}
+}
+
+func TestValidateTLS_HostnameWithCertKeyTriggersBYO(t *testing.T) {
+	dir := t.TempDir()
+	certPath := filepath.Join(dir, "cert.pem")
+	keyPath := filepath.Join(dir, "key.pem")
+	generateTestCert(t, certPath, keyPath, 365*24*time.Hour)
+
+	s := &Server{
+		Port:        5000,
+		Path:        dir,
+		ETagMaxSize: "5M",
+		TLSCert:     certPath,
+		TLSKey:      keyPath,
+		Hostname:    "localhost",
+		HTTPPort:    8080,
+		HTTPSPort:   8443,
+		LogOutput:   &bytes.Buffer{},
+	}
+
+	if err := s.Validate(); err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if s.ActiveTLSMode() != TLSModeBYO {
+		t.Errorf("expected TLSModeBYO, got %s", s.ActiveTLSMode())
+	}
+}
+
+func TestValidateTLS_AutoModePortConflict(t *testing.T) {
+	dir := t.TempDir()
+
+	s := &Server{
+		Port:              5000,
+		PortExplicitlySet: true,
+		Path:              dir,
+		ETagMaxSize:       "5M",
+		Hostname:          "example.com",
+		LogOutput:         &bytes.Buffer{},
+	}
+
+	err := s.Validate()
+	if err == nil {
+		t.Fatal("expected error when --port is set with auto TLS")
+	}
+}
+
+func TestValidateTLS_TLSEmailWithoutTLS(t *testing.T) {
+	dir := t.TempDir()
+
+	s := &Server{
+		Port:        5000,
+		Path:        dir,
+		ETagMaxSize: "5M",
+		TLSEmail:    "test@example.com",
+		LogOutput:   &bytes.Buffer{},
+	}
+
+	err := s.Validate()
+	if err == nil {
+		t.Fatal("expected error when --tls-email is set without TLS")
+	}
+}
+
+func TestValidateTLS_AutoModeNonStandardHTTPPort(t *testing.T) {
+	dir := t.TempDir()
+	buf := &bytes.Buffer{}
+
+	s := &Server{
+		Port:        5000,
+		Path:        dir,
+		ETagMaxSize: "5M",
+		Hostname:    "example.com",
+		HTTPPort:    8080,
+		HTTPSPort:   443,
+		LogOutput:   buf,
+	}
+
+	if err := s.Validate(); err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if !bytes.Contains(buf.Bytes(), []byte("ACME HTTP-01 challenges require port 80")) {
+		t.Error("expected warning about non-standard HTTP port for ACME challenges")
+	}
+}

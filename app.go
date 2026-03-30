@@ -143,12 +143,13 @@ func run() error {
 	flags.StringVar(&srv.TLSKey, "tls-key", "", "path to TLS private key file in PEM format")
 	flags.IntVar(&srv.HTTPPort, "http-port", 80, "HTTP listener port when TLS is active, use 0 to disable HTTP redirect")
 	flags.IntVar(&srv.HTTPSPort, "https-port", 443, "HTTPS listener port when TLS is active")
-	flags.StringVar(&srv.Hostname, "hostname", "", "hostname for HTTP-to-HTTPS redirects, required when TLS is active")
+	flags.StringVar(&srv.Hostname, "hostname", "", "hostname for HTTP-to-HTTPS redirects and automatic certificate provisioning")
+	flags.StringVar(&srv.TLSEmail, "tls-email", "", "email address for Let's Encrypt account notifications")
 
 	// Annotate flags with groups for the custom help template
 	flagGroups := map[string][]string{
 		"Server":         {"port", "path", "pathprefix", "title", "banner", "gzip", "cors", "hide-links"},
-		"TLS":            {"tls-cert", "tls-key", "http-port", "https-port", "hostname"},
+		"TLS":            {"tls-cert", "tls-key", "http-port", "https-port", "hostname", "tls-email"},
 		"Authentication": {"username", "password", "jwt-key", "ensure-unexpired-jwt"},
 		"Directory Listing": {
 			"disable-directory-listing", "disable-markdown", "markdown-before-dir", "render-all-markdown",

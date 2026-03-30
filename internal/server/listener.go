@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/caddyserver/certmagic"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/patrickdappollonio/http-server/internal/middlewares"
@@ -72,16 +73,38 @@ func (s *Server) listenHTTPOnly() error {
 
 // listenTLS starts dual HTTP+HTTPS listeners with errgroup coordination.
 func (s *Server) listenTLS() error {
+	// In auto mode, provision certificates via certmagic before starting listeners
+	if s.activeTLSMode == TLSModeAuto {
+		if err := s.setupAutoTLS(context.Background()); err != nil {
+			return err
+		}
+	}
+
 	router := s.router()
 
-	// HTTPS server with GetCertificate callback
-	tlsConfig := &tls.Config{
-		GetCertificate: s.getCertificate,
+	// Build TLS config based on mode
+	var tlsConfig *tls.Config
+	if s.activeTLSMode == TLSModeAuto && s.certmagicConfig != nil {
+		tlsConfig = s.certmagicConfig.TLSConfig()
+		tlsConfig.NextProtos = append([]string{"h2", "http/1.1"}, tlsConfig.NextProtos...)
+	} else {
+		tlsConfig = &tls.Config{
+			GetCertificate: s.getCertificate,
+		}
 	}
+
 	httpsServer := &http.Server{
 		Addr:      fmt.Sprintf(":%d", s.HTTPSPort),
 		Handler:   router,
 		TLSConfig: tlsConfig,
+	}
+
+	// HTTP handler: in auto mode, wrap with certmagic's ACME challenge handler
+	// so HTTP-01 challenges are solved on port 80
+	httpHandler := s.httpRedirectHandler()
+	if s.activeTLSMode == TLSModeAuto && s.certmagicConfig != nil {
+		issuer := s.certmagicConfig.Issuers[0].(*certmagic.ACMEIssuer)
+		httpHandler = issuer.HTTPChallengeHandler(httpHandler)
 	}
 
 	// HTTP redirect server (disabled when --http-port 0)
@@ -89,7 +112,7 @@ func (s *Server) listenTLS() error {
 	if s.HTTPPort != 0 {
 		httpServer = &http.Server{
 			Addr:    fmt.Sprintf(":%d", s.HTTPPort),
-			Handler: s.httpRedirectHandler(),
+			Handler: httpHandler,
 		}
 	}
 
