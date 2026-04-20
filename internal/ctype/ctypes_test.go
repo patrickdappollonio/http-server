@@ -51,6 +51,10 @@ func Test_getContentTypeForExtension(t *testing.T) {
 			filename: "Makefile",
 			want:     "text/x-makefile",
 		},
+		{
+			filename: ".wasm",
+			want:     "application/wasm",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.filename, func(t *testing.T) {

@@ -195,6 +195,7 @@ var ctypes = []struct {
 	{[]string{".srt"}, nil, "application/x-subrip"},
 	{[]string{".sql"}, nil, "application/sql"},
 	{[]string{".tgz"}, nil, "application/x-gzip"},
+	{[]string{".wasm"}, nil, "application/wasm"},
 }
 
 func GetContentTypeForFilename(name string) string {
