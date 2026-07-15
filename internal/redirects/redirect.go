@@ -50,7 +50,7 @@ func (e *Engine) Middleware(logger io.Writer) func(http.Handler) http.Handler {
 			}
 
 			fmt.Fprintf(logger, "REDIR %q -> %q (status: %d)\n", r.URL.RequestURI(), destination, statusCode)
-			http.Redirect(w, r, destination, statusCode)
+			http.Redirect(w, r, destination, statusCode) //nolint:gosec // destinations come from the operator-provided redirects file; redirecting to external URLs is an intended feature
 		})
 	}
 }
@@ -385,6 +385,13 @@ func (rule *RedirectRule) buildDestination(params map[string]string, requestRawQ
 		// Rebuild destination URL
 		destURL.RawQuery = queryString
 		destination = destURL.String()
+	}
+
+	// If the rule targets a local path, make sure placeholder expansion can't
+	// turn it into a scheme-relative URL ("//evil.com") by collapsing any
+	// duplicate leading slashes introduced by captured values.
+	if strings.HasPrefix(rule.To, "/") && !strings.HasPrefix(rule.To, "//") && strings.HasPrefix(destination, "//") {
+		destination = "/" + strings.TrimLeft(destination, "/")
 	}
 
 	return destination

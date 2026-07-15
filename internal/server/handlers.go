@@ -73,7 +73,15 @@ func (s *Server) showOrRender(w http.ResponseWriter, r *http.Request) {
 	if info.IsDir() {
 		// Check if the path doesn't ends in a slash, and redirect accordingly
 		if !strings.HasSuffix(r.URL.Path, "/") {
-			http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
+			target := r.URL.Path + "/"
+
+			// Collapse duplicate leading slashes so the target can't be
+			// interpreted by browsers as a scheme-relative URL ("//evil.com/").
+			if strings.HasPrefix(target, "//") {
+				target = "/" + strings.TrimLeft(target, "/")
+			}
+
+			http.Redirect(w, r, target, http.StatusMovedPermanently) //nolint:gosec // target is derived from the request path with leading slashes collapsed, so it is always same-origin
 			return
 		}
 
